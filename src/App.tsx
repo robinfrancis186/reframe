@@ -41,7 +41,8 @@ const WorkingPreview=lazy(()=>import('./WorkingPreview'));
 import ComponentJourney from './ComponentJourney';
 import { componentReadiness, sameComponent, preferredCapture } from './component-workflow.js';
 import './journey.css';
-import { readWorkspace, writeWorkspace } from './storage';
+import { onLibraryChange, readWorkspace, writeWorkspace } from './storage';
+import ExtensionPairing from './ExtensionPairing';
 import LibrarySync from './LibrarySync';
 import FidelityCheck, { canCheckFidelity, FidelityBadge } from './FidelityCheck';
 import { canExportCode, downloadCode, exportedCode, type ExportedCode } from './code-export';
@@ -225,6 +226,18 @@ export default function App() {
       setBusy(false);
     }
   }
+  // Captures saved by the browser extension (or another tab) appear without a reload.
+  const libraryCount = useRef(library.length);
+  libraryCount.current = library.length;
+  useEffect(() => onLibraryChange(raw => {
+    try {
+      const state = JSON.parse(raw);
+      if (!Array.isArray(state.items) || !state.items.every(isItem)) return;
+      const added = state.items.length - libraryCount.current;
+      setLibrary(state.items);
+      if (added > 0) notify(added === 1 ? `Added "${state.items[0].name}" from your browser.` : `Added ${added} components from your browser.`);
+    } catch { /* A malformed update is ignored; the saved library is unchanged. */ }
+  }), []);
   /** Renames or re-tags a saved component in place. */
   function organise(id: string, patch: Pick<Partial<ComponentItem>, "name" | "tags" | "collections">) {
     const next = library.map(i => i.id === id ? { ...i, ...patch } : i);
@@ -701,6 +714,7 @@ export default function App() {
               </p>
             </div>
             <LibrarySync />
+            <ExtensionPairing />
             <Clipboard items={library} onOpen={open} onDelete={remove} onIntegrate={integrate} onOrganise={organise} full />
             {deleted && (
               <button className="undo-button" onClick={restore}>

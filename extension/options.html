@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reframe Picker settings</title>
+<style>
+  body{font:14px/1.6 system-ui,sans-serif;max-width:520px;margin:32px auto;padding:0 16px;color:#1d1d1f}
+  h1{font-size:20px;margin:0 0 4px}p{color:#555}label{display:grid;gap:6px;margin:18px 0;font-weight:600}
+  input{font:inherit;padding:8px 10px;border:1px solid #bbb;border-radius:8px}
+  button{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid #333;background:#1d1d1f;color:#fff;cursor:pointer;margin-right:8px}
+  button.secondary{background:#fff;color:#1d1d1f}#status{margin-top:16px;font-weight:600}
+  .ok{color:#147a3d}.error{color:#b42318}
+</style>
+</head>
+<body>
+<h1>Reframe Picker</h1>
+<p>Saves components you pick on your own tabs to the Reframe library on this computer. In Reframe, open <b>Library → Browser extension</b>, choose <b>Pair extension</b>, and paste the token here.</p>
+<form id="form">
+  <label>Reframe address<input id="server" required placeholder="http://localhost:5173"></label>
+  <label>Pairing token<input id="token" required autocomplete="off" spellcheck="false" placeholder="rfx_…"></label>
+  <button type="submit">Save and test</button><button type="button" class="secondary" id="forget">Forget token</button>
+</form>
+<p id="status" role="status"></p>
+<p>To pick: click the Reframe Picker toolbar button (or press Alt+Shift+R) on any page, hover, click the element, then press Enter. Arrow keys move to the parent or child element; Esc cancels.</p>
+<script src="options.js"></script>
+</body>
+</html>

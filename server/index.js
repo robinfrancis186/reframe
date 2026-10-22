@@ -36,6 +36,8 @@ import {mountDownloads} from './downloads.js';
 import {LibraryStore,mountLibrary} from './library-store.js';
 import {scoreExport,scoreFidelity} from './fidelity.js';
 import {exportComponentCode} from './code-export.js';
+import {ExtensionPairing,isExtensionRoute,mountExtension} from './extension.js';
+import {isItem,themes} from '../src/model.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const app = express();
@@ -43,6 +45,7 @@ const referenceBrowser = new ReferenceBrowser();
 const store=process.env.REFRAME_STORE||path.join(root,'.reframe');
 const projects = new Projects(store);
 const libraryStore = new LibraryStore(store);
+const extensionPairing = new ExtensionPairing(store);
 const connections = new Connections(store);
 const websites=new Websites(store,referenceBrowser);
 const websiteHandlers=new Map();
@@ -56,8 +59,9 @@ app.use((req, res, next) => {
   const host = req.headers.host?.split(":")[0];
   if (!["localhost", "127.0.0.1"].includes(host))
     return res.status(403).json({ error: "This workbench is local-only." });
+  // The paired browser extension calls two routes from its own origin; they require its token.
   if (
-    localAPI &&
+    localAPI && !isExtensionRoute(req) &&
     (req.headers['sec-fetch-site']==='cross-site' || req.headers.origin &&
     ![`http://localhost:${port}`, `http://127.0.0.1:${port}`].includes(
       req.headers.origin,
@@ -74,6 +78,7 @@ app.use((req, res, next) => {
 });
 // The library carries its own larger body limit, so it is mounted before the general 8 MB parser.
 mountLibrary(app,express,libraryStore);
+mountExtension(app,express,{pairing:extensionPairing,library:libraryStore,browser:referenceBrowser,isItem,theme:themes[0],folder:path.join(root,'extension')});
 app.use(express.json({ limit: "8mb" }));
 mountDownloads(app);
 mountMcp(app,connections,projects);

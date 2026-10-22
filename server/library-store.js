@@ -80,6 +80,8 @@ export class LibraryStore{
     await this.snapshot(previous,reason);
     const next={revision:previous.revision+1,savedAt:new Date().toISOString(),workspace};
     await this.atomic(path.join(this.dir,'workspace.json'),JSON.stringify(next));
+    // A small revision file lets open apps notice changes (e.g. extension captures) without reading the library.
+    await this.atomic(path.join(this.dir,'revision.json'),JSON.stringify({revision:next.revision,savedAt:next.savedAt}));
     await this.collect();
     return {revision:next.revision,savedAt:next.savedAt,fonts:await this.storedFonts()};
   }
@@ -91,6 +93,28 @@ export class LibraryStore{
       if(baseRevision!==current.revision)throw Object.assign(fail('Your library changed in another tab or browser. Reload to see the latest version.',409),{revision:current.revision});
       await this.addFonts(fonts);await this.requireFonts(workspace);
       return this.commit(workspace,'save');
+    });
+  }
+  async revision(){try{return JSON.parse(await readFile(path.join(this.dir,'revision.json'),'utf8'));}catch{const {revision,savedAt}=await this.current();return {revision,savedAt};}}
+  /**
+   * Adds one component on the server's side (browser extension captures), in the same compact form the app saves:
+   * embedded fonts stored once by hash. A component with the same source and markup is replaced, not duplicated.
+   */
+  add(item,{theme}){
+    return this.serial(async()=>{
+      await mkdir(this.dir,{recursive:true,mode:0o700});
+      const current=await this.current(),state=current.workspace?JSON.parse(current.workspace):{version:1,items:[],theme};
+      const fonts={};
+      // Same reduction as the app's save: the replica's feature.json is recompiled from spec.website on install.
+      const json=JSON.stringify({...item,theme:state.theme||theme},function(key,value){if(key==='files'&&this.spec?.website)return {...value,'feature.json':JSON.stringify({...this.spec,website:'Recompiled from spec.website when installed.'})};return value;})
+        .replace(/data:font\/(?:woff2|woff|ttf);base64,[A-Za-z0-9+/=]+/g,font=>{const hash=createHash('sha256').update(font).digest('hex');fonts[hash]=font;return 'reframe-font:'+hash;});
+      const compact=JSON.parse(json);
+      await this.addFonts(fonts);
+      const existing=state.items.findIndex(i=>i.source===compact.source&&i.html===compact.html);
+      if(existing>=0)compact.id=state.items[existing].id;
+      state.items=[compact,...state.items.filter((_,i)=>i!==existing)];
+      const workspace=JSON.stringify(state);inspect(workspace);
+      return {...await this.commit(workspace,'extension capture'),id:compact.id,replaced:existing>=0};
     });
   }
   // Keeps a version without making it current, e.g. unsynced browser changes that lost a conflict.
@@ -115,6 +139,7 @@ export function mountLibrary(app,express,library){
   const handle=action=>async(req,res,next)=>{try{res.json(await action(req));}catch(error){if(error.status===409||error.status===422)return res.status(error.status).json({error:error.message,revision:error.revision,missing:error.missing});next(error);}};
   app.get('/api/library',handle(()=>library.read()));
   app.put('/api/library',json,handle(req=>library.write(req.body||{})));
+  app.get('/api/library/revision',handle(()=>library.revision()));
   app.get('/api/library/history',handle(()=>library.listHistory()));
   app.post('/api/library/history',json,handle(req=>library.keep(req.body||{})));
   app.post('/api/library/restore',json,handle(req=>library.restore(req.body||{})));

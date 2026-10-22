@@ -140,6 +140,19 @@ export async function repairAndScore(item,{browser,resource=referenceResource}={
   return {css:repaired,fidelity:shot?await measure(browser,item.referenceImage,shot,false):null};
 }
 
+/**
+ * Finishes a fresh capture the same way for every source (reference browser or extension): pins overridden snapshot
+ * styles and scores the result. Neither step can block the capture.
+ */
+export async function finishCapture(item,{browser,resource=referenceResource,rebuild}){
+  try{
+    const site=item.feature.spec.website,{css,fidelity}=await repairAndScore(item,{browser,resource});
+    if(css!==site.css)item={...item,feature:await rebuild(item,{...site,css})};
+    if(fidelity){const {score,grade,fitted,reference,rendered,differing,checkedAt}=fidelity;item={...item,fidelity:{score,grade,fitted,reference,rendered,differing,checkedAt}};}
+  }catch{/* The unrepaired, unscored capture is kept and can be checked later. */}
+  return item;
+}
+
 /** Scores one saved component. `browser` is the shared ReferenceBrowser, whose Chromium and network policy are reused. */
 export async function scoreFidelity(item,{browser,resource=referenceResource,diff=false}={}){
   if(!canScore(item))throw new Error('Fidelity needs a component picked in the reference browser, with its original reference image.');

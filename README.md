@@ -51,6 +51,16 @@ Stop the dev server before starting production on the same port. Production serv
 - Branding, library identity and themes survive workspace reload and JSON clipboard backup/import. Export a brand kit as JSON or colors/type/radius as CSS. Uploaded logos stay local. Private API keys and accounts are never part of these files.
 - **New capture → Source analysis** runs embedded REA on pasted JavaScript/TypeScript. It returns a static evidence report; it does not generate a UI or execute uploaded code.
 
+## Browser extension
+
+**Reframe Picker** (in `extension/`) picks components on the tabs you already have open: signed-in pages, and sites that block automated browsers. Captures go through the same sanitizing, style repair and fidelity check as picks in Studio, then appear in your library without a reload.
+
+1. Chrome → `chrome://extensions` → Developer mode → **Load unpacked** → select this project's `extension` folder.
+2. In Reframe, **Library → Saved components → Pick from your own browser → Pair extension**. Copy the token (shown once) into the extension's options, with Reframe's address (e.g. `http://localhost:5173`).
+3. On any page, click the Reframe Picker toolbar button or press **Alt+Shift+R**. Hover to see what a click selects, click, use **↑ / ↓** for the parent or child element, and press **Enter** (or **Save to Reframe**). **Esc** closes.
+
+The extension has no standing access to websites: it runs on a tab only when you start it there (`activeTab`), and it can reach only Reframe on `localhost`. The token is stored as a hash; **Pair again** replaces it and **Disconnect** revokes it. The server accepts the two extension routes only from an extension origin with a valid token. Page clicks are blocked while picking. Stylesheets from other domains that do not allow cross-origin reading cannot be read by any page script; the computed-style snapshot still reproduces the component's appearance, and the match score shows how close it is. After changing `server/capture-page.js`, run `npm run extension:build` (a test fails if the generated copy is out of date). The end-to-end test loads the real extension in Chrome for Testing (`npx playwright install chromium`); it is skipped if that browser is missing.
+
 ## Built-in reference browser
 
 Open **Browser** or **Browse & pick** in Studio. The backend starts an isolated headless Chromium session on demand and renders it inside Reframe as interactive snapshots. It first uses installed Google Chrome; if Chrome is unavailable, install Chromium with `npx playwright install chromium`. The browser integration tests require either runtime. This is a real rendered browser, not an external-site iframe.

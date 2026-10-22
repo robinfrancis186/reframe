@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { referenceResource, referenceUrl } from './browser-network.js';
 import { cleanHtml, extract } from './capture.js';
 import {readRendered,replicaItem,buildReplicaFeature} from './replica.js';
-import {repairAndScore} from './fidelity.js';
+import {finishCapture} from './fidelity.js';
 
 async function settle(entry) {
   if(entry.dialog)return;
@@ -267,14 +267,8 @@ export class ReferenceBrowser {
         return extract(await page.content(), page.url());
       } else if (action === 'capture') {
         if (!entry.selection) throw new Error('Pick an element first.');
-        const s=entry.selection,item={...await replicaItem([await readRendered(page,'[data-rf-picked]')],s.name,{resource:this.resource}),referenceImage:s.referenceImage,capturedAt:s.capturedAt};
-        // Pin snapshot styles the site's own rules overrode, then score the result against the picked appearance, in one
-        // render. Neither step can block the capture.
-        try{
-          const site=item.feature.spec.website,{css,fidelity}=await repairAndScore(item,{browser:this,resource:this.resource});
-          if(css!==site.css)item.feature=await buildReplicaFeature(item.html,item.name,{...site,css},item.feature.spec.id);
-          if(fidelity){const {score,grade,fitted,reference,rendered,differing,checkedAt}=fidelity;item.fidelity={score,grade,fitted,reference,rendered,differing,checkedAt};}
-        }catch{/* The unrepaired, unscored capture is kept and can be checked later. */}
+        const s=entry.selection;let item={...await replicaItem([await readRendered(page,'[data-rf-picked]')],s.name,{resource:this.resource}),referenceImage:s.referenceImage,capturedAt:s.capturedAt};
+        item=await finishCapture(item,{browser:this,resource:this.resource,rebuild:(item,site)=>buildReplicaFeature(item.html,item.name,site,item.feature.spec.id)});
         return {items:[item]};
       } else if (action !== 'snapshot') throw new Error('Unknown browser action.');
       if(entry.dialog)return paused();

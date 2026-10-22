@@ -201,6 +201,34 @@ export function writeWorkspace(value: string) {
   void flush();
 }
 
+// Changes saved elsewhere (browser-extension captures, another tab) are picked up while this tab has no unsaved
+// change of its own: a small revision check every few seconds, and at once when the tab is shown or focused again.
+const watchers = new Set<(workspace: string) => void>();
+let polling: ReturnType<typeof setInterval> | undefined;
+async function refresh() {
+  if (writing || pending !== null || status.state !== "synced") return;
+  try {
+    const { revision: latest } = await api<{ revision: number }>("/api/library/revision");
+    if (latest <= revision) return;
+    const server = await api<{ revision: number; savedAt: string | null; workspace: string | null; fonts: Record<string, string> }>("/api/library");
+    if (!server.workspace || server.revision <= revision || writing || pending !== null) return;
+    revision = server.revision; serverFonts = new Set(Object.keys(server.fonts));
+    cached = inflate(server.workspace, server.fonts);
+    try { const { workspace, fonts } = await compact(cached); await cacheLocally(workspace, fonts, false); } catch { /* The cache is optional. */ }
+    setStatus({ state: "synced", revision, savedAt: server.savedAt });
+    watchers.forEach(watch => watch(cached!));
+  } catch { /* The next check retries. */ }
+}
+export function onLibraryChange(listener: (workspace: string) => void) {
+  watchers.add(listener);
+  if (!polling) {
+    polling = setInterval(() => void refresh(), 4000);
+    window.addEventListener("focus", () => void refresh());
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") void refresh(); });
+  }
+  return () => { watchers.delete(listener); };
+}
+
 export type LibraryVersion = { id: string; reason: string; revision: number | null; savedAt: string; items: number };
 export const listVersions = () => api<LibraryVersion[]>("/api/library/history");
 /** Makes a kept version current on disk (the current one is kept too), then reloads the app with it. */
