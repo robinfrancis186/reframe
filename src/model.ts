@@ -5,7 +5,7 @@ export interface ProductCatalog {
   variants:{id:string;name:string;options?:Record<string,string>;priceCents:number;initialStock:number}[];
 }
 export interface FeatureSpec {
-  website?: {version:number;css:string;pages:{url:string;title:string;html:string;rootStyle:string;htmlClass:string;height:number;component:boolean}[];attachments:{name:string;type:string;base64:string}[];warnings:string[]};
+  website?: {version:number;css:string;pages:{url:string;title:string;html:string;rootStyle:string;htmlClass:string;height:number;component:boolean;backdrop?:string;viewport?:number}[];attachments:{name:string;type:string;base64:string}[];warnings:string[]};
   commerce?:ProductCatalog;
   version: number; id: string; name: string; authRequired?: boolean;
   fields: { id: string; label: string; type: string; required: boolean }[];
@@ -34,7 +34,14 @@ export interface ComponentItem {
   referenceImage?: string;
   feature?: FeaturePackage;
   libraryId?: string;
+  fidelity?: Fidelity;
 }
+/** How closely a saved replica matches the reference image taken when it was picked. */
+export interface Fidelity {
+  score: number; grade: string; fitted: boolean; differing: number; checkedAt: string;
+  reference: { width: number; height: number }; rendered: { width: number; height: number };
+}
+export const isFidelity = (f: unknown): f is Fidelity => { const v = f as Fidelity; return !!v && Number.isFinite(v.score) && v.score >= 0 && v.score <= 100 && typeof v.grade === "string" && v.grade.length <= 60 && typeof v.checkedAt === "string"; };
 export interface Theme {
   name: string;
   primary: string;
@@ -142,6 +149,7 @@ export function isItem(value: unknown): value is ComponentItem {
     (i.libraryId === undefined || typeof i.libraryId === "string" && !!libraryEntry(i.libraryId) && !i.feature) &&
     i.name.length <= 200 &&
     (!i.theme || isTheme(i.theme)) &&
+    (!i.fidelity || isFidelity(i.fidelity)) &&
     (!i.referenceImage || (typeof i.referenceImage === "string" && i.referenceImage.length <= 2_000_000 && /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(i.referenceImage)))
   );
 }

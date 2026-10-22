@@ -43,6 +43,7 @@ import { componentReadiness, sameComponent, preferredCapture } from './component
 import './journey.css';
 import { readWorkspace, writeWorkspace } from './storage';
 import LibrarySync from './LibrarySync';
+import FidelityCheck, { canCheckFidelity } from './FidelityCheck';
 const Agents=lazy(()=>import('./Agents'));
 const AssetLibrary=lazy(()=>import('./AssetLibrary'));
 import {
@@ -54,6 +55,7 @@ import {
   starters,
   themes,
   type ComponentItem,
+  type Fidelity,
   type Theme,
 } from "./model";
 import { documentHtml, reactCode } from "./export";
@@ -209,6 +211,15 @@ export default function App() {
       setError((e as Error).message);
     } finally {
       setBusy(false);
+    }
+  }
+  function scored(fidelity: Fidelity) {
+    const item = { ...active, fidelity };
+    setActive(item);
+    setElements(current => current.map(element => element.id === item.id ? item : element));
+    if (library.some(i => i.id === item.id)) {
+      const next = library.map(i => i.id === item.id ? { ...i, fidelity } : i);
+      if (persist(next)) setLibrary(next);
     }
   }
   function save(candidate = active) {
@@ -506,7 +517,7 @@ export default function App() {
                   </div>
                 </div>
                 {view==='preview' && <p className="preview-explanation">{componentReadiness(active).preview}</p>}
-                {view === "reference" && active.referenceImage ? <div className="reference-comparison"><img src={active.referenceImage} alt={`Original appearance of ${active.name}`}/><p>Original captured appearance · use Preview to see the adapted component.</p><a href={/^https?:\/\//.test(active.source) ? active.source : undefined} target="_blank" rel="noreferrer">{active.source}</a></div> : view === "preview" ? (
+                {view === "reference" && active.referenceImage ? <div className="reference-comparison">{canCheckFidelity(active) ? <FidelityCheck item={active} onScored={scored}/> : <><img src={active.referenceImage} alt={`Original appearance of ${active.name}`}/><p>Original captured appearance · use Preview to see the adapted component.</p></>}<a href={/^https?:\/\//.test(active.source) ? active.source : undefined} target="_blank" rel="noreferrer">{active.source}</a></div> : view === "preview" ? (
                   <div className={"canvas " + (mobile ? "mobile-canvas" : "")}>
                     <Preview
                       item={active}

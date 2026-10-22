@@ -12,6 +12,7 @@
     "verify": "npm run check && npm test && npm run build && npm --prefix examples/integrated-app run build && npm --prefix examples/connected-app run build",
     "gradio:setup": "uv venv --allow-existing .reframe/gradio-venv && uv pip install --python .reframe/gradio-venv/bin/python -r server/gradio-requirements.txt",
     "demo": "node examples/connected-app/server/index.js",
+    "fidelity": "node tests/fidelity-suite.mjs",
     "graphify:setup": "uv tool install --upgrade graphifyy==0.9.93"
   },
   "dependencies": {

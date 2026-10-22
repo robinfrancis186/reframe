@@ -3,7 +3,8 @@ import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { referenceResource, referenceUrl } from './browser-network.js';
 import { cleanHtml, extract } from './capture.js';
-import {readRendered,replicaItem} from './replica.js';
+import {readRendered,replicaItem,buildReplicaFeature} from './replica.js';
+import {repairAndScore} from './fidelity.js';
 
 async function settle(entry) {
   if(entry.dialog)return;
@@ -96,7 +97,24 @@ export class ReferenceBrowser {
           if (++entry.requests > 1200 || entry.bytes > 64_000_000) throw new Error('Page resource budget reached (1,200 requests / 64 MB).');
           if(entry.pending>=16)await new Promise(resolve=>entry.queue.push(resolve));
           entry.pending++; fetching = true;
-          const response = await this.resource(request.url(), await request.allHeaders(),{method,body:request.postDataBuffer()});
+          let response = await this.resource(request.url(), await request.allHeaders(),{method,body:request.postDataBuffer()});
+          // Chromium does not route a fulfilled redirect's next request back through this handler, so it would reach the
+          // deny-all proxy. Page navigations get a meta refresh (a new routed navigation, with the right URL and origin);
+          // subresources are followed here, without cookies or credentials once the origin changes.
+          if (response.status >= 300 && response.status < 400 && response.headers.location) {
+            let next = referenceUrl(new URL(response.headers.location, request.url()).href);
+            if (request.isNavigationRequest()) {
+              if (request.frame() === entry.page.mainFrame()) entry.redirectTo = next.href;
+              response = { status: 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }, body: Buffer.from(`<!doctype html><meta http-equiv="refresh" content="0;url=${next.href.replace(/[&"<>]/g, c => `&#${c.charCodeAt(0)};`)}">`) };
+            } else {
+              let headers = await request.allHeaders(), origin = new URL(request.url()).origin;
+              for (let hop = 0; hop < 5 && response.status >= 300 && response.status < 400 && response.headers.location; hop++) {
+                next = referenceUrl(new URL(response.headers.location, next.href).href);
+                if (next.origin !== origin) { headers = Object.fromEntries(Object.entries(headers).filter(([key]) => !/^(?:cookie|authorization|origin)$/i.test(key))); origin = next.origin; }
+                response = await this.resource(next.href, headers, { method: 'GET' });
+              }
+            }
+          }
           entry.bytes += response.body.length;
           if(response.status>=400)entry.issues.push({type:request.resourceType(),url:request.url().split('?')[0],reason:`HTTP ${response.status}`});
           if(response.status===200&&/^image\/(?:png|jpeg|webp|gif|avif)(?:;|$)/i.test(response.headers['content-type']||''))entry.images.add(request.url());
@@ -151,7 +169,13 @@ export class ReferenceBrowser {
       else if (action === 'navigate') {
         const target = referenceUrl(url);
         entry.blocked = 0; entry.requests = 0; entry.bytes = 0;entry.issues=[];entry.popup=null;
-        try { const response=await untilDialog(page.goto(target.href, { waitUntil: 'domcontentloaded', timeout: 25000 }));if(response?.status()>=400)throw new Error(`Website returned HTTP ${response.status()}.`); }
+        entry.redirectTo = null;
+        // A navigation interrupted by the previous page's late error navigation is retried once.
+        const go = () => untilDialog(page.goto(target.href, { waitUntil: 'domcontentloaded', timeout: 25000 }));
+        try { const response=await go().catch(e => { if (/interrupted by another navigation/.test(e.message)) return go(); throw e; });if(response?.status()>=400)throw new Error(`Website returned HTTP ${response.status()}.`);
+          // Follow redirect hops (each served as a meta refresh) until the final page has loaded.
+          for (let hop = 0; hop < 5 && entry.redirectTo && !entry.dialog; hop++) { const next = entry.redirectTo; entry.redirectTo = null; await untilDialog(page.waitForURL(next, { waitUntil: 'domcontentloaded', timeout: 25000 })); }
+        }
         catch (e) { if (!/Timeout/.test(e.message)) throw new Error('Website could not load. It may block automated browsers or redirect to an unavailable address.'); }
       } else if (action === 'back' || action === 'forward') {
         await untilDialog(page[action === 'back' ? 'goBack' : 'goForward']({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {}));
@@ -200,7 +224,13 @@ export class ReferenceBrowser {
           entry.selection = picked;
           if (entry.selection.html.length > 500_000) { entry.selection = null; throw new Error('This element is too large. Pick a smaller component.'); }
           // Hidden or off-screen containers have no visible box to photograph; they are still capturable.
-          if (entry.selection.bounds.width >= 1 && entry.selection.bounds.height >= 1) entry.selection.referenceImage = 'data:image/jpeg;base64,' + (await page.screenshot({ type: 'jpeg', quality: 65, clip: entry.selection.bounds, timeout: 5000 })).toString('base64');
+          // The reference shows only the picked element over its own backdrop: siblings of the element and of each
+          // ancestor (overlapping images, sticky headers, banners) are hidden for the screenshot and then restored.
+          if (entry.selection.bounds.width >= 1 && entry.selection.bounds.height >= 1) {
+            await page.evaluate(() => { const el = document.querySelector('[data-rf-picked]'); for (let node = el; node?.parentElement; node = node.parentElement) for (const sibling of node.parentElement.children) if (sibling !== node) sibling.setAttribute('data-rf-isolate', ''); const style = document.createElement('style'); style.id = 'rf-isolate'; style.textContent = '[data-rf-isolate]{visibility:hidden!important}'; document.head.append(style); });
+            try { entry.selection.referenceImage = 'data:image/jpeg;base64,' + (await page.screenshot({ type: 'jpeg', quality: 65, clip: entry.selection.bounds, timeout: 5000, animations: 'disabled' })).toString('base64'); }
+            finally { await page.evaluate(() => { document.getElementById('rf-isolate')?.remove(); for (const node of document.querySelectorAll('[data-rf-isolate]')) node.removeAttribute('data-rf-isolate'); }); }
+          }
           entry.selection.capturedAt = new Date().toISOString();
         }
       } else if (action === 'scroll') {
@@ -237,8 +267,15 @@ export class ReferenceBrowser {
         return extract(await page.content(), page.url());
       } else if (action === 'capture') {
         if (!entry.selection) throw new Error('Pick an element first.');
-        const s=entry.selection,item=await replicaItem([await readRendered(page,'[data-rf-picked]')],s.name,{resource:this.resource});
-        return {items:[{...item,referenceImage:s.referenceImage,capturedAt:s.capturedAt}]};
+        const s=entry.selection,item={...await replicaItem([await readRendered(page,'[data-rf-picked]')],s.name,{resource:this.resource}),referenceImage:s.referenceImage,capturedAt:s.capturedAt};
+        // Pin snapshot styles the site's own rules overrode, then score the result against the picked appearance, in one
+        // render. Neither step can block the capture.
+        try{
+          const site=item.feature.spec.website,{css,fidelity}=await repairAndScore(item,{browser:this,resource:this.resource});
+          if(css!==site.css)item.feature=await buildReplicaFeature(item.html,item.name,{...site,css},item.feature.spec.id);
+          if(fidelity){const {score,grade,fitted,reference,rendered,differing,checkedAt}=fidelity;item.fidelity={score,grade,fitted,reference,rendered,differing,checkedAt};}
+        }catch{/* The unrepaired, unscored capture is kept and can be checked later. */}
+        return {items:[item]};
       } else if (action !== 'snapshot') throw new Error('Unknown browser action.');
       if(entry.dialog)return paused();
       if(['navigate','reload','back','forward','viewport','click','key','enter'].includes(action))await settle(entry);

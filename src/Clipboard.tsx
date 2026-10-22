@@ -10,6 +10,8 @@ import { useState } from "react";
 import Preview from "./Preview";
 import { download, themes, type ComponentItem } from "./model";
 import { componentReadiness, matchesComponent } from './component-workflow.js';
+import { FidelityBadge } from './FidelityCheck';
+import './fidelity.css';
 export default function Clipboard({
   items,
   onOpen,
@@ -109,6 +111,7 @@ export default function Clipboard({
                 </button>
               </div>
               <span className="component-status">{componentReadiness(item).label}</span>
+              <FidelityBadge fidelity={item.fidelity} />
               {full && item.libraryId && <button disabled={!!exporting} onClick={async()=>{setExportError("");setExporting(item.id);try{await exportOriginal(item,item.theme || themes[0]);}catch(e){setExportError((e as Error).message);}finally{setExporting("");}}}>{exporting===item.id?"Preparing…":"Export all platforms"}</button>}
               {item.feature && <p className="clip-source">Working feature · {item.feature.spec.actions.length} action{item.feature.spec.actions.length!==1?'s':''} · frontend + backend</p>}
               {full && item.feature && <button onClick={() => download(`${item.feature!.spec.id}-feature.json`, JSON.stringify({ version: 1, items: [item] }, null, 2), 'application/json')}>Export full feature</button>}
