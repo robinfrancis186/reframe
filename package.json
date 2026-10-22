@@ -1,0 +1,39 @@
+{
+  "name": "reframe-workbench",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env server/index.js",
+    "build": "vite build",
+    "start": "NODE_ENV=production node --env-file-if-exists=.env server/index.js",
+    "test": "node --test --test-concurrency=2 tests/*.test.js",
+    "check": "tsc --noEmit",
+    "verify": "npm run check && npm test && npm run build && npm --prefix examples/integrated-app run build && npm --prefix examples/connected-app run build",
+    "gradio:setup": "uv venv --allow-existing .reframe/gradio-venv && uv pip install --python .reframe/gradio-venv/bin/python -r server/gradio-requirements.txt",
+    "demo": "node examples/connected-app/server/index.js",
+    "graphify:setup": "uv tool install --upgrade graphifyy==0.9.93"
+  },
+  "dependencies": {
+    "@babel/parser": "^8.0.4",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "cheerio": "^1.1.2",
+    "express": "^5.1.0",
+    "fflate": "0.8.3",
+    "ipaddr.js": "^2.2.0",
+    "lucide-react": "^0.468.0",
+    "playwright": "1.64.1",
+    "rea-agents": "6.7.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "sanitize-html": "^2.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "node": "24.11.1",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.1"
+  }
+}

@@ -1,0 +1,654 @@
+{
+  "checkedAt": "2026-10-21",
+  "source": "https://beui.dev",
+  "families": [
+    {
+      "reference": "https://beui.dev/components/agents/voice-orb",
+      "slug": "voice-orb",
+      "name": "Voice Orb",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/message-bubble",
+      "slug": "message-bubble",
+      "name": "Message Bubble",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/message",
+      "slug": "message",
+      "name": "Message",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/message-scroller",
+      "slug": "message-scroller",
+      "name": "Message Scroller",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/prompt-input",
+      "slug": "prompt-input",
+      "name": "Prompt Input",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/todo-list",
+      "slug": "todo-list",
+      "name": "Todo List",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/code-block",
+      "slug": "code-block",
+      "name": "Code Block",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/approval-card",
+      "slug": "approval-card",
+      "name": "Approval Card",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/file-diff",
+      "slug": "file-diff",
+      "name": "File Diff",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/tool-result",
+      "slug": "tool-result",
+      "name": "Tool Result",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/streaming-response",
+      "slug": "streaming-response",
+      "name": "Streaming Response",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/image-generation",
+      "slug": "image-generation",
+      "name": "Image Generation",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/tool-approval",
+      "slug": "tool-approval",
+      "name": "Tool Approval",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/citations",
+      "slug": "citations",
+      "name": "Citations",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/agent-activity",
+      "slug": "agent-activity",
+      "name": "Agent Activity",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/loading-states",
+      "slug": "loading-states",
+      "name": "Agent Loading States",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/ai-sidebar",
+      "slug": "ai-sidebar",
+      "name": "AI Sidebar",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/agents/chat-app",
+      "slug": "chat-app",
+      "name": "Chat App",
+      "section": "agents"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/timeline",
+      "slug": "timeline",
+      "name": "Timeline",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/alert",
+      "slug": "alert",
+      "name": "Animated Alert",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/collapsible",
+      "slug": "collapsible",
+      "name": "Animated Collapsible",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/aspect-ratio",
+      "slug": "aspect-ratio",
+      "name": "Aspect Ratio",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/arc-picker",
+      "slug": "arc-picker",
+      "name": "Arc Picker",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/sortable-stack",
+      "slug": "sortable-stack",
+      "name": "Sortable List",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/image-viewer",
+      "slug": "image-viewer",
+      "name": "Image Viewer",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/date-range-picker",
+      "slug": "date-range-picker",
+      "name": "Date Range Picker",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/card",
+      "slug": "card",
+      "name": "Card",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/color-picker",
+      "slug": "color-picker",
+      "name": "Color Picker",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/color-selector",
+      "slug": "color-selector",
+      "name": "Animated Color Selector",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/breadcrumb",
+      "slug": "breadcrumb",
+      "name": "Animated Breadcrumb",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/tilt-card",
+      "slug": "tilt-card",
+      "name": "Tilt Card",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/button",
+      "slug": "button",
+      "name": "Button",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/expanding-arrow-button",
+      "slug": "expanding-arrow-button",
+      "name": "Animated CTA Buttons",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/expandable-control",
+      "slug": "expandable-control",
+      "name": "Expandable Control",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/adaptive-stepper",
+      "slug": "adaptive-stepper",
+      "name": "Adaptive Stepper",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/marquee",
+      "slug": "marquee",
+      "name": "Marquee",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/tabs",
+      "slug": "tabs",
+      "name": "Tabs",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/switch",
+      "slug": "switch",
+      "name": "Switch",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/input",
+      "slug": "input",
+      "name": "Input",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/select",
+      "slug": "select",
+      "name": "Select",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/combobox",
+      "slug": "combobox",
+      "name": "Combobox",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/multi-select",
+      "slug": "multi-select",
+      "name": "Multi Select",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/checkbox",
+      "slug": "checkbox",
+      "name": "Checkbox",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/radio",
+      "slug": "radio",
+      "name": "Radio Group",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/bottom-sheet",
+      "slug": "bottom-sheet",
+      "name": "Bottom Sheet",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/pull-to-refresh",
+      "slug": "pull-to-refresh",
+      "name": "Pull to Refresh",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/shared-layout-bg",
+      "slug": "shared-layout-bg",
+      "name": "Shared Layout Background",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/bounce-sidebar",
+      "slug": "bounce-sidebar",
+      "name": "Bounce Sidebar",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/animated-sidebar",
+      "slug": "animated-sidebar",
+      "name": "Animated Sidebar",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/file-tree",
+      "slug": "file-tree",
+      "name": "File Tree",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/preview-rail",
+      "slug": "preview-rail",
+      "name": "Preview Rail",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/dock",
+      "slug": "dock",
+      "name": "Dock",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/tooltip",
+      "slug": "tooltip",
+      "name": "Tooltip",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/context-menu",
+      "slug": "context-menu",
+      "name": "Animated Context Menu",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/popover",
+      "slug": "popover",
+      "name": "Popover",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/morphing-modal",
+      "slug": "morphing-modal",
+      "name": "Morphing Modal",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/center-morph-modal",
+      "slug": "center-morph-modal",
+      "name": "Center Morph Modal",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/text-animation",
+      "slug": "text-animation",
+      "name": "Text Animation",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/number",
+      "slug": "number",
+      "name": "Number Animation",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/animated-badge",
+      "slug": "animated-badge",
+      "name": "Animated Badge",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/action-swap",
+      "slug": "action-swap",
+      "name": "Action Swap",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/animated-toast-stack",
+      "slug": "animated-toast-stack",
+      "name": "Animated Toast Stack",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/theme-toggle",
+      "slug": "theme-toggle",
+      "name": "Theme Toggle",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/bouncy-accordion",
+      "slug": "bouncy-accordion",
+      "name": "Bouncy Accordion",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/drawer",
+      "slug": "drawer",
+      "name": "Drawer",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/scroll-animation",
+      "slug": "scroll-animation",
+      "name": "Scroll Animation",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/range-slider",
+      "slug": "range-slider",
+      "name": "Range Slider",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/wheel-picker",
+      "slug": "wheel-picker",
+      "name": "Wheel Picker",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/table",
+      "slug": "table",
+      "name": "Table",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/shader-background",
+      "slug": "shader-background",
+      "name": "Shader Background",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/cylinder-carousel",
+      "slug": "cylinder-carousel",
+      "name": "Cylinder Carousel",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/motion/loader",
+      "slug": "loader",
+      "name": "Loader",
+      "section": "motion"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/infinite-masonry",
+      "slug": "infinite-masonry",
+      "name": "Infinite Masonry",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/notification-stack",
+      "slug": "notification-stack",
+      "name": "Notification Stack",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/project-folder",
+      "slug": "project-folder",
+      "name": "Project Folder",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/card-folder",
+      "slug": "card-folder",
+      "name": "Card Folder",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/knockout-bracket",
+      "slug": "knockout-bracket",
+      "name": "Fixtures",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/availability-scheduler",
+      "slug": "availability-scheduler",
+      "name": "Availability Scheduler",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/swap",
+      "slug": "swap",
+      "name": "Multi-chain Swap",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/dynamic-island",
+      "slug": "dynamic-island",
+      "name": "Dynamic Island",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/command-palette",
+      "slug": "command-palette",
+      "name": "Command Palette",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/morphing-search",
+      "slug": "morphing-search",
+      "name": "Morphing Search",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/expandable-action-bar",
+      "slug": "expandable-action-bar",
+      "name": "Expandable Action Bar",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/overflow-actions",
+      "slug": "overflow-actions",
+      "name": "Overflow Actions",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/expandable-tabs",
+      "slug": "expandable-tabs",
+      "name": "Expandable Tabs",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/morphing-tabs",
+      "slug": "morphing-tabs",
+      "name": "Morphing Tabs",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/swipeable-list",
+      "slug": "swipeable-list",
+      "name": "Swipeable List",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/file-upload",
+      "slug": "file-upload",
+      "name": "File Upload",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/prediction-market",
+      "slug": "prediction-market",
+      "name": "Prediction Market",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/wallet-card",
+      "slug": "wallet-card",
+      "name": "Wallet Card",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/otp-input",
+      "slug": "otp-input",
+      "name": "OTP Input",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/signup-form",
+      "slug": "signup-form",
+      "name": "Sign Up Form",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/bloom-menu",
+      "slug": "bloom-menu",
+      "name": "Bloom Menu",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/feedback-widget",
+      "slug": "feedback-widget",
+      "name": "Feedback Widget",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/components/blocks/not-found",
+      "slug": "not-found",
+      "name": "404 / Not Found",
+      "section": "blocks"
+    },
+    {
+      "reference": "https://beui.dev/charts/treemap",
+      "slug": "treemap",
+      "name": "Treemap",
+      "section": "charts"
+    },
+    {
+      "reference": "https://beui.dev/charts/candlestick-chart",
+      "slug": "candlestick-chart",
+      "name": "Candlestick Chart",
+      "section": "charts"
+    },
+    {
+      "reference": "https://beui.dev/charts/donut-chart",
+      "slug": "donut-chart",
+      "name": "Donut Chart",
+      "section": "charts"
+    },
+    {
+      "reference": "https://beui.dev/charts/volume-profile",
+      "slug": "volume-profile",
+      "name": "Volume Profile",
+      "section": "charts"
+    },
+    {
+      "reference": "https://beui.dev/charts/status-bar",
+      "slug": "status-bar",
+      "name": "Status Bar",
+      "section": "charts"
+    },
+    {
+      "reference": "https://beui.dev/charts/composition-chart",
+      "slug": "composition-chart",
+      "name": "Composition Chart",
+      "section": "charts"
+    },
+    {
+      "reference": "https://beui.dev/charts/funnel-chart",
+      "slug": "funnel-chart",
+      "name": "Funnel Chart",
+      "section": "charts"
+    },
+    {
+      "reference": "https://beui.dev/charts/liquidity-heatmap",
+      "slug": "liquidity-heatmap",
+      "name": "Liquidity Heatmap",
+      "section": "charts"
+    },
+    {
+      "reference": "https://beui.dev/charts/bump-chart",
+      "slug": "bump-chart",
+      "name": "Bump Chart",
+      "section": "charts"
+    },
+    {
+      "reference": "https://beui.dev/charts/order-book",
+      "slug": "order-book",
+      "name": "Order Book",
+      "section": "charts"
+    },
+    {
+      "reference": "https://beui.dev/charts/heat-calendar",
+      "slug": "heat-calendar",
+      "name": "Heat Calendar",
+      "section": "charts"
+    },
+    {
+      "reference": "https://beui.dev/charts/returns-calendar",
+      "slug": "returns-calendar",
+      "name": "Returns Calendar",
+      "section": "charts"
+    },
+    {
+      "reference": "https://beui.dev/charts/price-target-fan",
+      "slug": "price-target-fan",
+      "name": "Price Target Fan",
+      "section": "charts"
+    }
+  ]
+}

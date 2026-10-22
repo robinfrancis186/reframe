@@ -1,0 +1,41 @@
+/* Additional workspace tools retain the original neutral chrome. */
+.sidebar-connection{margin-top:auto;justify-content:flex-start;min-height:44px;background:transparent;border:0;color:var(--muted);font-size:12px;width:100%}.sidebar-connection.active{color:var(--blue);background:var(--raised)}
+.connection-message{overflow-wrap:anywhere}.graph-result table{width:100%;border-collapse:collapse;margin:20px 0;font-size:12px}.graph-result :is(th,td){text-align:left;padding:10px 0;border-bottom:1px solid var(--border);overflow-wrap:anywhere}.graph-result code{overflow-wrap:anywhere}.graph-result p{line-height:1.7}
+
+@media(max-width:850px){.sidebar-connection{position:absolute;right:16px;top:14px;width:auto;min-height:38px}.sidebar .count{display:none}}
+@media(prefers-reduced-motion:reduce){button,.agent-card,.starter-card{transition:none}}
+@media(max-width:850px){.sidebar nav{justify-content:space-between;gap:4px;overflow:visible}.sidebar nav button{min-width:0;flex:1 1 auto;justify-content:center;padding:10px 5px;font-size:11px;gap:4px}.sidebar nav button svg{width:14px;flex:none}}
+
+/* Keep the established Home surface unchanged. */
+.ui-workspace :is(.section-heading,.clip-title){flex-wrap:wrap}
+.ui-workspace .clipboard .clip-title{flex-wrap:nowrap;align-items:flex-start;gap:8px}
+.ui-workspace .clipboard .clip-title>.text-button{min-width:0;white-space:normal;overflow-wrap:anywhere;text-align:start;line-height:1.6;padding:8px 0}
+.ui-workspace .clip-title>svg{flex:none;margin-top:12px}
+.ui-workspace .clip-title>.icon-button{flex:none;width:44px;min-height:44px}
+.ui-workspace .clip-source{white-space:normal;overflow-wrap:anywhere;line-height:1.6;margin:8px 0}
+.ui-workspace .full-library .clip-card{min-width:0;display:flex;flex-direction:column;align-items:stretch;padding:12px}
+.ui-workspace .full-library .component-status{align-self:flex-start;margin:4px 0}
+.ui-workspace .clip-card>.clip-handoff{margin:12px 0 0;width:100%}
+.ui-workspace .full-library .clip-handoff{margin-top:auto}
+.ui-workspace .full-library .clip-card>button{min-height:44px}
+.clipboard-result-count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;line-height:1.6;margin:16px 0}
+.clipboard-more{display:flex;margin:24px auto 0}
+.ui-workspace .clipboard .section-heading{gap:12px}
+.ui-workspace .clipboard .search-field input{min-width:0;width:100%}
+.ui-workspace :is(.integration-item>span,.selected-block>strong){min-width:0;overflow-wrap:anywhere}
+.ui-workspace .integration-item{max-width:100%;white-space:normal}
+.ui-workspace .agents-page :is(.agent-talk,.agent-tabs button){min-height:44px}
+.ui-workspace .selected-block{flex-wrap:wrap}
+.ui-workspace :is(.integration-destination,.fit-panel){min-width:0}
+.ui-workspace :is(.section-views,.clipboard-filters,.destination-fields,.agent-result-actions) button{transition:transform 140ms cubic-bezier(.23,1,.32,1),background-color 140ms ease,border-color 140ms ease}
+.ui-workspace :is(.section-views,.clipboard-filters,.destination-fields,.agent-result-actions) button:active:not(:disabled):not(:focus-visible){transform:scale(.98)}
+.ui-workspace :is(.section-views,.clipboard-filters,.destination-fields,.agent-result-actions) button:focus-visible{transition:none}
+.capture-dialog{overscroll-behavior:contain;max-height:calc(100dvh - 24px)}
+.capture-dialog :is(header>div,footer>span){min-width:0}
+.capture-dialog header>.icon-button{flex:none;min-width:44px;min-height:44px}
+.capture-dialog .upload-area:focus-within{outline:2px solid var(--blue);outline-offset:3px}
+.capture-dialog .dialog-tabs button{min-height:44px}
+@media(min-width:700px) and (max-width:850px){.ui-workspace .full-library .clipboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:601px) and (max-width:1000px){.agents-page .agent-team{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.ui-workspace .full-library{padding:12px}.ui-workspace .clipboard .section-heading h2{flex-basis:100%}.ui-workspace .clipboard-filters button{min-height:44px}.ui-workspace .selected-block>strong{flex-basis:100%}}
+@media(prefers-reduced-motion:reduce){.ui-workspace :is(.section-views,.clipboard-filters,.destination-fields,.agent-result-actions) button{transition:none;transform:none!important}}

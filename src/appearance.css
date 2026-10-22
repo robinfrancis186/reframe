@@ -1,0 +1,23 @@
+.appearance-toggle{margin-left:auto;width:40px;height:40px;padding:0;flex:none}.page-header>.primary{margin-left:0}.page-header{gap:12px}
+:root[data-appearance=light]{color-scheme:light;--text:#252522;--muted:#65645e;--blue:#315e88;--border:#d8d7d0;--surface:#fff;--raised:#eeede8;--sunken:#f6f5f1;--primary:#252522;--primary-text:#fff}
+[data-appearance=light] .sidebar{background:#eeede8;border-color:var(--border)}
+[data-appearance=light] .sidebar nav button{color:var(--muted)}
+[data-appearance=light] .sidebar nav button.active{background:#deddd6;color:var(--text)}
+[data-appearance=light] :is(.page-header,.section-views){border-color:var(--border)}
+[data-appearance=light] :is(input,textarea,select,button){color:var(--text)}
+[data-appearance=light] input::placeholder,[data-appearance=light] textarea::placeholder{color:#74736c}
+[data-appearance=light] .primary{background:#292925;color:#fff;border-color:#292925}
+[data-appearance=light] .primary:hover{background:#44443c}
+[data-appearance=light] :is(.project-list button.selected,.integration-item.selected,.tree-list .selected,.element.selected){background:#e7edf2;border-color:#849db2}
+[data-appearance=light] .browse-action .action-icon{background:#e5edf6;color:#315e88}
+[data-appearance=light] .capture-action .action-icon{background:#f3ead7;color:#856628}
+[data-appearance=light] :is(.helper-launcher,.helper-panel,.helper-head,.helper-compose,.agent-card,.library-card,.engine-card,.quality){background:var(--surface);color:var(--text);border-color:var(--border)}
+[data-appearance=light] :is(.error-banner,.connection-failed){color:#a02e28}
+[data-appearance=light] :is(.code-view,pre){color:var(--text);background:var(--raised)}
+[data-appearance=light] :is(.helper-message,.helper-message.assistant,.helper-actions button,.agent-chip,.agent-hint){background:var(--raised);color:var(--text)}
+@media(max-width:600px){.page-header{gap:9px}.page-header>.primary{font-size:11px;padding:10px}.appearance-toggle{width:36px;height:36px}}
+.page-header .appearance-toggle{padding:0}.appearance-toggle svg{width:18px;height:18px;flex:none}
+[data-appearance=light] :is(.device-toggle button.selected,.dialog-tabs button.selected,.browser-tools button.selected,.browser-size button[aria-pressed=true],.browser-tabs>div.selected){background:#e7edf2;color:var(--text);border-color:#849db2}
+[data-appearance=light] :is(.engine-state,.browser-feedback){color:#236747}
+[data-appearance=light] .engine-state.pending{color:#85611a}
+[data-appearance=light] .recording-indicator{color:#a02e28}

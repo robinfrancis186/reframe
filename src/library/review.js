@@ -1,0 +1,58 @@
+// Expert source/design review of shared implementations; these are not runtime certifications.
+const profiles={
+ LibraryTabs:[7,7.5,8.2,8.2,'Roving keyboard focus, linked panels and a clearer segmented layout.'],
+ LibraryAccordion:[7,8,8,8.3,'Native disclosures keep keyboard and screen-reader behavior small and predictable.'],
+ LibrarySwitch:[6.5,8,8,8.3,'A 44px target, visible state and labelled switch; preferences remain session-local.'],
+ LibraryDialog:[6,6,8,8,'Native focus handling; clicking inside dialog padding no longer dismisses it.'],
+ LibraryToast:[6,7,7.8,8,'Announced confirmation with an explicit dismiss action.'],
+ LibrarySlider:[6.5,8,8,8.2,'Native keyboard input and a visible numeric value.'],
+ LibrarySearch:[6,5.5,8.3,8.2,'Clear search and empty state; filtering clears stale selection. Replace the sample options.'],
+ LibraryQuantity:[6.5,7.5,8,8.2,'Bounded seat count and labelled actions; billing is a separate integration.'],
+ LibrarySteps:[6,7,7.8,7.8,'Ordered progress with forward/back controls; replace sample onboarding content.'],
+ LibraryMenu:[6.5,7.5,7.8,8,'Native disclosure closes and returns focus after choosing an action.'],
+ LibraryCopy:[6.5,7.5,7.8,8,'Clipboard permission errors remain visible, with manual-copy guidance.'],
+ LibraryBrand:[6,7,8,8,'Brand tokens, supplied logo and expandable copy; replace the introduction.'],
+ LibraryTimeline:[5.5,6.5,7,7.2,'Local step navigation; this is not a dated activity history.'],
+ LibraryAlert:[6,7,7.8,7.8,'Semantic alert and explicit dismissal; use assertive announcements sparingly.'],
+ LibraryGallery:[4,5.5,5.5,6.5,'Abstract sample panels; real assets, masonry pagination and cylindrical layout are not implemented.'],
+ LibraryPicker:[5,6.5,6.5,7,'Labelled options and native selection; wheel physics are not implemented.'],
+ LibrarySortable:[6,5.5,7.7,8,'Keyboard reorder controls plus drag; archive undo now restores every item at its prior position.'],
+ LibraryDates:[6,7,7.8,8,'Range validation and clear action; scheduling availability and time zones need your service.'],
+ LibraryCard:[5.5,7,7.5,7.8,'Brand-aware surface and selection state; tilt respects reduced motion.'],
+ LibraryColors:[6,7,7.5,7.8,'Native color input with labelled presets and visible hex output.'],
+ LibraryBreadcrumb:[6,7,7.5,7.8,'Semantic navigation and local path state; connect the application router.'],
+ LibraryActions:[5,6,6.8,7,'Explicit non-submit actions and disclosure state; replace the interaction counter with product actions.'],
+ LibraryNavigation:[5.5,6.5,7,7.2,'Current-page semantics and compact navigation; route bindings and advanced transitions remain application work.'],
+ LibraryInput:[6,7.5,7.8,8,'Native email validation, labelled input and explicit form submission.'],
+ LibrarySelect:[5.5,6.5,7,7,'Native select with a filter; not a full ARIA autocomplete combobox.'],
+ LibraryChoices:[6,7,7.8,7.8,'Grouped, labelled native choices and selection feedback.'],
+ LibraryOverlay:[5.5,5.5,7.4,7.8,'Native modal, focus and corrected backdrop dismissal; popover/context-menu variants remain modal adaptations.'],
+ LibraryTooltip:[6,7,7.4,7.8,'Focus, pointer and Escape support; test assistive technology in the destination.'],
+ LibraryRefresh:[5.5,6,6.5,7,'Cancellable local refresh timer; touch pull gestures and a data loader still need integration.'],
+ LibraryMotion:[4.5,6,5.8,6.8,'Pause/replay and reduced motion; variants share an ambient animation, not shaders or a real marquee.'],
+ LibraryNumber:[6,7,7.5,7.8,'Visible numeric state and live announcement; animation is a reveal, not digit interpolation.'],
+ LibraryNotice:[5.5,6,7,7.5,'Announced state and dismissible notices; retained stack is bounded to ten notices.'],
+ LibraryTheme:[5.5,6.5,7,7.2,'Local appearance preview; host project theme persistence is separate.'],
+ LibraryFiles:[5,6.5,6.8,7,'Disclosure and selection work; sample file names are not a filesystem connection.'],
+ LibraryTable:[6,6.5,8,8.2,'Sortable progress, labelled row selection and a visible empty-filter state.'],
+ LibraryOTP:[6,7.5,7.8,8,'Numeric code format and autofill; server verification is explicitly required.'],
+ LibraryUpload:[5.5,5.5,7.5,8,'Ten-file/10 MB limits; invalid selection clears stale entries. No files are uploaded automatically.'],
+ LibrarySignup:[6,5.5,7.8,8,'Native validation; editing fields now clears stale success. Account creation needs authentication services.'],
+ LibraryFeedback:[6,7,7.8,8,'Accessible rating and bounded draft; submission needs a real endpoint.'],
+ LibraryBracket:[5.5,7,7,7.5,'Local winner selection; changing finalists resets the winner.'],
+ LibrarySwap:[5,6,6.5,6.8,'Illustrative amounts/choices only. Quotes, trades and funds are not implemented.'],
+ LibraryWallet:[5.5,6.5,7,7.2,'Public-address display and masking only; wallet connectivity is separate.'],
+ LibraryNotFound:[6,7,7.8,7.8,'Clear recovery action in local state; wire it to the application route.'],
+ LibraryAgent:[5,5.5,6.8,6.8,'Local supplied-content states; bounded draft history and explicit copy errors. Shared implementation still carries variant branches.'],
+ LibraryChart:[4,5,5.8,6.5,'Accessible sample values and selection; several specialist chart names use simplified geometry. Supply correct domain data before product use.'],
+ LibraryCommand:[7,8,8,8.2,'Scoped keyboard shortcut, real destination section discovery, focus transfer and listener cleanup.'],
+};
+export const reviewDate='2026-10-22';
+export function componentReview(entry){
+ const profile=profiles[entry.component];
+ if(!profile)throw new Error('Missing component review: '+entry.component);
+ const [designBefore,codeBefore,design,code,note]=profile;
+ const simplified=['LibraryGallery','LibraryPicker','LibrarySelect','LibraryOverlay','LibraryRefresh','LibraryMotion','LibraryChart','LibraryActions','LibraryNavigation','LibraryFiles'].includes(entry.component);
+ const service=entry.requirements.length>0;
+ return {design,code,before:Number(((designBefore+codeBefore)/2).toFixed(1)),score:Number(((design+code)/2).toFixed(1)),designBefore,codeBefore,note,level:service?'Service demo':simplified?'Adaptation starter':'Interactive starter',scope:'Expert review of the shared web implementation. Native source is available; device verification is pending.'};
+}
