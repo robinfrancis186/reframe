@@ -5,7 +5,7 @@ export interface ProductCatalog {
   variants:{id:string;name:string;options?:Record<string,string>;priceCents:number;initialStock:number}[];
 }
 export interface FeatureSpec {
-  website?: {version:number;css:string;pages:{url:string;title:string;html:string;rootStyle:string;htmlClass:string;height:number;component:boolean;backdrop?:string;viewport?:number}[];attachments:{name:string;type:string;base64:string}[];warnings:string[]};
+  website?: {version:number;css:string;pages:{url:string;title:string;html:string;rootStyle:string;htmlClass:string;height:number;component:boolean;backdrop?:string;viewport?:number;rem?:number}[];attachments:{name:string;type:string;base64:string}[];warnings:string[]};
   commerce?:ProductCatalog;
   version: number; id: string; name: string; authRequired?: boolean;
   fields: { id: string; label: string; type: string; required: boolean }[];

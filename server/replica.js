@@ -12,7 +12,8 @@ export const websiteServer=`import{createServer}from'node:http';import{readFile}
 const q=text=>String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const styleAttribute=value=>load(replicaHTML('<div style="'+q(value)+'"></div>'),null,false)('div').attr('style')||'';
 const tags=['main','header','footer','nav','section','article','aside','img','picture','button','input','textarea','select','option','form','fieldset','legend','label','details','summary','svg','path','circle','rect','line','polyline','polygon','ellipse','g','defs','linearGradient','radialGradient','stop','clipPath','use','symbol','title','dialog'];
-// Optional capture context: the opaque color behind a component and the viewport width it was captured at.
+// Optional capture context: the opaque color behind a component, the viewport width it was captured at and the page's
+// root font size (what 1rem meant there).
 // Snapshot values left out because they are each property's default. Site rules can still override a default (e.g.
 // content hidden with opacity:0 until scripts run), so the fidelity repair pass checks them too. Keep in sync with
 // the `inert` map inside readRendered, which runs in the page and cannot import this.
@@ -21,6 +22,7 @@ export function pageContext(page){
  const context={};
  if(typeof page.backdrop==='string'&&/^(?:#[0-9a-f]{3,8}|rgba?\(\s*[\d.]+%?\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*(?:,\s*[\d.]+\s*)?\))$/i.test(page.backdrop.trim()))context.backdrop=page.backdrop.trim();
  if(Number.isInteger(page.viewport)&&page.viewport>=200&&page.viewport<=4000)context.viewport=page.viewport;
+ if(Number.isFinite(page.rem)&&page.rem>=4&&page.rem<=64)context.rem=page.rem;
  return context;
 }
 export function replicaHTML(html){
@@ -78,7 +80,7 @@ export async function readRendered(page,selector='body'){
   const fonts=selector==='body'?null:[...new Set(source.flatMap(el=>[null,'::before','::after'].map(pseudo=>getComputedStyle(el,pseudo))).flatMap(c=>c.fontFamily.split(',').map(f=>f.trim().replace(/^["']|["']$/g,'').toLowerCase()+'|'+(parseInt(c.fontWeight)||400)+'|'+(/italic|oblique/.test(c.fontStyle)?'italic':'normal'))).filter(f=>!f.startsWith('|')))].slice(0,200);
   // The first opaque background behind a picked component, so previews and fidelity checks show it on its original backdrop.
   let backdrop=null;for(let el=root.parentElement;el&&!backdrop;el=el.parentElement){const color=getComputedStyle(el).backgroundColor;if(color&&!/^(?:transparent|rgba\([^)]*,\s*0\))$/.test(color))backdrop=color;}
-  return {url:location.href,title:document.title,html:body,css,rootStyle:inheritedCSS,htmlClass:document.documentElement.className,component:selector!=='body',backdrop:selector==='body'?null:backdrop||'rgb(255, 255, 255)',viewport:innerWidth,height:Math.ceil(root.getBoundingClientRect().height),missing,fonts,links:[...new Set([...root.querySelectorAll('a[href]')].map(a=>a.href))].slice(0,150)};
+  return {url:location.href,title:document.title,html:body,css,rootStyle:inheritedCSS,htmlClass:document.documentElement.className,component:selector!=='body',backdrop:selector==='body'?null:backdrop||'rgb(255, 255, 255)',viewport:innerWidth,rem:parseFloat(getComputedStyle(document.documentElement).fontSize)||16,height:Math.ceil(root.getBoundingClientRect().height),missing,fonts,links:[...new Set([...root.querySelectorAll('a[href]')].map(a=>a.href))].slice(0,150)};
  },selector);
 }
 // Picked components keep, per rendered family/weight/style, the face a browser would match (exact range, else nearest

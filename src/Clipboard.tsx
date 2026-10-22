@@ -11,6 +11,7 @@ import Preview from "./Preview";
 import { download, themes, type ComponentItem } from "./model";
 import { componentReadiness, matchesComponent } from './component-workflow.js';
 import { FidelityBadge } from './FidelityCheck';
+import { canExportCode, downloadCode } from './code-export';
 import './fidelity.css';
 export default function Clipboard({
   items,
@@ -114,6 +115,7 @@ export default function Clipboard({
               <FidelityBadge fidelity={item.fidelity} />
               {full && item.libraryId && <button disabled={!!exporting} onClick={async()=>{setExportError("");setExporting(item.id);try{await exportOriginal(item,item.theme || themes[0]);}catch(e){setExportError((e as Error).message);}finally{setExporting("");}}}>{exporting===item.id?"Preparing…":"Export all platforms"}</button>}
               {item.feature && <p className="clip-source">Working feature · {item.feature.spec.actions.length} action{item.feature.spec.actions.length!==1?'s':''} · frontend + backend</p>}
+              {full && canExportCode(item) && <button disabled={exporting === "code:" + item.id} onClick={async () => { setExportError(""); setExporting("code:" + item.id); try { await downloadCode(item); } catch (e) { setExportError((e as Error).message); } finally { setExporting(""); } }}>{exporting === "code:" + item.id ? "Preparing…" : "Export code"}</button>}
               {full && item.feature && <button onClick={() => download(`${item.feature!.spec.id}-feature.json`, JSON.stringify({ version: 1, items: [item] }, null, 2), 'application/json')}>Export full feature</button>}
               {full && <p className="clip-source" title={item.source}>{item.source}</p>}
               {full && onIntegrate && <button className="clip-handoff" onClick={()=>onIntegrate(item)} aria-label={`Fit & install ${item.name}`}>Fit &amp; install</button>}

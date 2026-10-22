@@ -54,8 +54,8 @@ function compare({reference,rendered,diff}){
 }
 
 // Renders a website capture in an isolated, script-free page and passes the page to `use`.
-async function withRendered(site,{browser,resource},use){
-  const page=site.pages[0];
+const withRendered=(site,options,use)=>withDocument(documentFor(site),site.pages[0],options,use);
+async function withDocument(html,page,{browser,resource},use){
   await browser.start();
   const context=await browser.browser.newContext({viewport:{width:page.viewport||1280,height:900},javaScriptEnabled:false,serviceWorkers:'block',acceptDownloads:false});
   try{
@@ -67,7 +67,7 @@ async function withRendered(site,{browser,resource},use){
       try{await route.fulfill(await resource(url,{...await request.allHeaders(),referer:page.url}));}catch{await route.abort();}
     });
     const tab=await context.newPage();tab.setDefaultTimeout(15000);
-    await tab.setContent(documentFor(site),{waitUntil:'load',timeout:20000});
+    await tab.setContent(html,{waitUntil:'load',timeout:20000});
     await tab.evaluate(()=>document.fonts.ready);
     return await use(tab);
   }finally{await context.close();}
@@ -107,9 +107,9 @@ async function findRepairs(tab,rules){
 
 // Crops the rendered component with the same fractional box and encoding (JPEG, quality 65) as the reference, so
 // rounding and compression artifacts do not count as differences.
-async function shoot(tab,site){
+async function shoot(tab,site,selector='[data-rf-rendered="0"]'){
   // The saved root carries snapshot index 0; older captures fall back to the first element.
-  const root=tab.locator('[data-rf-rendered="0"]'),target=await root.count()?root.first():tab.locator('body > *').first();
+  const root=tab.locator(selector),target=await root.count()?root.first():tab.locator('body > *').first();
   const box=await target.count()?await target.boundingBox():null;
   if(!box||box.width<1||box.height<1)throw new Error('The saved component has no visible content to compare.');
   return tab.screenshot({type:'jpeg',quality:65,animations:'disabled',timeout:10000,fullPage:box.y+box.height>900||box.x+box.width>(site.pages[0].viewport||1280),clip:{x:Math.max(0,box.x),y:Math.max(0,box.y),width:box.width,height:box.height}});
@@ -145,4 +145,15 @@ export async function scoreFidelity(item,{browser,resource=referenceResource,dif
   if(!canScore(item))throw new Error('Fidelity needs a component picked in the reference browser, with its original reference image.');
   const site=validateReplica(item.feature.spec.website);
   return measure(browser,item.referenceImage,await withRendered(site,{browser,resource},tab=>shoot(tab,site)),diff);
+}
+
+/** Scores exported code (scoped stylesheet and markup) against the reference, the same way as a saved capture. */
+export async function scoreExport(item,{css,markup,scope,fonts},{browser,resource=referenceResource}={}){
+  if(!canScore(item))return null;
+  const site=validateReplica(item.feature.spec.website),page=site.pages[0];
+  const inline=css.replace(/url\("\.\/(fonts\/[\w.]+)"\)/g,(all,file)=>fonts[file]?`url("data:font/${file.split('.').pop()};base64,${fonts[file]}")`:all);
+  const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><style>${inline.replace(/<\/style/gi,'')}html,body{margin:0;padding:0;background:${page.backdrop||'#ffffff'}}</style></head><body>${markup}</body></html>`;
+  const shot=await withDocument(html,page,{browser,resource},tab=>shoot(tab,site,`.${scope}-0`));
+  const {score,grade,fitted,reference,rendered,differing,checkedAt}=await measure(browser,item.referenceImage,shot,false);
+  return {score,grade,fitted,reference,rendered,differing,checkedAt};
 }

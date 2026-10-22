@@ -34,7 +34,8 @@ import {buildReplicaFeature} from './replica.js';
 import {randomUUID} from 'node:crypto';
 import {mountDownloads} from './downloads.js';
 import {LibraryStore,mountLibrary} from './library-store.js';
-import {scoreFidelity} from './fidelity.js';
+import {scoreExport,scoreFidelity} from './fidelity.js';
+import {exportComponentCode} from './code-export.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const app = express();
@@ -266,6 +267,12 @@ route('post', '/api/browser/tabs', () => referenceBrowser.create());
 route('post', '/api/browser/close', req => referenceBrowser.closeTab(req.body.id));
 route('post', '/api/browser/action', req => referenceBrowser.act(req.body));
 route('post', '/api/fidelity', req => scoreFidelity(req.body.item, { browser: referenceBrowser, diff: req.body.diff === true }));
+route('post', '/api/export/code', async req => {
+  const code = exportComponentCode(req.body.item);
+  // The exported code is rendered and scored against the original, so its fidelity is known before it is used.
+  const fidelity = await scoreExport(req.body.item, code, { browser: referenceBrowser }).catch(() => null);
+  return { name: code.name, scope: code.scope, files: code.files, fonts: code.fonts, fidelity };
+});
 route('post', '/api/refine', req => refineCopy(req.body.html));
 route('post', '/api/refine/source', req => refineSourceComments(req.body.code));
 route('post', '/api/refine/document', req => refineDocument(req.body));

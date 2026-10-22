@@ -43,7 +43,8 @@ import { componentReadiness, sameComponent, preferredCapture } from './component
 import './journey.css';
 import { readWorkspace, writeWorkspace } from './storage';
 import LibrarySync from './LibrarySync';
-import FidelityCheck, { canCheckFidelity } from './FidelityCheck';
+import FidelityCheck, { canCheckFidelity, FidelityBadge } from './FidelityCheck';
+import { canExportCode, downloadCode, exportedCode, type ExportedCode } from './code-export';
 const Agents=lazy(()=>import('./Agents'));
 const AssetLibrary=lazy(()=>import('./AssetLibrary'));
 import {
@@ -131,7 +132,18 @@ export default function App() {
       .catch(e => { if (!controller.signal.aborted) setError(e.message); });
     return () => controller.abort();
   }, [sourceKey]);
-  const code = active.libraryId ? originalSource.key === sourceKey ? originalSource.code : '' : format === "react" ? reactCode(active, theme) : documentHtml(active, theme);
+  // Website captures export as real source (React component, scoped CSS, static HTML), generated on the server.
+  const exportable = canExportCode(active);
+  const [exported, setExported] = useState<{ key: string; code?: ExportedCode; error?: string } | null>(null);
+  const exportKey = `${active.id}:${active.feature?.builtAt}`;
+  useEffect(() => {
+    if (!exportable || view !== "code" || exported?.key === exportKey) return;
+    let current = true;
+    exportedCode(active).then(code => { if (current) setExported({ key: exportKey, code }); }, e => { if (current) setExported({ key: exportKey, error: (e as Error).message }); });
+    return () => { current = false; };
+  }, [exportKey, exportable, view]);
+  const exportedFiles = exported?.key === exportKey ? exported.code : undefined;
+  const code = active.libraryId ? originalSource.key === sourceKey ? originalSource.code : '' : exportable ? (exportedFiles ? exportedFiles.files[`${exportedFiles.name}.${format === "react" ? "tsx" : format === "css" ? "css" : "html"}`] || "" : "") : format === "react" ? reactCode(active, theme) : documentHtml(active, theme);
   useEffect(() => {
     const controller = new AbortController();
     fetch("/api/quality", {
@@ -551,8 +563,9 @@ export default function App() {
                         value={active.libraryId && format==="html" ? "react" : format}
                         onChange={(e) => setFormat(e.target.value)}
                       >
-                        {!active.libraryId && <option value="html">HTML + CSS</option>}
-                        <option value="react">React JSX</option>
+                        {!active.libraryId && <option value="html">{exportable ? "HTML" : "HTML + CSS"}</option>}
+                        <option value="react">{exportable ? "React component" : "React JSX"}</option>
+                        {exportable && <option value="css">Scoped CSS</option>}
                         {active.libraryId && <><option value="swiftui">iOS · SwiftUI</option><option value="compose">Android · Compose</option></>}
                       </select>
                       <button disabled={!code} onClick={() => void copy()}>
@@ -560,6 +573,7 @@ export default function App() {
                         Copy code
                       </button>
                     </div>
+                    {exportable && <p className="code-export-status" role="status">{exported?.key === exportKey ? exported.error ? exported.error : <>Real source, styles scoped under <code>.{exportedFiles!.scope}</code>{exportedFiles!.fidelity && <> · exported code <FidelityBadge fidelity={exportedFiles!.fidelity} /></>}</> : "Generating source and checking it against the original…"}</p>}
                     <pre tabIndex={0}>{code}</pre>
                   </div>
                 )}
@@ -611,7 +625,7 @@ export default function App() {
                     <ClipboardIcon size={16} />
                     Save to clipboard
                   </button>
-                  <button
+                  {exportable ? <button onClick={() => { downloadCode(active).catch(e => setError((e as Error).message)); }}><Code2 size={16} />Download code (React, CSS, HTML)</button> : <button
                     disabled={!code}
                     onClick={() =>
                       download(
@@ -623,7 +637,7 @@ export default function App() {
                   >
                     <Code2 size={16} />
                     Export {active.feature?'visual ':''}{format === "swiftui" ? "SwiftUI" : format === "compose" ? "Compose" : format === "react" ? "React" : "HTML"}
-                  </button>
+                  </button>}
                   {active.feature && <button onClick={()=>download(`${active.feature!.spec.id}-feature.json`,JSON.stringify({version:1,items:[{...active,theme}]},null,2),'application/json')}>Export UI + backend package</button>}
                 </div>
                 <button disabled={!!active.libraryId||!!active.feature?.spec.website} onClick={() => setBuilding(!building)}><Wand2 size={16}/>{active.feature?.spec.website ? 'Rendered website runtime included' : active.feature ? "Edit working feature" : "Build working feature"}</button>
