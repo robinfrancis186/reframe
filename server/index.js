@@ -33,12 +33,14 @@ import {featureHandler as websiteHandler} from './features/website.mjs';
 import {buildReplicaFeature} from './replica.js';
 import {randomUUID} from 'node:crypto';
 import {mountDownloads} from './downloads.js';
+import {LibraryStore,mountLibrary} from './library-store.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const app = express();
 const referenceBrowser = new ReferenceBrowser();
 const store=process.env.REFRAME_STORE||path.join(root,'.reframe');
 const projects = new Projects(store);
+const libraryStore = new LibraryStore(store);
 const connections = new Connections(store);
 const websites=new Websites(store,referenceBrowser);
 const websiteHandlers=new Map();
@@ -68,6 +70,8 @@ app.use((req, res, next) => {
   if(localAPI)res.setHeader('Cache-Control','no-store');
   next();
 });
+// The library carries its own larger body limit, so it is mounted before the general 8 MB parser.
+mountLibrary(app,express,libraryStore);
 app.use(express.json({ limit: "8mb" }));
 mountDownloads(app);
 mountMcp(app,connections,projects);

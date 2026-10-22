@@ -42,6 +42,7 @@ import ComponentJourney from './ComponentJourney';
 import { componentReadiness, sameComponent, preferredCapture } from './component-workflow.js';
 import './journey.css';
 import { readWorkspace, writeWorkspace } from './storage';
+import LibrarySync from './LibrarySync';
 const Agents=lazy(()=>import('./Agents'));
 const AssetLibrary=lazy(()=>import('./AssetLibrary'));
 import {
@@ -666,6 +667,7 @@ export default function App() {
                 Drag a saved component onto the workbench, or open it to adapt.
               </p>
             </div>
+            <LibrarySync />
             <Clipboard items={library} onOpen={open} onDelete={remove} onIntegrate={integrate} full />
             {deleted && (
               <button className="undo-button" onClick={restore}>
