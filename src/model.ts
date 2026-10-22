@@ -1,5 +1,6 @@
 import { safeFont, validBrand } from "./branding.js";
 import { libraryEntry } from "./library/catalog.js";
+import { validOrganisation } from "./library/organize.js";
 export interface ProductCatalog {
   product:{id:string;name:string;description:string;currency:string;details:string[];notice:string};
   variants:{id:string;name:string;options?:Record<string,string>;priceCents:number;initialStock:number}[];
@@ -35,6 +36,10 @@ export interface ComponentItem {
   feature?: FeaturePackage;
   libraryId?: string;
   fidelity?: Fidelity;
+  /** Your own labels, normalized (see library/organize.js). */
+  tags?: string[];
+  /** Named collections the component belongs to. */
+  collections?: string[];
 }
 /** How closely a saved replica matches the reference image taken when it was picked. */
 export interface Fidelity {
@@ -150,6 +155,7 @@ export function isItem(value: unknown): value is ComponentItem {
     i.name.length <= 200 &&
     (!i.theme || isTheme(i.theme)) &&
     (!i.fidelity || isFidelity(i.fidelity)) &&
+    validOrganisation(i) &&
     (!i.referenceImage || (typeof i.referenceImage === "string" && i.referenceImage.length <= 2_000_000 && /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(i.referenceImage)))
   );
 }

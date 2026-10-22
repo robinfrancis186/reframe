@@ -225,6 +225,14 @@ export default function App() {
       setBusy(false);
     }
   }
+  /** Renames or re-tags a saved component in place. */
+  function organise(id: string, patch: Pick<Partial<ComponentItem>, "name" | "tags" | "collections">) {
+    const next = library.map(i => i.id === id ? { ...i, ...patch } : i);
+    if (!persist(next)) return false;
+    setLibrary(next);
+    if (active.id === id) setActive(current => ({ ...current, ...patch }));
+    return true;
+  }
   function scored(fidelity: Fidelity) {
     const item = { ...active, fidelity };
     setActive(item);
@@ -693,7 +701,7 @@ export default function App() {
               </p>
             </div>
             <LibrarySync />
-            <Clipboard items={library} onOpen={open} onDelete={remove} onIntegrate={integrate} full />
+            <Clipboard items={library} onOpen={open} onDelete={remove} onIntegrate={integrate} onOrganise={organise} full />
             {deleted && (
               <button className="undo-button" onClick={restore}>
                 <Undo2 size={15} />
