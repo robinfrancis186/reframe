@@ -1,4 +1,5 @@
 import type { ComponentItem, Theme } from "./model";
+import { fontFaceCss, fontRequirement } from "./fonts.js";
 export const escapeHtml = (s: string) =>
   s.replace(
     /[&<>"']/g,
@@ -27,7 +28,7 @@ export function documentHtml(
 ) {
   const site=item.feature?.spec.website;
   if(site){const page=site.pages[0];return `<!doctype html><html lang="en" class="${escapeHtml(page.htmlClass||'')}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https: http: data:; font-src https: data:; form-action 'none'; base-uri 'none'"><title>${escapeHtml(item.name)}</title><style>${site.css.replace(/<\/style/gi,'')}body{margin:0;${page.component?'padding:16px;':''}${(page.rootStyle||'').replace(/[<>]/g,'')}}</style></head><body>${page.html}</body></html>`;}
-  return `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${preview ? "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none'\">" : ""}<title>${escapeHtml(item.name)}</title><style>${preview ? "html,body{box-sizing:border-box;margin:0;min-height:100%;background:transparent}body{padding:20px;display:grid;align-items:center;min-height:100vh}" : ""}${componentCss(theme)}</style></head><body>\n<!-- Source: ${escapeHtml(item.source).replace(/--/g, "")} | ${escapeHtml(item.evidence).replace(/--/g, "")} -->\n<div class="rf-component">${item.html}</div>\n</body></html>`;
+  return `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${preview ? "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src 'self'; form-action 'none'; base-uri 'none'\">" : ""}<title>${escapeHtml(item.name)}</title><style>${preview ? fontFaceCss(theme.font) + "html,body{box-sizing:border-box;margin:0;min-height:100%;background:transparent}body{padding:20px;display:grid;align-items:center;min-height:100vh}" : fontRequirement(theme.font) ? `/* ${fontRequirement(theme.font)} */` : ""}${componentCss(theme)}</style></head><body>\n<!-- Source: ${escapeHtml(item.source).replace(/--/g, "")} | ${escapeHtml(item.evidence).replace(/--/g, "")} -->\n<div class="rf-component">${item.html}</div>\n</body></html>`;
 }
 export function reactCode(item: ComponentItem, theme: Theme) {
   if(item.feature?.spec.website)return '// Install the UI + backend package through Projects; this component uses its bundled local website API.\n'+item.feature.files['Component.tsx'];
@@ -48,5 +49,5 @@ export function reactCode(item: ComponentItem, theme: Theme) {
       .join(" ");
     return `<${tag}${attrs ? " " + attrs : ""}${voids.has(tag) ? " />" : `>${Array.from(node.childNodes).map(jsx).join("")}</${tag}>`}`;
   };
-  return `// Source: ${item.source.replace(/[\r\n]/g, " ")}\n// ${item.evidence.replace(/[\r\n]/g, " ")}\n// Connect actions and routes in your app; styles are scoped to .rf-component.\nexport default function CapturedComponent() {\n  return (\n    <div className="rf-component">\n      <style>{${JSON.stringify(componentCss(theme))}}</style>\n      ${Array.from(doc.body.childNodes).map(jsx).join("\n      ")}\n    </div>\n  );\n}\n`;
+  return `// Source: ${item.source.replace(/[\r\n]/g, " ")}\n// ${item.evidence.replace(/[\r\n]/g, " ")}\n// Connect actions and routes in your app; styles are scoped to .rf-component.\n${fontRequirement(theme.font) ? "// " + fontRequirement(theme.font) + "\n" : ""}export default function CapturedComponent() {\n  return (\n    <div className="rf-component">\n      <style>{${JSON.stringify(componentCss(theme))}}</style>\n      ${Array.from(doc.body.childNodes).map(jsx).join("\n      ")}\n    </div>\n  );\n}\n`;
 }

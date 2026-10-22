@@ -43,6 +43,7 @@ import { componentReadiness, sameComponent, preferredCapture } from './component
 import './journey.css';
 import { readWorkspace, writeWorkspace } from './storage';
 const Agents=lazy(()=>import('./Agents'));
+const AssetLibrary=lazy(()=>import('./AssetLibrary'));
 import {
   api,
   download,
@@ -679,6 +680,7 @@ export default function App() {
         {page === 'Agents' && <Suspense fallback={<p role="status">Loading Agents…</p>}><Agents testInvite={agentTestInvite} onAction={agentAction} onTalk={id=>setAgentInvite({id,nonce:Date.now()})} item={active} library={library} theme={theme} onSave={save} onNavigate={setPage} onEdit={item=>{setActive(item);setBuilding(true);setPage('Workbench');}}/></Suspense>}
         {page === 'Native capture' && <Suspense fallback={<p role="status">Loading NativeCapture…</p>}><NativeCapture onCapture={captured} /></Suspense>}
         {page === 'Projects' && <Suspense fallback={<p role="status">Loading Projects…</p>}><Projects active={active} items={library} theme={theme} onTheme={changeTheme} onSave={save} /></Suspense>}
+        {page === 'Assets' && <><div className="intro"><h2>Every font, color and icon, kept once.</h2><p>Assets from your saved components, plus open fonts you can ship.</p></div><Suspense fallback={<p role="status">Loading assets…</p>}><AssetLibrary items={library} theme={theme} onTheme={changeTheme}/></Suspense></>}
         {page === 'Component library' && <Suspense fallback={<p role="status">Loading ComponentLibrary…</p>}><ComponentLibrary theme={theme} onOpen={open} onSave={save} onProjects={()=>setPage('Projects')}/></Suspense>}
         {page === "Project theme" && (
           <>

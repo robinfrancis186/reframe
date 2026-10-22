@@ -51,7 +51,13 @@ export async function readRendered(page,selector='body'){
   for(const rule of keyframes)if(selector==='body'||css.includes(rule.name))css+='\n'+rule.cssText;
   if(selector!=='body'){
    const props='display box-sizing flex-direction flex-wrap align-items justify-content gap grid-template-columns margin-top margin-right margin-bottom margin-left padding-top padding-right padding-bottom padding-left border-top border-right border-bottom border-left border-radius color background-color background-image background-size background-position background-repeat font-family font-size font-weight line-height letter-spacing text-align text-decoration box-shadow opacity fill stroke'.split(' ');
-   let fallback='';for(let i=0;i<source.length;i++){copies[i].setAttribute('data-rf-rendered',String(i));const c=getComputedStyle(source[i]);fallback+='[data-rf-rendered="'+i+'"]{'+(i===0?'width:'+c.width+';height:'+c.height+';max-width:100%;':'')+props.map(p=>p+':'+c.getPropertyValue(p)+';').join('')+'}';}css=fallback+'\n'+css;
+   // Computed-style fallback, without declarations that cannot apply (layout props on non-flex boxes, SVG paint on
+   // HTML, inert initial values) and with identical blocks sharing one rule, so large regions stay within budget.
+   const layout=['flex-direction','flex-wrap','align-items','justify-content','gap'],inert={'box-shadow':'none',opacity:'1','background-image':'none','letter-spacing':'normal'};
+   const groups=new Map();for(let i=0;i<source.length;i++){copies[i].setAttribute('data-rf-rendered',String(i));const el=source[i],c=getComputedStyle(el),display=c.display,svg=el instanceof SVGElement,image=c.getPropertyValue('background-image')!=='none';
+    const block=(i===0?'width:'+c.width+';height:'+c.height+';max-width:100%;':'')+props.filter(p=>!(!svg&&(p==='fill'||p==='stroke')||!/flex|grid/.test(display)&&layout.includes(p)||!/grid/.test(display)&&p==='grid-template-columns'||!image&&/^background-(?:size|position|repeat)$/.test(p)||inert[p]===c.getPropertyValue(p))).map(p=>p+':'+c.getPropertyValue(p)+';').join('');
+    if(!groups.has(block))groups.set(block,[]);groups.get(block).push(i);}
+   css=[...groups].map(([block,ids])=>ids.map(i=>'[data-rf-rendered="'+i+'"]').join(',')+'{'+block+'}').join('')+'\n'+css;
   }
   const body=root===document.body?clone.innerHTML:clone.outerHTML;
   // Faces actually rendered by the component (including icon pseudo-elements) decide which @font-face rules are kept.
@@ -84,6 +90,7 @@ export async function prepareReplica(rawPages,{resource=referenceResource}={}){
     try{let index=attachments.findIndex(x=>x.url===target.href);if(index<0){if(attachments.length>=8)throw new Error('Eight download limit reached.');const result=await resource(target.href);if(result.status!==200||!result.body.subarray(0,5).equals(Buffer.from('%PDF-'))||result.body.length>2000000)throw new Error('The public PDF could not be verified under 2 MB.');index=attachments.length;attachments.push({url:target.href,name:(link.attr('download')||target.pathname.split('/').pop()).replace(/[^a-zA-Z0-9_.-]/g,'_').slice(0,100),type:'application/pdf',base64:result.body.toString('base64')});}link.attr('href','download-'+index+'.pdf').attr('download',attachments[index].name).removeAttr('target');}catch(e){link.removeAttr('href');warnings.push('Download not bundled: '+target.href+' · '+e.message);}
    }
   }
+  if(String(raw.css||'').length>500000)throw new Error('This selection carries more than 500 KB of styles. Pick a smaller region, or capture its sections separately.');
   const nextCSS=replicaCSS(raw.css||'');if(nextCSS&&!css.includes(nextCSS))css+='\n'+nextCSS;
   const rootStyle=typeof raw.rootStyle==='string'?raw.rootStyle.replace(/[<>]/g,''):'';
   pages.push({url,title:String(raw.title||'Captured page').slice(0,200),html:replicaHTML($.html()),rootStyle:styleAttribute(rootStyle),htmlClass:String(raw.htmlClass||'').replace(/[^a-zA-Z0-9_ :.-]/g,'').slice(0,500),height:Math.max(80,Math.min(1200,Number(raw.height)||900)),component:!!raw.component});warnings.push(...(raw.missing||[]).map(u=>'Stylesheet unavailable: '+u));

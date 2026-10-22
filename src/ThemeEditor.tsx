@@ -2,6 +2,7 @@ import { useState } from "react";
 import BrandingDetector from "./BrandingDetector";
 import { safeLogo } from "./branding.js";
 import { type Theme, themes } from "./model";
+import { bundledFonts } from "./fonts.js";
 export default function ThemeEditor({
   theme,
   onChange,
@@ -147,10 +148,15 @@ export default function ThemeEditor({
                 onChange({ ...theme, font: e.target.value, name: "Custom" })
               }
             >
-              {!themes.some(t => t.font === theme.font) && theme.font !== "ui-monospace, monospace" && <option value={theme.font}>{theme.font} (detected)</option>}
-              <option value="Inter, system-ui, sans-serif">System sans</option>
-              <option value="Georgia, serif">Editorial serif</option>
-              <option value="ui-monospace, monospace">Monospace</option>
+              {!themes.some(t => t.font === theme.font) && !bundledFonts.some(f => f.stack === theme.font) && theme.font !== "ui-monospace, monospace" && <option value={theme.font}>{theme.font} (detected)</option>}
+              <optgroup label="System">
+                <option value="Inter, system-ui, sans-serif">System sans</option>
+                <option value="Georgia, serif">Editorial serif</option>
+                <option value="ui-monospace, monospace">Monospace</option>
+              </optgroup>
+              <optgroup label="Bundled open fonts">
+                {bundledFonts.map(f => <option key={f.id} value={f.stack}>{f.family} · {f.category}</option>)}
+              </optgroup>
             </select>
           </label>
           <label>

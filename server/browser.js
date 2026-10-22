@@ -174,7 +174,15 @@ export class ReferenceBrowser {
             let el = document.elementFromPoint(x, y);
             if (!(el instanceof HTMLElement)) el = el?.closest('a,button')||el?.parentElement;
             el=el?.closest('a,button,input,textarea,select,summary')||el;
-            for (let n = 0; n < depth; n++) if (el?.parentElement && el.parentElement !== document.body) el = el.parentElement;
+            // Each parent step must visibly grow the selection: wrappers with the same box or no box are skipped.
+            const box = node => { const r = node.getBoundingClientRect(); return r.width < 1 || r.height < 1 ? null : [r.x, r.y, r.width, r.height].map(Math.round).join(); };
+            for (let n = 0; n < depth && el; n++) {
+              const start = box(el);
+              let next = el.parentElement;
+              while (next && next !== document.body && (box(next) === null || box(next) === start)) next = next.parentElement;
+              if (!next || next === document.body) break;
+              el = next;
+            }
             if (probe) {
               // Hover preview: report what a pick here would select without changing the page or the selection.
               if (!el || el === document.body || el === document.documentElement) return null;
@@ -186,12 +194,13 @@ export class ReferenceBrowser {
             const rect = el.getBoundingClientRect(), clone = el.cloneNode(true);
             for (const node of [clone, ...clone.querySelectorAll('[href],[src]')]) for (const attr of ['href', 'src']) if (node.hasAttribute(attr)) { try { node.setAttribute(attr, new URL(node.getAttribute(attr), document.baseURI).href); } catch { node.removeAttribute(attr); } }
             for (const node of [clone,...clone.querySelectorAll('input,textarea')]) { node.removeAttribute('value'); if (node.tagName === 'TEXTAREA') node.textContent = ''; }
-            return { html: clone.outerHTML.slice(0, 500_001), tag: el.tagName.toLowerCase(), name: (el.querySelector('h1,h2,h3')?.textContent || el.getAttribute('aria-label') || el.textContent || el.tagName).replace(/\s+/g, ' ').trim().slice(0, 80), bounds: { x: Math.max(0, rect.x), y: Math.max(0, rect.y), width: Math.min(innerWidth, rect.right) - Math.max(0, rect.x), height: Math.min(innerHeight, rect.bottom) - Math.max(0, rect.y) } };
+            return { html: clone.outerHTML.slice(0, 500_001), tag: el.tagName.toLowerCase(), name: ([...el.querySelectorAll('h1,h2,h3')].find(h => h.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && h.getBoundingClientRect().width > 0)?.textContent || el.getAttribute('aria-label') || el.textContent || el.tagName).replace(/\s+/g, ' ').trim().slice(0, 80), bounds: { x: Math.max(0, rect.x), y: Math.max(0, rect.y), width: Math.min(innerWidth, rect.right) - Math.max(0, rect.x), height: Math.min(innerHeight, rect.bottom) - Math.max(0, rect.y) } };
           }, { x, y, depth, probe: action === 'probe' });
           if (action === 'probe') return { probe: picked };
           entry.selection = picked;
           if (entry.selection.html.length > 500_000) { entry.selection = null; throw new Error('This element is too large. Pick a smaller component.'); }
-          entry.selection.referenceImage = 'data:image/jpeg;base64,' + (await page.screenshot({ type: 'jpeg', quality: 65, clip: entry.selection.bounds, timeout: 5000 })).toString('base64');
+          // Hidden or off-screen containers have no visible box to photograph; they are still capturable.
+          if (entry.selection.bounds.width >= 1 && entry.selection.bounds.height >= 1) entry.selection.referenceImage = 'data:image/jpeg;base64,' + (await page.screenshot({ type: 'jpeg', quality: 65, clip: entry.selection.bounds, timeout: 5000 })).toString('base64');
           entry.selection.capturedAt = new Date().toISOString();
         }
       } else if (action === 'scroll') {

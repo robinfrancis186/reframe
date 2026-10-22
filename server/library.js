@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { parse } from '@babel/parser';
 import { libraryEntry, libraryStyles } from '../src/library/catalog.js';
 import { themeStyle } from '../src/branding.js';
+import { fontRequirement } from '../src/fonts.js';
 
 export async function librarySource(id, name = 'ReframeOriginal', theme, typescript = false, framework = 'react') {
   const entry = libraryEntry(id);
@@ -38,6 +39,6 @@ export async function libraryPackage(id,theme) {
   const results = await Promise.all(['react','swiftui','compose'].map(framework=>librarySource(id,'ReframeOriginal',theme,framework==='react',framework)));
   const files = Object.fromEntries(results.map((result,index)=>[['Component.tsx','Component.swift','Component.kt'][index],result.imports.join('\n') + '\n\n' + result.code + '\n']));
   files['brand.json'] = JSON.stringify(theme,null,2);
-  files['README.md'] = '# ' + entry.name + '\n\nIndependently authored Reframe Original. React, SwiftUI (iOS 17+) and Android Compose / Material 3 source are included. Install only the file for your platform. Native source inherits semantic fonts and uses the selected brand palette and corners.\n\n' + (id==='search'?'React data binding: <ReframeOriginal items={projectNames} onSelect={handleSelection} />. items is a readonly string array; onSelect receives selected text.\n':id==='be-table'?'React data binding: <ReframeOriginal rows={projectRows} />. Each row needs a unique name and numeric progress.\n':'') + (entry.requirements || []).join('\n') + '\n\nNative SDK builds, device behavior and assistive technology testing must be verified in the destination app. Generated UI state is local to the component; service credentials and runtime records are not included.\n';
+  files['README.md'] = '# ' + entry.name + '\n\nIndependently authored Reframe Original. React, SwiftUI (iOS 17+) and Android Compose / Material 3 source are included. Install only the file for your platform. Native source inherits semantic fonts and uses the selected brand palette and corners.\n\n' + (id==='search'?'React data binding: <ReframeOriginal items={projectNames} onSelect={handleSelection} />. items is a readonly string array; onSelect receives selected text.\n':id==='be-table'?'React data binding: <ReframeOriginal rows={projectRows} />. Each row needs a unique name and numeric progress.\n':'') + [...(entry.requirements || []),fontRequirement(theme.font)].filter(Boolean).join('\n') + '\n\nNative SDK builds, device behavior and assistive technology testing must be verified in the destination app. Generated UI state is local to the component; service credentials and runtime records are not included.\n';
   return {version:1,id,files,bytes:Object.values(files).reduce((sum,value)=>sum+Buffer.byteLength(value),0),requirements:entry.requirements || []};
 }

@@ -86,7 +86,7 @@ test('specialists provide real local guidance and constrained OpenAI replies, wi
 
 test('five coherent sections retain every feature page and Connections and every helper destination',()=>{
   assert.equal(sections.length,5);
-  const pages=sections.flatMap(section=>section.pages.map(([id])=>id));assert.equal(pages.length,11);assert.equal(new Set(pages).size,11);
+  const pages=sections.flatMap(section=>section.pages.map(([id])=>id));assert.equal(pages.length,12);assert.equal(new Set(pages).size,12);
   for(const page of pages){assert.ok(sectionFor(page).pages.some(([id])=>id===page));assert.ok(contextualAgent(page));}
   for(const action of Object.values(helpActions))if(action.page)assert.ok(pages.includes(action.page));
 });

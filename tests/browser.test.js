@@ -70,7 +70,7 @@ test('isolated reference browser renders JS, picks, captures provenance, navigat
   const hits = [];
   const browser = new ReferenceBrowser({ resource: async url => {
     hits.push(url);
-    return { status: 200, headers: { 'content-type': 'text/html' }, body: Buffer.from(`<html><head><title>Reference fixture</title></head><body style="margin:0"><section id="card" style="height:200px;width:400px;background:#eae4ff;padding:20px"><h1>Dynamic card</h1><button onclick="this.textContent='Selected'">Select</button><a href="https://example.com/next">Next</a><p id="result"></p></section><div style="height:1500px">Below fold</div><script>document.querySelector('#result').textContent='Rendered by JavaScript';fetch('/write',{method:'POST',body:'test'}).catch(()=>{});</script></body></html>`) };
+    return { status: 200, headers: { 'content-type': 'text/html' }, body: Buffer.from(`<html><head><title>Reference fixture</title></head><body style="margin:0"><section id="card" style="height:200px;width:400px;background:#eae4ff;padding:20px"><div id="wrap"><div style="display:contents"><h1>Dynamic card</h1></div></div><button onclick="this.textContent='Selected'">Select</button><a href="https://example.com/next">Next</a><p id="result"></p></section><div style="height:1500px">Below fold</div><script>document.querySelector('#result').textContent='Rendered by JavaScript';fetch('/write',{method:'POST',body:'test'}).catch(()=>{});</script></body></html>`) };
   }});
   try {
     const { id } = await browser.create();
@@ -84,7 +84,8 @@ test('isolated reference browser renders JS, picks, captures provenance, navigat
     assert.ok(!preview.image, 'hover preview must not take a screenshot');
     const picked = await browser.act({ id, action: 'pick', x: 30, y: 45 });
     assert.equal(picked.selection.tag, 'h1');
-    await browser.act({ id, action: 'pick', x: 30, y: 45, depth: 1 });
+    const parent = await browser.act({ id, action: 'pick', x: 30, y: 45, depth: 1 });
+    assert.equal(parent.selection.tag, 'section', 'same-box and box-less wrappers are skipped');
     const result = await browser.act({ id, action: 'capture' });
     assert.match(result.items[0].html, /Rendered by JavaScript/);
     assert.doesNotMatch(result.items[0].html, /onclick|<script|style=/);
