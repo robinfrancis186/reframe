@@ -55,16 +55,29 @@ test('the real extension picks an element on a page, captures it and saves it to
   const fixture=`<!doctype html><html><head><title>Plans</title><style>html{font-size:10px}body{margin:0;background:#f3f1ec;font:1.6rem/1.5 Arial,sans-serif}.wrap .plan{width:320px;margin:40px;padding:2.4rem;background:#fff;border-radius:1.2rem;color:#1f2430}.plan h2{margin:0 0 .8rem;font-size:2.4rem}.plan .buy{display:inline-block;margin-top:1.2rem;padding:1rem 1.8rem;background:#2d5bd7;color:#fff;border-radius:.8rem;text-decoration:none}</style></head><body><div class="wrap"><section class="plan" id="plan"><div class="inner"><h2>Team plan</h2><p>Shared projects for five people.</p><a class="buy" id="buy" href="/checkout">Start trial</a></div></section></div></body></html>`;
   const library=new LibraryStore(store),pairing=new ExtensionPairing(store),reference=new ReferenceBrowser();
   const app=express();mountLibrary(app,express,library);mountExtension(app,express,{pairing,library,browser:reference,isItem,theme:themes[0],folder:extension});
+  // Stands in for Reframe's Library panel: the same one-click pairing messages as src/ExtensionPairing.tsx.
+  app.get('/pair',(_req,res)=>res.type('html').send(`<!doctype html><title>Reframe</title><script>
+    window.bridge=new Promise(r=>{addEventListener('message',e=>{if(e.data?.source==='reframe-picker'&&e.data.type==='ready')r(e.data.version)});postMessage({source:'reframe',type:'hello'},location.origin);});
+    window.connect=async()=>{const {token}=await (await fetch('/api/extension/pair',{method:'POST'})).json();const reply=new Promise(r=>addEventListener('message',function l(e){if(e.data?.source==='reframe-picker'&&e.data.type==='paired'){removeEventListener('message',l);r(e.data)}}));postMessage({source:'reframe',type:'pair',token},location.origin);return reply;};
+  </script>`));
   app.use(express.json());app.use((error,_req,res,_next)=>res.status(error.status||400).json({error:error.message}));
   const server=await new Promise(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s));});
   const address='http://127.0.0.1:'+server.address().port;
   let context;
   try{
-    const {token}=await pairing.pair();
     context=await chromium.launchPersistentContext(path.join(dir,'profile'),{channel:'chromium',headless:true,args:[`--disable-extensions-except=${extension}`,`--load-extension=${extension}`]});
     await context.route('https://fixture.example/**',route=>route.fulfill({status:200,contentType:'text/html',body:fixture}));
     const worker=context.serviceWorkers()[0]||await context.waitForEvent('serviceworker');
-    await worker.evaluate(settings=>chrome.storage.local.set(settings),{server:address,token});
+    // One-click pairing: the page hands the extension a token, after the user confirms in the browser.
+    const reframe=await context.newPage();await reframe.goto(address+'/pair');
+    assert.equal(await reframe.evaluate(()=>window.bridge),'0.1.0','the extension announces itself to Reframe');
+    reframe.once('dialog',dialog=>{assert.ok(dialog.message().includes('Reframe at '+address));void dialog.dismiss();});
+    assert.deepEqual(await reframe.evaluate(()=>connect()),{source:'reframe-picker',type:'paired',ok:false,error:'Connection cancelled in the browser.'});
+    assert.equal((await worker.evaluate(()=>chrome.storage.local.get('token'))).token,undefined,'nothing is stored without confirmation');
+    reframe.once('dialog',dialog=>void dialog.accept());
+    assert.equal((await reframe.evaluate(()=>connect())).ok,true);
+    assert.equal((await worker.evaluate(()=>chrome.storage.local.get('server'))).server,address);
+    await reframe.close();
     const page=await context.newPage();await page.setViewportSize({width:1100,height:700});await page.goto('https://fixture.example/');
     const start=()=>worker.evaluate(async()=>{const [tab]=await chrome.tabs.query({url:'https://fixture.example/*'});return self.startPicker(tab);});
     assert.equal(await start(),true);

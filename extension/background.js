@@ -33,6 +33,13 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
     if (message.type === 'screenshot') return { image: await chrome.tabs.captureVisibleTab(sender.tab.windowId, { format: 'png' }) };
     if (message.type === 'save') return reframe('/api/extension/capture', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(message.capture) });
     if (message.type === 'ping') return reframe('/api/extension/ping');
+    if (message.type === 'pair') {
+      // Sent by pair-bridge.js after the user confirmed on a Reframe page; only a page on this computer can pair.
+      if (!sender.tab || !/^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/.test(message.server) || new URL(sender.tab.url).origin !== message.server) throw new Error('Pairing must come from Reframe on this computer.');
+      if (!/^rfx_[\w-]{20,80}$/.test(message.token || '')) throw new Error('The pairing token is not valid.');
+      await chrome.storage.local.set({ server: message.server, token: message.token });
+      return reframe('/api/extension/ping');
+    }
     throw new Error('Unknown request.');
   };
   run().then(result => reply({ ok: true, result }), error => reply({ ok: false, error: error.message }));
