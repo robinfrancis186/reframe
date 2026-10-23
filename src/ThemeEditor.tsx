@@ -1,8 +1,8 @@
-import { useState } from "react";
-import BrandingDetector from "./BrandingDetector";
-import { safeLogo } from "./branding.js";
-import { type Theme, themes } from "./model";
-import { bundledFonts } from "./fonts.js";
+import { useState } from 'react';
+import BrandingDetector from './BrandingDetector';
+import { safeLogo } from './branding.js';
+import { type Theme, themes } from './model';
+import { bundledFonts } from './fonts.js';
 export default function ThemeEditor({
   theme,
   onChange,
@@ -12,45 +12,41 @@ export default function ThemeEditor({
   onChange: (t: Theme) => void;
   full?: boolean;
 }) {
-  const [css, setCss] = useState("");
-  const [message, setMessage] = useState("");
+  const [css, setCss] = useState('');
+  const [message, setMessage] = useState('');
   function importCss() {
     const value = (names: string[]) => {
       for (const name of names) {
-        const match = css.match(
-          new RegExp(`--${name}\\s*:\\s*(#[0-9a-f]{6})\\b`, "i"),
-        );
+        const match = css.match(new RegExp(`--${name}\\s*:\\s*(#[0-9a-f]{6})\\b`, 'i'));
         if (match) return match[1];
       }
       return null;
     };
-    const primary = value(["primary", "color-primary", "accent"]),
-      background = value(["background", "surface", "color-background"]),
-      text = value(["foreground", "text", "color-text"]);
+    const primary = value(['primary', 'color-primary', 'accent']),
+      background = value(['background', 'surface', 'color-background']),
+      text = value(['foreground', 'text', 'color-text']);
     if (!primary && !background && !text) {
       setMessage(
-        "No supported hex tokens found. Use --primary, --background or --foreground with six-digit hex values.",
+        'No supported hex tokens found. Use --primary, --background or --foreground with six-digit hex values.',
       );
       return;
     }
     onChange({
       ...theme,
-      name: "My project",
+      name: 'My project',
       primary: primary || theme.primary,
       background: background || theme.background,
       text: text || theme.text,
     });
-    setMessage("Project colors applied.");
+    setMessage('Project colors applied.');
   }
   return (
     <div className="theme-controls">
-      {full && <BrandingDetector theme={theme} onChange={onChange}/>}
+      {full && <BrandingDetector theme={theme} onChange={onChange} />}
       <label>
         Project theme
         <select
-          value={
-            themes.some((t) => t.name === theme.name) ? theme.name : "Custom"
-          }
+          value={themes.some((t) => t.name === theme.name) ? theme.name : 'Custom'}
           onChange={(e) => {
             const t = themes.find((t) => t.name === e.target.value);
             if (t) onChange({ ...theme, ...t });
@@ -70,20 +66,16 @@ export default function ThemeEditor({
               key={t.primary}
               aria-label={`Use ${t.name}`}
               aria-pressed={theme.primary === t.primary}
-              className={theme.primary === t.primary ? "active" : ""}
+              className={theme.primary === t.primary ? 'active' : ''}
               style={{ background: t.primary }}
-              onClick={() =>
-                onChange({ ...theme, primary: t.primary, name: "Custom" })
-              }
+              onClick={() => onChange({ ...theme, primary: t.primary, name: 'Custom' })}
             />
           ))}
           <input
             type="color"
             aria-label="Custom primary color"
             value={theme.primary}
-            onChange={(e) =>
-              onChange({ ...theme, name: "Custom", primary: e.target.value })
-            }
+            onChange={(e) => onChange({ ...theme, name: 'Custom', primary: e.target.value })}
           />
         </div>
       </fieldset>
@@ -98,7 +90,7 @@ export default function ThemeEditor({
             onChange({
               ...theme,
               radius: Number(e.target.value),
-              name: "Custom",
+              name: 'Custom',
             })
           }
         />
@@ -109,11 +101,58 @@ export default function ThemeEditor({
       </label>
       {full && (
         <>
-          <div className="brand-fields"><h3>Brand identity</h3><label>Brand name<input maxLength={100} value={theme.brandName || ''} placeholder="Your brand" onChange={e => onChange({...theme,brandName:e.target.value})}/></label><label>Tagline<textarea rows={2} maxLength={240} value={theme.tagline || ''} placeholder="A little about your brand" onChange={e => onChange({...theme,tagline:e.target.value})}/></label><label>Brand logo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={e => {
-            const file = e.target.files?.[0]; if (!file) return;
-            if (file.size > 250000) { setMessage('Choose a PNG, JPEG or WebP logo under 250 KB.'); return; }
-            const reader = new FileReader(); reader.onerror = () => setMessage('Could not read this logo.'); reader.onload = () => { if (safeLogo(reader.result)) { onChange({...theme,logo:reader.result as string}); setMessage('Brand logo applied.'); } else setMessage('Choose a PNG, JPEG or WebP image.'); }; reader.readAsDataURL(file);
-          }}/></label>{theme.logo && <div className="brand-logo-row"><img src={theme.logo} alt="Current brand logo"/><button onClick={() => onChange({...theme,logo:''})}>Remove logo</button></div>}</div>
+          <div className="brand-fields">
+            <h3>Brand identity</h3>
+            <label>
+              Brand name
+              <input
+                maxLength={100}
+                value={theme.brandName || ''}
+                placeholder="Your brand"
+                onChange={(e) => onChange({ ...theme, brandName: e.target.value })}
+              />
+            </label>
+            <label>
+              Tagline
+              <textarea
+                rows={2}
+                maxLength={240}
+                value={theme.tagline || ''}
+                placeholder="A little about your brand"
+                onChange={(e) => onChange({ ...theme, tagline: e.target.value })}
+              />
+            </label>
+            <label>
+              Brand logo
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 250000) {
+                    setMessage('Choose a PNG, JPEG or WebP logo under 250 KB.');
+                    return;
+                  }
+                  const reader = new FileReader();
+                  reader.onerror = () => setMessage('Could not read this logo.');
+                  reader.onload = () => {
+                    if (safeLogo(reader.result)) {
+                      onChange({ ...theme, logo: reader.result as string });
+                      setMessage('Brand logo applied.');
+                    } else setMessage('Choose a PNG, JPEG or WebP image.');
+                  };
+                  reader.readAsDataURL(file);
+                }}
+              />
+            </label>
+            {theme.logo && (
+              <div className="brand-logo-row">
+                <img src={theme.logo} alt="Current brand logo" />
+                <button onClick={() => onChange({ ...theme, logo: '' })}>Remove logo</button>
+              </div>
+            )}
+          </div>
           <div className="theme-colors">
             <label>
               Surface
@@ -124,7 +163,7 @@ export default function ThemeEditor({
                   onChange({
                     ...theme,
                     background: e.target.value,
-                    name: "Custom",
+                    name: 'Custom',
                   })
                 }
               />
@@ -134,9 +173,7 @@ export default function ThemeEditor({
               <input
                 type="color"
                 value={theme.text}
-                onChange={(e) =>
-                  onChange({ ...theme, text: e.target.value, name: "Custom" })
-                }
+                onChange={(e) => onChange({ ...theme, text: e.target.value, name: 'Custom' })}
               />
             </label>
           </div>
@@ -144,18 +181,24 @@ export default function ThemeEditor({
             Typography
             <select
               value={theme.font}
-              onChange={(e) =>
-                onChange({ ...theme, font: e.target.value, name: "Custom" })
-              }
+              onChange={(e) => onChange({ ...theme, font: e.target.value, name: 'Custom' })}
             >
-              {!themes.some(t => t.font === theme.font) && !bundledFonts.some(f => f.stack === theme.font) && theme.font !== "ui-monospace, monospace" && <option value={theme.font}>{theme.font} (detected)</option>}
+              {!themes.some((t) => t.font === theme.font) &&
+                !bundledFonts.some((f) => f.stack === theme.font) &&
+                theme.font !== 'ui-monospace, monospace' && (
+                  <option value={theme.font}>{theme.font} (detected)</option>
+                )}
               <optgroup label="System">
                 <option value="Inter, system-ui, sans-serif">System sans</option>
                 <option value="Georgia, serif">Editorial serif</option>
                 <option value="ui-monospace, monospace">Monospace</option>
               </optgroup>
               <optgroup label="Bundled open fonts">
-                {bundledFonts.map(f => <option key={f.id} value={f.stack}>{f.family} · {f.category}</option>)}
+                {bundledFonts.map((f) => (
+                  <option key={f.id} value={f.stack}>
+                    {f.family} · {f.category}
+                  </option>
+                ))}
               </optgroup>
             </select>
           </label>
@@ -165,9 +208,7 @@ export default function ThemeEditor({
               value={css}
               onChange={(e) => setCss(e.target.value)}
               rows={5}
-              placeholder={
-                "--primary: #3159e8;\n--background: #ffffff;\n--foreground: #161a27;"
-              }
+              placeholder={'--primary: #3159e8;\n--background: #ffffff;\n--foreground: #161a27;'}
             />
           </label>
           <button onClick={importCss}>Apply project colors</button>

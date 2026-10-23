@@ -3,15 +3,8 @@
   "name": "Reframe Picker",
   "version": "0.1.0",
   "description": "Pick a component on any page you have open and save it to your local Reframe library.",
-  "permissions": [
-    "activeTab",
-    "scripting",
-    "storage"
-  ],
-  "host_permissions": [
-    "http://localhost/*",
-    "http://127.0.0.1/*"
-  ],
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["http://localhost/*", "http://127.0.0.1/*"],
   "background": {
     "service_worker": "background.js"
   },
@@ -29,13 +22,8 @@
   "options_page": "options.html",
   "content_scripts": [
     {
-      "matches": [
-        "http://localhost/*",
-        "http://127.0.0.1/*"
-      ],
-      "js": [
-        "pair-bridge.js"
-      ],
+      "matches": ["http://localhost/*", "http://127.0.0.1/*"],
+      "js": ["pair-bridge.js"],
       "run_at": "document_idle"
     }
   ]

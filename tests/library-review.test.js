@@ -1,40 +1,215 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,writeFile,readFile,rm,mkdir} from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, rm, mkdir } from 'node:fs/promises';
 import path from 'node:path';
-import {build} from 'vite';
-import {createServer} from 'node:http';
-import {chromium} from 'playwright';
-import {catalog,libraryStyles} from '../src/library/catalog.js';
-import {componentReview} from '../src/library/review.js';
-import {librarySource} from '../server/library.js';
-import {themeStyle} from '../src/branding.js';
-const theme={name:'Review',primary:'#3357c1',background:'#ffffff',text:'#172334',font:'system-ui, sans-serif',radius:12};
-test('every preset has a bounded review and exports only matching style groups',()=>{
- for(const entry of catalog){const rating=componentReview(entry);for(const key of ['score','design','code','before'])assert.ok(rating[key]>=0&&rating[key]<=10,entry.id);assert.ok(rating.note.length>30);assert.ok(libraryStyles(entry).length<6346,entry.id);}
- const tabs=catalog.find(x=>x.id==='tabs');assert.match(libraryStyles(tabs),/role=tablist/);assert.ok(!libraryStyles(tabs).includes('dialog::backdrop'));assert.ok(!libraryStyles(tabs).includes('rf-gallery-window'));
- assert.equal(themeStyle(theme)['--rf-scheme'],'light');assert.equal(themeStyle({...theme,background:'#111111'})['--rf-scheme'],'dark');
+import { build } from 'vite';
+import { createServer } from 'node:http';
+import { chromium } from 'playwright';
+import { catalog, libraryStyles } from '../src/library/catalog.js';
+import { componentReview } from '../src/library/review.js';
+import { librarySource } from '../server/library.js';
+import { themeStyle } from '../src/branding.js';
+const theme = {
+  name: 'Review',
+  primary: '#3357c1',
+  background: '#ffffff',
+  text: '#172334',
+  font: 'system-ui, sans-serif',
+  radius: 12,
+};
+test('every preset has a bounded review and exports only matching style groups', () => {
+  for (const entry of catalog) {
+    const rating = componentReview(entry);
+    for (const key of ['score', 'design', 'code', 'before'])
+      assert.ok(rating[key] >= 0 && rating[key] <= 10, entry.id);
+    assert.ok(rating.note.length > 30);
+    assert.ok(libraryStyles(entry).length < 6346, entry.id);
+  }
+  const tabs = catalog.find((x) => x.id === 'tabs');
+  assert.match(libraryStyles(tabs), /role=tablist/);
+  assert.ok(!libraryStyles(tabs).includes('dialog::backdrop'));
+  assert.ok(!libraryStyles(tabs).includes('rf-gallery-window'));
+  assert.equal(themeStyle(theme)['--rf-scheme'], 'light');
+  assert.equal(themeStyle({ ...theme, background: '#111111' })['--rf-scheme'], 'dark');
 });
-test('exported presets retain interaction, recovery, form safety and narrow layout in a real destination', {timeout:120000},async()=>{
- await mkdir('.reframe',{recursive:true});const root=await mkdtemp(path.resolve('.reframe/library-review-'));let server,browser;
- try{
-  const ids=['search','dialog','be-swipeable-list','be-signup-form','be-file-upload','be-table','be-file-diff','tabs'];
-  const imports=[];
-  for(const [i,id] of ids.entries()){const result=await librarySource(id,'Preset'+i,theme,true);await writeFile(path.join(root,`Preset${i}.tsx`),result.imports.join('\n')+'\n'+result.code);imports.push(`import {Preset${i}} from './Preset${i}';`);}
-  await writeFile(path.join(root,'index.html'),'<div id="root"></div><script type="module" src="/main.tsx"></script>');
-  await writeFile(path.join(root,'main.tsx'),`import React from 'react';import {createRoot} from 'react-dom/client';import RecoveryBoundary from '../../src/RecoveryBoundary';${imports.join('\n')}function Live(){const [items,setItems]=React.useState(['Existing project']);const [selected,setSelected]=React.useState('');return <><Preset0 items={items} onSelect={setSelected}/><button onClick={()=>setItems(['New project'])}>Update project data</button><output aria-label="App selection">{selected}</output></>}function Crash(){throw Error('Test rendering failure');}function Recovery(){return <RecoveryBoundary><Crash/></RecoveryBoundary>}const views=[${ids.map((_,i)=>'Preset'+i).join(',')},Live,Recovery];const Component=views[Number(new URLSearchParams(location.search).get('view'))||0];createRoot(document.getElementById('root')!).render(<main style={{maxWidth:620,margin:'auto'}}><Component/><form onSubmit={e=>{e.preventDefault();document.getElementById('submits')!.textContent='Submitted';}}><Preset0/></form><output id="submits">Not submitted</output></main>);`);
-  await build({root,configFile:false,envFile:false,logLevel:'error',esbuild:{jsx:'automatic'},build:{outDir:'dist'}});server=createServer(async(req,res)=>{const pathname=new URL(req.url,'http://localhost').pathname;const name=pathname==='/'?'index.html':pathname.slice(1);try{const data=await readFile(path.join(root,'dist',name));res.setHeader('Content-Type',name.endsWith('.js')?'text/javascript':'text/html');res.end(data);}catch{res.writeHead(404);res.end();}});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const url='http://127.0.0.1:'+server.address().port+'/';
-  try{browser=await chromium.launch({headless:true,channel:'chrome'});}catch{browser=await chromium.launch({headless:true});}const page=await browser.newPage({viewport:{width:390,height:844}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  const open=async id=>{await page.goto(url+'?view='+ids.indexOf(id));await page.locator('.rf-library').first().waitFor();return page.locator('.rf-library').first();};
-  let view=await open('search');await view.getByRole('button',{name:'Brand guidelines'}).click();assert.match(await view.getByRole('status').innerText(),/Selected/);await view.getByLabel('Search projects').fill('research');assert.equal(await view.getByRole('status').innerText(),'1 projects available');await view.getByRole('button',{name:'Clear search'}).click();assert.equal(await view.getByRole('button').count(),4);
-  await page.locator('form').getByRole('button',{name:'Design system'}).click();assert.equal(await page.locator('#submits').innerText(),'Not submitted');
-  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-  view=await open('dialog');await view.getByRole('button',{name:'Open dialog'}).click();const modal=view.getByRole('dialog');await modal.click({position:{x:10,y:10}});assert.ok(await modal.isVisible());await page.keyboard.press('Escape');assert.equal(await modal.isVisible(),false);assert.equal(await view.getByRole('button',{name:'Open dialog'}).evaluate(el=>el===document.activeElement),true);
-  view=await open('be-swipeable-list');await view.getByRole('button',{name:'Archive Research'}).click();await view.getByRole('button',{name:'Archive Design'}).click();await view.getByRole('button',{name:'Undo archive'}).click();await view.getByRole('button',{name:'Undo archive'}).click();assert.deepEqual(await view.locator('li strong').allTextContents(),['Research','Design','Build']);
-  view=await open('be-signup-form');await view.getByLabel('Email').fill('test@example.com');await view.getByLabel('Password').fill('example-pass-123');await view.getByRole('button',{name:'Check signup details'}).click();assert.match(await view.getByRole('status').innerText(),/checks passed/);await view.getByLabel('Email').fill('other@example.com');assert.doesNotMatch(await view.getByRole('status').innerText(),/checks passed/);
-  view=await open('be-file-upload');await view.getByLabel('Choose files').setInputFiles({name:'small.txt',mimeType:'text/plain',buffer:Buffer.from('test')});assert.equal(await view.locator('li').count(),1);await view.getByLabel('Choose files').setInputFiles({name:'large.txt',mimeType:'text/plain',buffer:Buffer.alloc(10000001)});assert.equal(await view.locator('li').count(),0);assert.match(await view.getByRole('alert').innerText(),/10 MB/);
-  view=await open('be-table');await view.getByLabel('Filter rows').fill('unknown');assert.match(await view.locator('tbody').innerText(),/No matching projects/);
-  view=await open('be-file-diff');await page.evaluate(()=>Object.defineProperty(navigator,'clipboard',{value:{writeText:async()=>{throw new Error('denied');}},configurable:true}));await view.getByRole('button',{name:'Copy'}).click();assert.match(await view.getByRole('status').innerText(),/manually/);
-  view=await open('tabs');await view.getByRole('tab',{name:'Overview'}).focus();await page.keyboard.press('ArrowRight');assert.equal(await view.getByRole('tab',{name:'Activity'}).getAttribute('aria-selected'),'true');await page.goto(url+'?view=8');await page.locator('.rf-library').first().getByRole('button',{name:'Existing project'}).click();assert.equal(await page.getByLabel('App selection').innerText(),'Existing project');await page.getByRole('button',{name:'Update project data'}).click();assert.equal(await page.locator('.rf-library').first().getByRole('button',{name:'New project'}).count(),1);assert.doesNotMatch(await page.locator('.rf-library').first().getByRole('status').innerText(),/Selected/);assert.deepEqual(errors,[]);await page.goto(url+'?view=9');await page.getByRole('button',{name:'Reload Reframe'}).waitFor();assert.match(await page.getByRole('alert').innerText(),/saved clipboard has not been cleared/);
- }finally{await browser?.close();if(server)await new Promise(resolve=>server.close(resolve));await rm(root,{recursive:true,force:true});}
-});
+test(
+  'exported presets retain interaction, recovery, form safety and narrow layout in a real destination',
+  { timeout: 120000 },
+  async () => {
+    await mkdir('.reframe', { recursive: true });
+    const root = await mkdtemp(path.resolve('.reframe/library-review-'));
+    let server, browser;
+    try {
+      const ids = [
+        'search',
+        'dialog',
+        'be-swipeable-list',
+        'be-signup-form',
+        'be-file-upload',
+        'be-table',
+        'be-file-diff',
+        'tabs',
+      ];
+      const imports = [];
+      for (const [i, id] of ids.entries()) {
+        const result = await librarySource(id, 'Preset' + i, theme, true);
+        await writeFile(
+          path.join(root, `Preset${i}.tsx`),
+          result.imports.join('\n') + '\n' + result.code,
+        );
+        imports.push(`import {Preset${i}} from './Preset${i}';`);
+      }
+      await writeFile(
+        path.join(root, 'index.html'),
+        '<div id="root"></div><script type="module" src="/main.tsx"></script>',
+      );
+      await writeFile(
+        path.join(root, 'main.tsx'),
+        `import React from 'react';import {createRoot} from 'react-dom/client';import RecoveryBoundary from '../../src/RecoveryBoundary';${imports.join('\n')}function Live(){const [items,setItems]=React.useState(['Existing project']);const [selected,setSelected]=React.useState('');return <><Preset0 items={items} onSelect={setSelected}/><button onClick={()=>setItems(['New project'])}>Update project data</button><output aria-label="App selection">{selected}</output></>}function Crash(){throw Error('Test rendering failure');}function Recovery(){return <RecoveryBoundary><Crash/></RecoveryBoundary>}const views=[${ids.map((_, i) => 'Preset' + i).join(',')},Live,Recovery];const Component=views[Number(new URLSearchParams(location.search).get('view'))||0];createRoot(document.getElementById('root')!).render(<main style={{maxWidth:620,margin:'auto'}}><Component/><form onSubmit={e=>{e.preventDefault();document.getElementById('submits')!.textContent='Submitted';}}><Preset0/></form><output id="submits">Not submitted</output></main>);`,
+      );
+      await build({
+        root,
+        configFile: false,
+        envFile: false,
+        logLevel: 'error',
+        esbuild: { jsx: 'automatic' },
+        build: { outDir: 'dist' },
+      });
+      server = createServer(async (req, res) => {
+        const pathname = new URL(req.url, 'http://localhost').pathname;
+        const name = pathname === '/' ? 'index.html' : pathname.slice(1);
+        try {
+          const data = await readFile(path.join(root, 'dist', name));
+          res.setHeader('Content-Type', name.endsWith('.js') ? 'text/javascript' : 'text/html');
+          res.end(data);
+        } catch {
+          res.writeHead(404);
+          res.end();
+        }
+      });
+      await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+      const url = 'http://127.0.0.1:' + server.address().port + '/';
+      try {
+        browser = await chromium.launch({ headless: true, channel: 'chrome' });
+      } catch {
+        browser = await chromium.launch({ headless: true });
+      }
+      const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      const errors = [];
+      page.on('pageerror', (e) => errors.push(e.message));
+      const open = async (id) => {
+        await page.goto(url + '?view=' + ids.indexOf(id));
+        await page.locator('.rf-library').first().waitFor();
+        return page.locator('.rf-library').first();
+      };
+      let view = await open('search');
+      await view.getByRole('button', { name: 'Brand guidelines' }).click();
+      assert.match(await view.getByRole('status').innerText(), /Selected/);
+      await view.getByLabel('Search projects').fill('research');
+      assert.equal(await view.getByRole('status').innerText(), '1 projects available');
+      await view.getByRole('button', { name: 'Clear search' }).click();
+      assert.equal(await view.getByRole('button').count(), 4);
+      await page.locator('form').getByRole('button', { name: 'Design system' }).click();
+      assert.equal(await page.locator('#submits').innerText(), 'Not submitted');
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      view = await open('dialog');
+      await view.getByRole('button', { name: 'Open dialog' }).click();
+      const modal = view.getByRole('dialog');
+      await modal.click({ position: { x: 10, y: 10 } });
+      assert.ok(await modal.isVisible());
+      await page.keyboard.press('Escape');
+      assert.equal(await modal.isVisible(), false);
+      assert.equal(
+        await view
+          .getByRole('button', { name: 'Open dialog' })
+          .evaluate((el) => el === document.activeElement),
+        true,
+      );
+      view = await open('be-swipeable-list');
+      await view.getByRole('button', { name: 'Archive Research' }).click();
+      await view.getByRole('button', { name: 'Archive Design' }).click();
+      await view.getByRole('button', { name: 'Undo archive' }).click();
+      await view.getByRole('button', { name: 'Undo archive' }).click();
+      assert.deepEqual(await view.locator('li strong').allTextContents(), [
+        'Research',
+        'Design',
+        'Build',
+      ]);
+      view = await open('be-signup-form');
+      await view.getByLabel('Email').fill('test@example.com');
+      await view.getByLabel('Password').fill('example-pass-123');
+      await view.getByRole('button', { name: 'Check signup details' }).click();
+      assert.match(await view.getByRole('status').innerText(), /checks passed/);
+      await view.getByLabel('Email').fill('other@example.com');
+      assert.doesNotMatch(await view.getByRole('status').innerText(), /checks passed/);
+      view = await open('be-file-upload');
+      await view
+        .getByLabel('Choose files')
+        .setInputFiles({ name: 'small.txt', mimeType: 'text/plain', buffer: Buffer.from('test') });
+      assert.equal(await view.locator('li').count(), 1);
+      await view
+        .getByLabel('Choose files')
+        .setInputFiles({
+          name: 'large.txt',
+          mimeType: 'text/plain',
+          buffer: Buffer.alloc(10000001),
+        });
+      assert.equal(await view.locator('li').count(), 0);
+      assert.match(await view.getByRole('alert').innerText(), /10 MB/);
+      view = await open('be-table');
+      await view.getByLabel('Filter rows').fill('unknown');
+      assert.match(await view.locator('tbody').innerText(), /No matching projects/);
+      view = await open('be-file-diff');
+      await page.evaluate(() =>
+        Object.defineProperty(navigator, 'clipboard', {
+          value: {
+            writeText: async () => {
+              throw new Error('denied');
+            },
+          },
+          configurable: true,
+        }),
+      );
+      await view.getByRole('button', { name: 'Copy' }).click();
+      assert.match(await view.getByRole('status').innerText(), /manually/);
+      view = await open('tabs');
+      await view.getByRole('tab', { name: 'Overview' }).focus();
+      await page.keyboard.press('ArrowRight');
+      assert.equal(
+        await view.getByRole('tab', { name: 'Activity' }).getAttribute('aria-selected'),
+        'true',
+      );
+      await page.goto(url + '?view=8');
+      await page
+        .locator('.rf-library')
+        .first()
+        .getByRole('button', { name: 'Existing project' })
+        .click();
+      assert.equal(await page.getByLabel('App selection').innerText(), 'Existing project');
+      await page.getByRole('button', { name: 'Update project data' }).click();
+      assert.equal(
+        await page
+          .locator('.rf-library')
+          .first()
+          .getByRole('button', { name: 'New project' })
+          .count(),
+        1,
+      );
+      assert.doesNotMatch(
+        await page.locator('.rf-library').first().getByRole('status').innerText(),
+        /Selected/,
+      );
+      assert.deepEqual(errors, []);
+      await page.goto(url + '?view=9');
+      await page.getByRole('button', { name: 'Reload Reframe' }).waitFor();
+      assert.match(
+        await page.getByRole('alert').innerText(),
+        /saved clipboard has not been cleared/,
+      );
+    } finally {
+      await browser?.close();
+      if (server) await new Promise((resolve) => server.close(resolve));
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+);

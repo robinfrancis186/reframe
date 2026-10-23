@@ -1,166 +1,1723 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 
-export function LibrarySearch({items=['Design system', 'Product roadmap', 'Brand guidelines', 'Research notes'],onSelect}:{items?:readonly string[];onSelect?:(value:string)=>void}={}) {
-  const [query, setQuery] = useState(''), [selected, setSelected] = useState(''), id = useId();
-  const results = [...new Set(items)].filter(item => typeof item==='string' && item.toLowerCase().includes(query.trim().toLowerCase()));
-  return <section><h2>Find your next idea.</h2><label htmlFor={id}>Search projects<input id={id} type="search" value={query} onChange={event => { setQuery(event.target.value); setSelected(''); }} placeholder="Try design or brand…" /></label>{query && <button type="button" onClick={() => { setQuery(''); setSelected(''); document.getElementById(id)?.focus(); }}>Clear search</button>}<ul className="rf-results">{results.map(item => <li key={item}><button type="button" aria-pressed={selected === item} onClick={() => {setSelected(item);onSelect?.(item);}}>{item}<span aria-hidden="true">{selected === item ? '✓' : '↗'}</span></button></li>)}</ul><p role="status">{results.length === 0 ? 'No projects found. Try another search.' : selected && results.includes(selected) ? `Selected: ${selected}` : `${results.length} projects available`}</p></section>;
+export function LibrarySearch({
+  items = ['Design system', 'Product roadmap', 'Brand guidelines', 'Research notes'],
+  onSelect,
+}: { items?: readonly string[]; onSelect?: (value: string) => void } = {}) {
+  const [query, setQuery] = useState(''),
+    [selected, setSelected] = useState(''),
+    id = useId();
+  const results = [...new Set(items)].filter(
+    (item) => typeof item === 'string' && item.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+  return (
+    <section>
+      <h2>Find your next idea.</h2>
+      <label htmlFor={id}>
+        Search projects
+        <input
+          id={id}
+          type="search"
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setSelected('');
+          }}
+          placeholder="Try design or brand…"
+        />
+      </label>
+      {query && (
+        <button
+          type="button"
+          onClick={() => {
+            setQuery('');
+            setSelected('');
+            document.getElementById(id)?.focus();
+          }}
+        >
+          Clear search
+        </button>
+      )}
+      <ul className="rf-results">
+        {results.map((item) => (
+          <li key={item}>
+            <button
+              type="button"
+              aria-pressed={selected === item}
+              onClick={() => {
+                setSelected(item);
+                onSelect?.(item);
+              }}
+            >
+              {item}
+              <span aria-hidden="true">{selected === item ? '✓' : '↗'}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <p role="status">
+        {results.length === 0
+          ? 'No projects found. Try another search.'
+          : selected && results.includes(selected)
+            ? `Selected: ${selected}`
+            : `${results.length} projects available`}
+      </p>
+    </section>
+  );
 }
 
 export function LibraryTimeline() {
-  const [active,setActive]=useState(0), events=['Discover the reference','Adapt to your brand','Build something useful'];
-  return <section><h2>Your next chapter.</h2><div className="rf-row">{events.map((event,i)=><button type="button" key={event} aria-pressed={active===i} onClick={()=>setActive(i)}>{i+1}</button>)}</div><h3>{events[active]}</h3><p>Step {active+1} of {events.length}</p><button type="button" disabled={active===0} onClick={()=>setActive(active-1)}>Previous</button> <button type="button" disabled={active===2} onClick={()=>setActive(active+1)}>Next</button></section>;
+  const [active, setActive] = useState(0),
+    events = ['Discover the reference', 'Adapt to your brand', 'Build something useful'];
+  return (
+    <section>
+      <h2>Your next chapter.</h2>
+      <div className="rf-row">
+        {events.map((event, i) => (
+          <button
+            type="button"
+            key={event}
+            aria-pressed={active === i}
+            onClick={() => setActive(i)}
+          >
+            {i + 1}
+          </button>
+        ))}
+      </div>
+      <h3>{events[active]}</h3>
+      <p>
+        Step {active + 1} of {events.length}
+      </p>
+      <button type="button" disabled={active === 0} onClick={() => setActive(active - 1)}>
+        Previous
+      </button>{' '}
+      <button type="button" disabled={active === 2} onClick={() => setActive(active + 1)}>
+        Next
+      </button>
+    </section>
+  );
 }
 export function LibraryAlert() {
-  const [visible,setVisible]=useState(true);
-  return <section>{visible?<div role="alert"><h2>A moment of clarity.</h2><p>Review your changes before continuing.</p><button type="button" onClick={()=>setVisible(false)}>Dismiss alert</button></div>:<button type="button" onClick={()=>setVisible(true)}>Show alert</button>}</section>;
+  const [visible, setVisible] = useState(true);
+  return (
+    <section>
+      {visible ? (
+        <div role="alert">
+          <h2>A moment of clarity.</h2>
+          <p>Review your changes before continuing.</p>
+          <button type="button" onClick={() => setVisible(false)}>
+            Dismiss alert
+          </button>
+        </div>
+      ) : (
+        <button type="button" onClick={() => setVisible(true)}>
+          Show alert
+        </button>
+      )}
+    </section>
+  );
 }
-export function LibraryGallery({variant='image-viewer'}:{variant?:string}={}) {
-  const [active,setActive]=useState(0), [zoom,setZoom]=useState(false), names=['Morning','Daylight','Evening'];
-  return <section><h2>A different perspective.</h2><div className="rf-gallery-window"><div className="rf-artwork" role="img" aria-label={`${names[active]} abstract landscape`} style={{aspectRatio:variant==='aspect-ratio'?(active===1?'1':'16/9'):'16/10',transform:zoom?'scale(1.5)':'none',background:`linear-gradient(${80+active*65}deg,var(--rf-primary),var(--rf-bg))`}}><span>{names[active]}</span></div></div><div className="rf-row"><button type="button" aria-label="Previous artwork" onClick={()=>setActive((active+2)%3)}>←</button>{names.map((name,i)=><button type="button" key={name} aria-pressed={active===i} onClick={()=>setActive(i)}>{name}</button>)}<button type="button" aria-pressed={zoom} onClick={()=>setZoom(!zoom)}>{zoom?"Fit image":"Zoom artwork"}</button><button type="button" aria-label="Next artwork" onClick={()=>setActive((active+1)%3)}>→</button></div></section>;
+export function LibraryGallery({ variant = 'image-viewer' }: { variant?: string } = {}) {
+  const [active, setActive] = useState(0),
+    [zoom, setZoom] = useState(false),
+    names = ['Morning', 'Daylight', 'Evening'];
+  return (
+    <section>
+      <h2>A different perspective.</h2>
+      <div className="rf-gallery-window">
+        <div
+          className="rf-artwork"
+          role="img"
+          aria-label={`${names[active]} abstract landscape`}
+          style={{
+            aspectRatio: variant === 'aspect-ratio' ? (active === 1 ? '1' : '16/9') : '16/10',
+            transform: zoom ? 'scale(1.5)' : 'none',
+            background: `linear-gradient(${80 + active * 65}deg,var(--rf-primary),var(--rf-bg))`,
+          }}
+        >
+          <span>{names[active]}</span>
+        </div>
+      </div>
+      <div className="rf-row">
+        <button
+          type="button"
+          aria-label="Previous artwork"
+          onClick={() => setActive((active + 2) % 3)}
+        >
+          ←
+        </button>
+        {names.map((name, i) => (
+          <button type="button" key={name} aria-pressed={active === i} onClick={() => setActive(i)}>
+            {name}
+          </button>
+        ))}
+        <button type="button" aria-pressed={zoom} onClick={() => setZoom(!zoom)}>
+          {zoom ? 'Fit image' : 'Zoom artwork'}
+        </button>
+        <button type="button" aria-label="Next artwork" onClick={() => setActive((active + 1) % 3)}>
+          →
+        </button>
+      </div>
+    </section>
+  );
 }
-export function LibraryPicker({variant='wheel-picker'}:{variant?:string}={}) {
-  const [value,setValue]=useState('Balanced');
-  return <section><h2>Choose your pace.</h2><div className={variant==='arc-picker'?'rf-arc':'rf-picker'}>{['Focused','Balanced','Exploratory'].map((v,i)=><button type="button" key={v} style={variant==='arc-picker'?{transform:`translateY(${i===1?0:12}px)`}:undefined} aria-pressed={value===v} onClick={()=>setValue(v)}>{v}</button>)}</div><label>Selection<select value={value} onChange={e=>setValue(e.target.value)}>{['Focused','Balanced','Exploratory'].map(v=><option key={v}>{v}</option>)}</select></label><p role="status">{value}</p></section>;
+export function LibraryPicker({ variant = 'wheel-picker' }: { variant?: string } = {}) {
+  const [value, setValue] = useState('Balanced');
+  return (
+    <section>
+      <h2>Choose your pace.</h2>
+      <div className={variant === 'arc-picker' ? 'rf-arc' : 'rf-picker'}>
+        {['Focused', 'Balanced', 'Exploratory'].map((v, i) => (
+          <button
+            type="button"
+            key={v}
+            style={
+              variant === 'arc-picker'
+                ? { transform: `translateY(${i === 1 ? 0 : 12}px)` }
+                : undefined
+            }
+            aria-pressed={value === v}
+            onClick={() => setValue(v)}
+          >
+            {v}
+          </button>
+        ))}
+      </div>
+      <label>
+        Selection
+        <select value={value} onChange={(e) => setValue(e.target.value)}>
+          {['Focused', 'Balanced', 'Exploratory'].map((v) => (
+            <option key={v}>{v}</option>
+          ))}
+        </select>
+      </label>
+      <p role="status">{value}</p>
+    </section>
+  );
 }
-export function LibrarySortable({variant='sortable-stack'}:{variant?:string}={}) {
-  const [items,setItems]=useState(['Research','Design','Build']), [removed,setRemoved]=useState<{item:string;index:number}[]>([]), [announcement,setAnnouncement]=useState('');
-  function move(index:number,delta:number){const next=[...items], destination=index+delta; if(destination<0||destination>=next.length)return; [next[index],next[destination]]=[next[destination],next[index]];setItems(next);setAnnouncement(`${items[index]} moved to position ${destination+1}`);}
-  return <section><h2>Put first things first.</h2><ul className="rf-results">{items.map((item,i)=><li className="rf-row" key={item} draggable onDragStart={e=>e.dataTransfer.setData('text/plain',item)} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const from=items.indexOf(e.dataTransfer.getData('text/plain'));if(from>=0)move(from,i-from);}}><strong>{item}</strong>{variant==='swipeable-list'?<button type="button" onClick={()=>{setRemoved(old=>[...old,{item,index:i}]);setItems(old=>old.filter(v=>v!==item));setAnnouncement(`${item} archived. Undo is available.`);}}>Archive {item}</button>:<><button type="button" aria-label={`Move ${item} up`} disabled={!i} onClick={()=>move(i,-1)}>↑</button><button type="button" aria-label={`Move ${item} down`} disabled={i===items.length-1} onClick={()=>move(i,1)}>↓</button></>}</li>)}</ul>{!!removed.length&&<button type="button" onClick={()=>{const last=removed[removed.length-1];setItems(old=>{const next=[...old];next.splice(Math.min(last.index,next.length),0,last.item);return next;});setRemoved(old=>old.slice(0,-1));setAnnouncement(`${last.item} restored.`);}}>Undo archive</button>}<p role="status">{announcement}</p></section>;
+export function LibrarySortable({ variant = 'sortable-stack' }: { variant?: string } = {}) {
+  const [items, setItems] = useState(['Research', 'Design', 'Build']),
+    [removed, setRemoved] = useState<{ item: string; index: number }[]>([]),
+    [announcement, setAnnouncement] = useState('');
+  function move(index: number, delta: number) {
+    const next = [...items],
+      destination = index + delta;
+    if (destination < 0 || destination >= next.length) return;
+    [next[index], next[destination]] = [next[destination], next[index]];
+    setItems(next);
+    setAnnouncement(`${items[index]} moved to position ${destination + 1}`);
+  }
+  return (
+    <section>
+      <h2>Put first things first.</h2>
+      <ul className="rf-results">
+        {items.map((item, i) => (
+          <li
+            className="rf-row"
+            key={item}
+            draggable
+            onDragStart={(e) => e.dataTransfer.setData('text/plain', item)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const from = items.indexOf(e.dataTransfer.getData('text/plain'));
+              if (from >= 0) move(from, i - from);
+            }}
+          >
+            <strong>{item}</strong>
+            {variant === 'swipeable-list' ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setRemoved((old) => [...old, { item, index: i }]);
+                  setItems((old) => old.filter((v) => v !== item));
+                  setAnnouncement(`${item} archived. Undo is available.`);
+                }}
+              >
+                Archive {item}
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  aria-label={`Move ${item} up`}
+                  disabled={!i}
+                  onClick={() => move(i, -1)}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Move ${item} down`}
+                  disabled={i === items.length - 1}
+                  onClick={() => move(i, 1)}
+                >
+                  ↓
+                </button>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+      {!!removed.length && (
+        <button
+          type="button"
+          onClick={() => {
+            const last = removed[removed.length - 1];
+            setItems((old) => {
+              const next = [...old];
+              next.splice(Math.min(last.index, next.length), 0, last.item);
+              return next;
+            });
+            setRemoved((old) => old.slice(0, -1));
+            setAnnouncement(`${last.item} restored.`);
+          }}
+        >
+          Undo archive
+        </button>
+      )}
+      <p role="status">{announcement}</p>
+    </section>
+  );
 }
-export function LibraryDates({variant='date-range-picker'}:{variant?:string}={}) {
-  const [start,setStart]=useState(''), [end,setEnd]=useState(''), [slot,setSlot]=useState(''); const invalid=!!(start&&end&&end<start);
-  return <section><h2>A little time, well spent.</h2><label>Start date<input type="date" value={start} onChange={e=>setStart(e.target.value)}/></label><label>End date<input type="date" min={start} value={end} onChange={e=>setEnd(e.target.value)} aria-invalid={invalid}/></label>{variant==='availability-scheduler'&&<div className="rf-row">{['09:00','13:00','16:00'].map(time=><button type="button" key={time} aria-pressed={slot===time} onClick={()=>setSlot(time)}>{time}</button>)}</div>}<p role={invalid?'alert':'status'}>{invalid?'End date must follow start date.':start&&end?`${start} → ${end}${slot?' at '+slot:''}`:'Choose your date range.'}</p><button type="button" onClick={()=>{setStart('');setEnd('');setSlot('');}}>Clear dates</button></section>;
+export function LibraryDates({ variant = 'date-range-picker' }: { variant?: string } = {}) {
+  const [start, setStart] = useState(''),
+    [end, setEnd] = useState(''),
+    [slot, setSlot] = useState('');
+  const invalid = !!(start && end && end < start);
+  return (
+    <section>
+      <h2>A little time, well spent.</h2>
+      <label>
+        Start date
+        <input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
+      </label>
+      <label>
+        End date
+        <input
+          type="date"
+          min={start}
+          value={end}
+          onChange={(e) => setEnd(e.target.value)}
+          aria-invalid={invalid}
+        />
+      </label>
+      {variant === 'availability-scheduler' && (
+        <div className="rf-row">
+          {['09:00', '13:00', '16:00'].map((time) => (
+            <button
+              type="button"
+              key={time}
+              aria-pressed={slot === time}
+              onClick={() => setSlot(time)}
+            >
+              {time}
+            </button>
+          ))}
+        </div>
+      )}
+      <p role={invalid ? 'alert' : 'status'}>
+        {invalid
+          ? 'End date must follow start date.'
+          : start && end
+            ? `${start} → ${end}${slot ? ' at ' + slot : ''}`
+            : 'Choose your date range.'}
+      </p>
+      <button
+        type="button"
+        onClick={() => {
+          setStart('');
+          setEnd('');
+          setSlot('');
+        }}
+      >
+        Clear dates
+      </button>
+    </section>
+  );
 }
-export function LibraryCard({variant='card',brandName='Your brand',tagline='Make room for what matters.'}:{variant?:string;brandName?:string;tagline?:string}={}) {
-  const [selected,setSelected]=useState(false);
-  return <article className={variant==='tilt-card'?'rf-tilt':''} onPointerMove={e=>{if(variant==='tilt-card'){const b=e.currentTarget.getBoundingClientRect();e.currentTarget.style.transform=`perspective(600px) rotateY(${((e.clientX-b.left)/b.width-.5)*12}deg)`;}}} onPointerLeave={e=>{e.currentTarget.style.transform='';}}><small>{brandName}</small><h2>A considered starting point.</h2><p>{tagline}</p><button type="button" data-primary aria-pressed={selected} onClick={()=>setSelected(!selected)}>{selected?'Selected ✓':'Choose this card'}</button></article>;
+export function LibraryCard({
+  variant = 'card',
+  brandName = 'Your brand',
+  tagline = 'Make room for what matters.',
+}: { variant?: string; brandName?: string; tagline?: string } = {}) {
+  const [selected, setSelected] = useState(false);
+  return (
+    <article
+      className={variant === 'tilt-card' ? 'rf-tilt' : ''}
+      onPointerMove={(e) => {
+        if (variant === 'tilt-card') {
+          const b = e.currentTarget.getBoundingClientRect();
+          e.currentTarget.style.transform = `perspective(600px) rotateY(${((e.clientX - b.left) / b.width - 0.5) * 12}deg)`;
+        }
+      }}
+      onPointerLeave={(e) => {
+        e.currentTarget.style.transform = '';
+      }}
+    >
+      <small>{brandName}</small>
+      <h2>A considered starting point.</h2>
+      <p>{tagline}</p>
+      <button
+        type="button"
+        data-primary
+        aria-pressed={selected}
+        onClick={() => setSelected(!selected)}
+      >
+        {selected ? 'Selected ✓' : 'Choose this card'}
+      </button>
+    </article>
+  );
 }
-export function LibraryColors({variant='color-picker'}:{variant?:string}={}) {
-  const [value,setValue]=useState('#176e9b'), id=useId();
-  return <section><h2>A shade of possibility.</h2>{variant==='color-picker'&&<label htmlFor={id}>Choose a color<input id={id} type="color" value={value} onChange={e=>setValue(e.target.value)}/></label>}<div className="rf-row">{['#176e9b','#7657c5','#247457','#c44b18'].map(color=><button type="button" key={color} aria-label={`Choose ${color}`} aria-pressed={color===value} style={{background:color,color:'#fff'}} onClick={()=>setValue(color)}>●</button>)}</div><output>{value}</output><div style={{background:value,height:40,borderRadius:'var(--rf-radius)',marginTop:12}}/></section>;
+export function LibraryColors({ variant = 'color-picker' }: { variant?: string } = {}) {
+  const [value, setValue] = useState('#176e9b'),
+    id = useId();
+  return (
+    <section>
+      <h2>A shade of possibility.</h2>
+      {variant === 'color-picker' && (
+        <label htmlFor={id}>
+          Choose a color
+          <input id={id} type="color" value={value} onChange={(e) => setValue(e.target.value)} />
+        </label>
+      )}
+      <div className="rf-row">
+        {['#176e9b', '#7657c5', '#247457', '#c44b18'].map((color) => (
+          <button
+            type="button"
+            key={color}
+            aria-label={`Choose ${color}`}
+            aria-pressed={color === value}
+            style={{ background: color, color: '#fff' }}
+            onClick={() => setValue(color)}
+          >
+            ●
+          </button>
+        ))}
+      </div>
+      <output>{value}</output>
+      <div
+        style={{ background: value, height: 40, borderRadius: 'var(--rf-radius)', marginTop: 12 }}
+      />
+    </section>
+  );
 }
 export function LibraryBreadcrumb() {
-  const [path,setPath]=useState(['Workspace','Projects','Design']);
-  return <section><nav aria-label="Breadcrumb"><ol className="rf-row">{path.map((part,i)=><li key={part}><button type="button" aria-current={i===path.length-1?'page':undefined} onClick={()=>setPath(path.slice(0,i+1))}>{part}</button></li>)}</ol></nav><h2>{path.at(-1)}</h2><button type="button" onClick={()=>setPath(['Workspace','Projects','Design'])}>Open design folder</button></section>;
+  const [path, setPath] = useState(['Workspace', 'Projects', 'Design']);
+  return (
+    <section>
+      <nav aria-label="Breadcrumb">
+        <ol className="rf-row">
+          {path.map((part, i) => (
+            <li key={part}>
+              <button
+                type="button"
+                aria-current={i === path.length - 1 ? 'page' : undefined}
+                onClick={() => setPath(path.slice(0, i + 1))}
+              >
+                {part}
+              </button>
+            </li>
+          ))}
+        </ol>
+      </nav>
+      <h2>{path.at(-1)}</h2>
+      <button type="button" onClick={() => setPath(['Workspace', 'Projects', 'Design'])}>
+        Open design folder
+      </button>
+    </section>
+  );
 }
-export function LibraryActions({variant='button'}:{variant?:string}={}) {
-  const [active,setActive]=useState(false), [count,setCount]=useState(0);
-  return <section><h2>A clear next step.</h2><button type="button" data-primary aria-expanded={['expandable-control','bloom-menu','expandable-action-bar','overflow-actions'].includes(variant)?active:undefined} aria-pressed={active} onClick={()=>{setActive(!active);setCount(count+1);}}>{variant==='action-swap'?(active?'Following ✓':'Follow'):active?'Selected ✓':'Explore the idea'} <span aria-hidden="true">↗</span></button>{active&&['expandable-control','bloom-menu','expandable-action-bar','overflow-actions'].includes(variant)&&<div className="rf-row rf-reveal">{['Design','Build','Share'].map(action=><button type="button" key={action} onClick={()=>setCount(count+1)}>{action}</button>)}</div>}<p role="status">{count} interaction{count===1?'':'s'} in this session.</p></section>;
+export function LibraryActions({ variant = 'button' }: { variant?: string } = {}) {
+  const [active, setActive] = useState(false),
+    [count, setCount] = useState(0);
+  return (
+    <section>
+      <h2>A clear next step.</h2>
+      <button
+        type="button"
+        data-primary
+        aria-expanded={
+          [
+            'expandable-control',
+            'bloom-menu',
+            'expandable-action-bar',
+            'overflow-actions',
+          ].includes(variant)
+            ? active
+            : undefined
+        }
+        aria-pressed={active}
+        onClick={() => {
+          setActive(!active);
+          setCount(count + 1);
+        }}
+      >
+        {variant === 'action-swap'
+          ? active
+            ? 'Following ✓'
+            : 'Follow'
+          : active
+            ? 'Selected ✓'
+            : 'Explore the idea'}{' '}
+        <span aria-hidden="true">↗</span>
+      </button>
+      {active &&
+        ['expandable-control', 'bloom-menu', 'expandable-action-bar', 'overflow-actions'].includes(
+          variant,
+        ) && (
+          <div className="rf-row rf-reveal">
+            {['Design', 'Build', 'Share'].map((action) => (
+              <button type="button" key={action} onClick={() => setCount(count + 1)}>
+                {action}
+              </button>
+            ))}
+          </div>
+        )}
+      <p role="status">
+        {count} interaction{count === 1 ? '' : 's'} in this session.
+      </p>
+    </section>
+  );
 }
-export function LibraryNavigation({variant='dock'}:{variant?:string}={}) {
-  const [active,setActive]=useState('Overview'), [collapsed,setCollapsed]=useState(false); const labels=['Overview','Activity','Settings'];
-  return <section><div className="rf-row"><button type="button" aria-expanded={!collapsed} onClick={()=>setCollapsed(!collapsed)}>{collapsed?'Expand navigation':'Collapse navigation'}</button></div><nav aria-label="Project navigation" className={variant.includes('sidebar')?'rf-nav-vertical':'rf-row'}>{labels.map(label=><button type="button" key={label} aria-current={active===label?'page':undefined} aria-label={label} data-primary={active===label||undefined} onClick={()=>setActive(label)}>{collapsed?label[0]:label}</button>)}</nav><h2>{active}</h2><p>{active==='Settings'?'Choose your preferences.':active==='Activity'?'Your recent work belongs here.':'Everything you need, close at hand.'}</p></section>;
+export function LibraryNavigation({ variant = 'dock' }: { variant?: string } = {}) {
+  const [active, setActive] = useState('Overview'),
+    [collapsed, setCollapsed] = useState(false);
+  const labels = ['Overview', 'Activity', 'Settings'];
+  return (
+    <section>
+      <div className="rf-row">
+        <button type="button" aria-expanded={!collapsed} onClick={() => setCollapsed(!collapsed)}>
+          {collapsed ? 'Expand navigation' : 'Collapse navigation'}
+        </button>
+      </div>
+      <nav
+        aria-label="Project navigation"
+        className={variant.includes('sidebar') ? 'rf-nav-vertical' : 'rf-row'}
+      >
+        {labels.map((label) => (
+          <button
+            type="button"
+            key={label}
+            aria-current={active === label ? 'page' : undefined}
+            aria-label={label}
+            data-primary={active === label || undefined}
+            onClick={() => setActive(label)}
+          >
+            {collapsed ? label[0] : label}
+          </button>
+        ))}
+      </nav>
+      <h2>{active}</h2>
+      <p>
+        {active === 'Settings'
+          ? 'Choose your preferences.'
+          : active === 'Activity'
+            ? 'Your recent work belongs here.'
+            : 'Everything you need, close at hand.'}
+      </p>
+    </section>
+  );
 }
 export function LibraryInput() {
-  const [email,setEmail]=useState(''), [checked,setChecked]=useState(false), id=useId(); const valid=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  return <form onSubmit={e=>{e.preventDefault();setChecked(true);}}><h2>Stay in the loop.</h2><label htmlFor={id}>Email<input id={id} type="email" value={email} onChange={e=>{setEmail(e.target.value);setChecked(false);}} required aria-invalid={checked&&!valid}/></label><button type="submit">Check email</button><p role="status">{checked?(valid?'Email format looks good.':'Enter a valid email address.'):'Format validation happens locally.'}</p></form>;
+  const [email, setEmail] = useState(''),
+    [checked, setChecked] = useState(false),
+    id = useId();
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        setChecked(true);
+      }}
+    >
+      <h2>Stay in the loop.</h2>
+      <label htmlFor={id}>
+        Email
+        <input
+          id={id}
+          type="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setChecked(false);
+          }}
+          required
+          aria-invalid={checked && !valid}
+        />
+      </label>
+      <button type="submit">Check email</button>
+      <p role="status">
+        {checked
+          ? valid
+            ? 'Email format looks good.'
+            : 'Enter a valid email address.'
+          : 'Format validation happens locally.'}
+      </p>
+    </form>
+  );
 }
-export function LibrarySelect({variant='select'}:{variant?:string}={}) {
-  const [selected,setSelected]=useState('Design'), [query,setQuery]=useState(''), id=useId(), options=['Design','Engineering','Research'];
-  return <section><h2>Choose a direction.</h2>{variant==='combobox'&&<label>Filter options<input type="search" value={query} onChange={e=>setQuery(e.target.value)}/></label>}<label htmlFor={id}>Discipline<select id={id} value={selected} onChange={e=>setSelected(e.target.value)}>{[...new Set([selected,...options.filter(v=>v.toLowerCase().includes(query.trim().toLowerCase()))])].map(value=><option key={value}>{value}</option>)}</select></label><p role="status">Selected: {selected}</p></section>;
+export function LibrarySelect({ variant = 'select' }: { variant?: string } = {}) {
+  const [selected, setSelected] = useState('Design'),
+    [query, setQuery] = useState(''),
+    id = useId(),
+    options = ['Design', 'Engineering', 'Research'];
+  return (
+    <section>
+      <h2>Choose a direction.</h2>
+      {variant === 'combobox' && (
+        <label>
+          Filter options
+          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} />
+        </label>
+      )}
+      <label htmlFor={id}>
+        Discipline
+        <select id={id} value={selected} onChange={(e) => setSelected(e.target.value)}>
+          {[
+            ...new Set([
+              selected,
+              ...options.filter((v) => v.toLowerCase().includes(query.trim().toLowerCase())),
+            ]),
+          ].map((value) => (
+            <option key={value}>{value}</option>
+          ))}
+        </select>
+      </label>
+      <p role="status">Selected: {selected}</p>
+    </section>
+  );
 }
-export function LibraryChoices({variant='checkbox'}:{variant?:string}={}) {
-  const [values,setValues]=useState<string[]>(['Design']), [query,setQuery]=useState(''), id=useId(); const options=['Design','Engineering','Research'];
-  return <section><h2>Make it personal.</h2>{variant==='multi-select'&&<label>Find a discipline<input type="search" value={query} onChange={e=>setQuery(e.target.value)}/></label>}<fieldset><legend>Your interests</legend>{options.filter(v=>v.toLowerCase().includes(query.trim().toLowerCase())).map(value=><label key={value} className="rf-row"><input type={variant==='radio'?'radio':'checkbox'} name={id} checked={values.includes(value)} onChange={()=>setValues(variant==='radio'?[value]:values.includes(value)?values.filter(v=>v!==value):[...values,value])}/>{value}</label>)}</fieldset><p role="status">{values.join(', ')||'No interests selected'}</p></section>;
+export function LibraryChoices({ variant = 'checkbox' }: { variant?: string } = {}) {
+  const [values, setValues] = useState<string[]>(['Design']),
+    [query, setQuery] = useState(''),
+    id = useId();
+  const options = ['Design', 'Engineering', 'Research'];
+  return (
+    <section>
+      <h2>Make it personal.</h2>
+      {variant === 'multi-select' && (
+        <label>
+          Find a discipline
+          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} />
+        </label>
+      )}
+      <fieldset>
+        <legend>Your interests</legend>
+        {options
+          .filter((v) => v.toLowerCase().includes(query.trim().toLowerCase()))
+          .map((value) => (
+            <label key={value} className="rf-row">
+              <input
+                type={variant === 'radio' ? 'radio' : 'checkbox'}
+                name={id}
+                checked={values.includes(value)}
+                onChange={() =>
+                  setValues(
+                    variant === 'radio'
+                      ? [value]
+                      : values.includes(value)
+                        ? values.filter((v) => v !== value)
+                        : [...values, value],
+                  )
+                }
+              />
+              {value}
+            </label>
+          ))}
+      </fieldset>
+      <p role="status">{values.join(', ') || 'No interests selected'}</p>
+    </section>
+  );
 }
-export function LibraryOverlay({variant='popover'}:{variant?:string}={}) {
-  const dialog=useRef<HTMLDialogElement>(null), [page,setPage]=useState(0), id=useId();
-  return <section><h2>Space for a little more.</h2><button type="button" data-primary onClick={()=>dialog.current?.showModal()}>Open {variant.replaceAll('-',' ')}</button><dialog ref={dialog} data-placement={variant} aria-labelledby={id} onClick={e=>{const r=e.currentTarget.getBoundingClientRect();if(e.currentTarget===e.target&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom))dialog.current?.close();}}><h2 id={id}>{page?'The finer details.':'A fresh perspective.'}</h2><p>{page?'Keep your focus. Everything you need is in reach.':'A small space for a focused decision.'}</p><div className="rf-row"><button type="button" onClick={()=>setPage(page?0:1)}>{page?'Back':'Show details'}</button><form method="dialog"><button type="submit">Close panel</button></form></div></dialog></section>;
+export function LibraryOverlay({ variant = 'popover' }: { variant?: string } = {}) {
+  const dialog = useRef<HTMLDialogElement>(null),
+    [page, setPage] = useState(0),
+    id = useId();
+  return (
+    <section>
+      <h2>Space for a little more.</h2>
+      <button type="button" data-primary onClick={() => dialog.current?.showModal()}>
+        Open {variant.replaceAll('-', ' ')}
+      </button>
+      <dialog
+        ref={dialog}
+        data-placement={variant}
+        aria-labelledby={id}
+        onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          if (
+            e.currentTarget === e.target &&
+            (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)
+          )
+            dialog.current?.close();
+        }}
+      >
+        <h2 id={id}>{page ? 'The finer details.' : 'A fresh perspective.'}</h2>
+        <p>
+          {page
+            ? 'Keep your focus. Everything you need is in reach.'
+            : 'A small space for a focused decision.'}
+        </p>
+        <div className="rf-row">
+          <button type="button" onClick={() => setPage(page ? 0 : 1)}>
+            {page ? 'Back' : 'Show details'}
+          </button>
+          <form method="dialog">
+            <button type="submit">Close panel</button>
+          </form>
+        </div>
+      </dialog>
+    </section>
+  );
 }
 export function LibraryTooltip() {
-  const [open,setOpen]=useState(false), id=useId();
-  return <section><h2>A useful little hint.</h2><div className="rf-hint"><button type="button" aria-describedby={open?id:undefined} onMouseEnter={()=>setOpen(true)} onMouseLeave={()=>setOpen(false)} onFocus={()=>setOpen(true)} onBlur={()=>setOpen(false)} onClick={()=>setOpen(!open)} onKeyDown={e=>{if(e.key==='Escape')setOpen(false);}}>What does this do?</button>{open&&<span id={id} role="tooltip">Keep a component close so you can use it again.</span>}</div></section>;
+  const [open, setOpen] = useState(false),
+    id = useId();
+  return (
+    <section>
+      <h2>A useful little hint.</h2>
+      <div className="rf-hint">
+        <button
+          type="button"
+          aria-describedby={open ? id : undefined}
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setOpen(false)}
+          onClick={() => setOpen(!open)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setOpen(false);
+          }}
+        >
+          What does this do?
+        </button>
+        {open && (
+          <span id={id} role="tooltip">
+            Keep a component close so you can use it again.
+          </span>
+        )}
+      </div>
+    </section>
+  );
 }
 export function LibraryRefresh() {
-  const [time,setTime]=useState('Not refreshed'), [busy,setBusy]=useState(false);
-  useEffect(()=>{if(!busy)return;const timer=setTimeout(()=>{setTime(new Date().toLocaleTimeString());setBusy(false);},400);return()=>clearTimeout(timer);},[busy]);
-  return <section><h2>A fresh start.</h2><p>Local refresh interaction. Connect your own data loader in the exported source.</p><button type="button" disabled={busy} onClick={()=>setBusy(true)}>{busy?'Refreshing…':'Refresh view'}</button><p role="status">{time}</p></section>;
+  const [time, setTime] = useState('Not refreshed'),
+    [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!busy) return;
+    const timer = setTimeout(() => {
+      setTime(new Date().toLocaleTimeString());
+      setBusy(false);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [busy]);
+  return (
+    <section>
+      <h2>A fresh start.</h2>
+      <p>Local refresh interaction. Connect your own data loader in the exported source.</p>
+      <button type="button" disabled={busy} onClick={() => setBusy(true)}>
+        {busy ? 'Refreshing…' : 'Refresh view'}
+      </button>
+      <p role="status">{time}</p>
+    </section>
+  );
 }
-export function LibraryMotion({variant='text-animation'}:{variant?:string}={}) {
-  const [playing,setPlaying]=useState(true), [version,setVersion]=useState(0);
-  return <section><div className={`rf-motion rf-motion-${variant}`} data-playing={playing} key={version}><h2>Ideas in motion.</h2><p>Discover. Adapt. Create.</p></div><div className="rf-row"><button type="button" aria-pressed={playing} onClick={()=>setPlaying(!playing)}>{playing?'Pause motion':'Play motion'}</button><button type="button" onClick={()=>setVersion(version+1)}>Replay</button></div><small>Respects reduced-motion preferences.</small></section>;
+export function LibraryMotion({ variant = 'text-animation' }: { variant?: string } = {}) {
+  const [playing, setPlaying] = useState(true),
+    [version, setVersion] = useState(0);
+  return (
+    <section>
+      <div className={`rf-motion rf-motion-${variant}`} data-playing={playing} key={version}>
+        <h2>Ideas in motion.</h2>
+        <p>Discover. Adapt. Create.</p>
+      </div>
+      <div className="rf-row">
+        <button type="button" aria-pressed={playing} onClick={() => setPlaying(!playing)}>
+          {playing ? 'Pause motion' : 'Play motion'}
+        </button>
+        <button type="button" onClick={() => setVersion(version + 1)}>
+          Replay
+        </button>
+      </div>
+      <small>Respects reduced-motion preferences.</small>
+    </section>
+  );
 }
 export function LibraryNumber() {
-  const [value,setValue]=useState(120);
-  return <section><small>ROOM TO GROW</small><h2 key={value} className="rf-reveal"><output aria-live="polite">{value.toLocaleString()}</output></h2><div className="rf-row"><button type="button" onClick={()=>setValue(value-10)}>Decrease by ten</button><button type="button" data-primary onClick={()=>setValue(value+10)}>Increase by ten</button></div></section>;
+  const [value, setValue] = useState(120);
+  return (
+    <section>
+      <small>ROOM TO GROW</small>
+      <h2 key={value} className="rf-reveal">
+        <output aria-live="polite">{value.toLocaleString()}</output>
+      </h2>
+      <div className="rf-row">
+        <button type="button" onClick={() => setValue(value - 10)}>
+          Decrease by ten
+        </button>
+        <button type="button" data-primary onClick={() => setValue(value + 10)}>
+          Increase by ten
+        </button>
+      </div>
+    </section>
+  );
 }
-export function LibraryNotice({variant='loader'}:{variant?:string}={}) {
-  const [status,setStatus]=useState('Ready'), [notices,setNotices]=useState([1]), [next,setNext]=useState(2);
-  return <section><h2>{variant==='dynamic-island'?'A little live context.':'Good to know.'}</h2>{['notification-stack','animated-toast-stack'].includes(variant)?<><button type="button" onClick={()=>{setNotices([...notices,next].slice(-10));setNext(next+1);}}>Add notice</button>{notices.map(n=><div key={n} role="status" className="rf-reveal">Notice {n} <button type="button" aria-label={`Dismiss notice ${n}`} onClick={()=>setNotices(notices.filter(v=>v!==n))}>Dismiss</button></div>)}</>:<><div role="status" className={variant==='loader'?'rf-loader':''}>{status}</div><button type="button" onClick={()=>setStatus(status==='Ready'?'In progress':status==='In progress'?'Complete':'Ready')}>Next status</button></>}</section>;
+export function LibraryNotice({ variant = 'loader' }: { variant?: string } = {}) {
+  const [status, setStatus] = useState('Ready'),
+    [notices, setNotices] = useState([1]),
+    [next, setNext] = useState(2);
+  return (
+    <section>
+      <h2>{variant === 'dynamic-island' ? 'A little live context.' : 'Good to know.'}</h2>
+      {['notification-stack', 'animated-toast-stack'].includes(variant) ? (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              setNotices([...notices, next].slice(-10));
+              setNext(next + 1);
+            }}
+          >
+            Add notice
+          </button>
+          {notices.map((n) => (
+            <div key={n} role="status" className="rf-reveal">
+              Notice {n}{' '}
+              <button
+                type="button"
+                aria-label={`Dismiss notice ${n}`}
+                onClick={() => setNotices(notices.filter((v) => v !== n))}
+              >
+                Dismiss
+              </button>
+            </div>
+          ))}
+        </>
+      ) : (
+        <>
+          <div role="status" className={variant === 'loader' ? 'rf-loader' : ''}>
+            {status}
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              setStatus(
+                status === 'Ready'
+                  ? 'In progress'
+                  : status === 'In progress'
+                    ? 'Complete'
+                    : 'Ready',
+              )
+            }
+          >
+            Next status
+          </button>
+        </>
+      )}
+    </section>
+  );
 }
 export function LibraryTheme() {
-  const [dark,setDark]=useState(false);
-  return <section style={{background:dark?'#181c29':'var(--rf-bg)',color:dark?'#f4f6fc':'var(--rf-text)',padding:20,borderRadius:'var(--rf-radius)'}}><h2 style={{color:'inherit'}}>A different light.</h2><p>This component previews its own appearance.</p><button type="button" aria-pressed={dark} onClick={()=>setDark(!dark)}>{dark?'Use project appearance':'Preview dark appearance'}</button></section>;
+  const [dark, setDark] = useState(false);
+  return (
+    <section
+      style={{
+        background: dark ? '#181c29' : 'var(--rf-bg)',
+        color: dark ? '#f4f6fc' : 'var(--rf-text)',
+        padding: 20,
+        borderRadius: 'var(--rf-radius)',
+      }}
+    >
+      <h2 style={{ color: 'inherit' }}>A different light.</h2>
+      <p>This component previews its own appearance.</p>
+      <button type="button" aria-pressed={dark} onClick={() => setDark(!dark)}>
+        {dark ? 'Use project appearance' : 'Preview dark appearance'}
+      </button>
+    </section>
+  );
 }
-export function LibraryFiles({variant='file-tree'}:{variant?:string}={}) {
-  const [selected,setSelected]=useState('Readme.md');
-  return <section><h2>Your project, at a glance.</h2><details open><summary>{variant==='file-tree'?'Project files':'Open folder'}</summary><div className="rf-nav-vertical">{['Readme.md','Brand tokens.css','Component.tsx'].map(file=><button type="button" key={file} aria-pressed={file===selected} onClick={()=>setSelected(file)}>{file}</button>)}</div></details><p role="status">Selected: {selected}</p></section>;
+export function LibraryFiles({ variant = 'file-tree' }: { variant?: string } = {}) {
+  const [selected, setSelected] = useState('Readme.md');
+  return (
+    <section>
+      <h2>Your project, at a glance.</h2>
+      <details open>
+        <summary>{variant === 'file-tree' ? 'Project files' : 'Open folder'}</summary>
+        <div className="rf-nav-vertical">
+          {['Readme.md', 'Brand tokens.css', 'Component.tsx'].map((file) => (
+            <button
+              type="button"
+              key={file}
+              aria-pressed={file === selected}
+              onClick={() => setSelected(file)}
+            >
+              {file}
+            </button>
+          ))}
+        </div>
+      </details>
+      <p role="status">Selected: {selected}</p>
+    </section>
+  );
 }
-export function LibraryTable({rows:projectRows=[{name:'Research',progress:30},{name:'Design',progress:70},{name:'Build',progress:50}]}:{rows?:readonly {name:string;progress:number}[]}={}) {
-  const [ascending,setAscending]=useState(true), [selected,setSelected]=useState<string[]>([]), [query,setQuery]=useState(''); const rows=projectRows.filter(r=>r.name.toLowerCase().includes(query.trim().toLowerCase())).sort((a,b)=>ascending?a.progress-b.progress:b.progress-a.progress);
-  return <section><h2>A clearer view of your work.</h2><label>Filter rows<input type="search" value={query} onChange={e=>setQuery(e.target.value)}/></label><div className="rf-table-scroll"><table><thead><tr><th>Select</th><th>Project</th><th aria-sort={ascending?'ascending':'descending'}><button type="button" onClick={()=>setAscending(!ascending)}>Progress {ascending?'↑':'↓'}</button></th></tr></thead><tbody>{!rows.length&&<tr><td colSpan={3}>No matching projects. Clear the filter to see all rows.</td></tr>}{rows.map(row=><tr key={row.name}><td><input type="checkbox" aria-label={`Select ${row.name}`} checked={selected.includes(row.name)} onChange={()=>setSelected(selected.includes(row.name)?selected.filter(v=>v!==row.name):[...selected,row.name])}/></td><th scope="row">{row.name}</th><td>{row.progress}%</td></tr>)}</tbody></table></div><p role="status">{selected.length} rows selected</p></section>;
+export function LibraryTable({
+  rows: projectRows = [
+    { name: 'Research', progress: 30 },
+    { name: 'Design', progress: 70 },
+    { name: 'Build', progress: 50 },
+  ],
+}: { rows?: readonly { name: string; progress: number }[] } = {}) {
+  const [ascending, setAscending] = useState(true),
+    [selected, setSelected] = useState<string[]>([]),
+    [query, setQuery] = useState('');
+  const rows = projectRows
+    .filter((r) => r.name.toLowerCase().includes(query.trim().toLowerCase()))
+    .sort((a, b) => (ascending ? a.progress - b.progress : b.progress - a.progress));
+  return (
+    <section>
+      <h2>A clearer view of your work.</h2>
+      <label>
+        Filter rows
+        <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} />
+      </label>
+      <div className="rf-table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Select</th>
+              <th>Project</th>
+              <th aria-sort={ascending ? 'ascending' : 'descending'}>
+                <button type="button" onClick={() => setAscending(!ascending)}>
+                  Progress {ascending ? '↑' : '↓'}
+                </button>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {!rows.length && (
+              <tr>
+                <td colSpan={3}>No matching projects. Clear the filter to see all rows.</td>
+              </tr>
+            )}
+            {rows.map((row) => (
+              <tr key={row.name}>
+                <td>
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${row.name}`}
+                    checked={selected.includes(row.name)}
+                    onChange={() =>
+                      setSelected(
+                        selected.includes(row.name)
+                          ? selected.filter((v) => v !== row.name)
+                          : [...selected, row.name],
+                      )
+                    }
+                  />
+                </td>
+                <th scope="row">{row.name}</th>
+                <td>{row.progress}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p role="status">{selected.length} rows selected</p>
+    </section>
+  );
 }
 export function LibraryOTP() {
-  const [code,setCode]=useState(''), [checked,setChecked]=useState(false), id=useId();
-  return <form onSubmit={e=>{e.preventDefault();setChecked(true);}}><h2>One small step.</h2><label htmlFor={id}>Six-digit code<input id={id} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e=>{setCode(e.target.value.replace(/\D/g,''));setChecked(false);}} required/></label><button type="submit" disabled={code.length!==6}>Check format</button><p role="status">{checked?'Six-digit format accepted. Server verification is still required.':'Enter your code. Verification requires your identity service.'}</p></form>;
+  const [code, setCode] = useState(''),
+    [checked, setChecked] = useState(false),
+    id = useId();
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        setChecked(true);
+      }}
+    >
+      <h2>One small step.</h2>
+      <label htmlFor={id}>
+        Six-digit code
+        <input
+          id={id}
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          pattern="[0-9]{6}"
+          maxLength={6}
+          value={code}
+          onChange={(e) => {
+            setCode(e.target.value.replace(/\D/g, ''));
+            setChecked(false);
+          }}
+          required
+        />
+      </label>
+      <button type="submit" disabled={code.length !== 6}>
+        Check format
+      </button>
+      <p role="status">
+        {checked
+          ? 'Six-digit format accepted. Server verification is still required.'
+          : 'Enter your code. Verification requires your identity service.'}
+      </p>
+    </form>
+  );
 }
 export function LibraryUpload() {
-  const [files,setFiles]=useState<{name:string;size:number}[]>([]), [error,setError]=useState('');
-  return <section><h2>A good place for your files.</h2><label>Choose files<input type="file" multiple onChange={e=>{const chosen=Array.from(e.target.files||[]);if(chosen.length>10||chosen.some(f=>f.size>10000000)){setError('Choose up to 10 files, each under 10 MB.');setFiles([]);e.target.value='';return;}setError('');setFiles(chosen.map(({name,size})=>({name,size})));}}/></label>{error&&<p role="alert">{error}</p>}<ul>{files.map((file,i)=><li key={`${file.name}-${i}`}>{file.name} · {Math.ceil(file.size/1024)} KB <button type="button" aria-label={`Remove ${file.name}`} onClick={()=>setFiles(files.filter((_,index)=>index!==i))}>Remove</button></li>)}</ul><small>Local selection only. Connect your storage service to upload.</small></section>;
+  const [files, setFiles] = useState<{ name: string; size: number }[]>([]),
+    [error, setError] = useState('');
+  return (
+    <section>
+      <h2>A good place for your files.</h2>
+      <label>
+        Choose files
+        <input
+          type="file"
+          multiple
+          onChange={(e) => {
+            const chosen = Array.from(e.target.files || []);
+            if (chosen.length > 10 || chosen.some((f) => f.size > 10000000)) {
+              setError('Choose up to 10 files, each under 10 MB.');
+              setFiles([]);
+              e.target.value = '';
+              return;
+            }
+            setError('');
+            setFiles(chosen.map(({ name, size }) => ({ name, size })));
+          }}
+        />
+      </label>
+      {error && <p role="alert">{error}</p>}
+      <ul>
+        {files.map((file, i) => (
+          <li key={`${file.name}-${i}`}>
+            {file.name} · {Math.ceil(file.size / 1024)} KB{' '}
+            <button
+              type="button"
+              aria-label={`Remove ${file.name}`}
+              onClick={() => setFiles(files.filter((_, index) => index !== i))}
+            >
+              Remove
+            </button>
+          </li>
+        ))}
+      </ul>
+      <small>Local selection only. Connect your storage service to upload.</small>
+    </section>
+  );
 }
 export function LibrarySignup() {
-  const [ready,setReady]=useState(false), id=useId();
-  return <form onChange={()=>setReady(false)} onSubmit={e=>{e.preventDefault();setReady(true);}}><h2>Make yourself at home.</h2><label htmlFor={`${id}-email`}>Email<input id={`${id}-email`} type="email" autoComplete="email" required/></label><label htmlFor={`${id}-password`}>Password<input id={`${id}-password`} type="password" autoComplete="new-password" minLength={10} required/></label><button type="submit">Check signup details</button><p role="status">{ready?'Format checks passed. Connect your authentication service to create an account.':'Passwords stay in this form; no account service is connected.'}</p></form>;
+  const [ready, setReady] = useState(false),
+    id = useId();
+  return (
+    <form
+      onChange={() => setReady(false)}
+      onSubmit={(e) => {
+        e.preventDefault();
+        setReady(true);
+      }}
+    >
+      <h2>Make yourself at home.</h2>
+      <label htmlFor={`${id}-email`}>
+        Email
+        <input id={`${id}-email`} type="email" autoComplete="email" required />
+      </label>
+      <label htmlFor={`${id}-password`}>
+        Password
+        <input
+          id={`${id}-password`}
+          type="password"
+          autoComplete="new-password"
+          minLength={10}
+          required
+        />
+      </label>
+      <button type="submit">Check signup details</button>
+      <p role="status">
+        {ready
+          ? 'Format checks passed. Connect your authentication service to create an account.'
+          : 'Passwords stay in this form; no account service is connected.'}
+      </p>
+    </form>
+  );
 }
 export function LibraryFeedback() {
-  const [rating,setRating]=useState(0), [message,setMessage]=useState(''), [ready,setReady]=useState(false);
-  return <form onSubmit={e=>{e.preventDefault();setReady(true);}}><h2>How did it feel?</h2><div role="group" aria-label="Rating" className="rf-row">{[1,2,3,4,5].map(n=><button type="button" key={n} aria-label={`Rate ${n} of 5`} aria-pressed={rating===n} onClick={()=>{setRating(n);setReady(false);}}>{n<=rating?'★':'☆'}</button>)}</div><label>Your feedback<textarea required maxLength={2000} value={message} onChange={e=>{setMessage(e.target.value);setReady(false);}}/></label><button type="submit" disabled={!rating}>Prepare feedback</button><p role="status">{ready?`Draft ready: ${rating}/5 · ${message.length} characters. Connect a submission service to send it.`:'Your perspective helps shape what comes next.'}</p></form>;
+  const [rating, setRating] = useState(0),
+    [message, setMessage] = useState(''),
+    [ready, setReady] = useState(false);
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        setReady(true);
+      }}
+    >
+      <h2>How did it feel?</h2>
+      <div role="group" aria-label="Rating" className="rf-row">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            type="button"
+            key={n}
+            aria-label={`Rate ${n} of 5`}
+            aria-pressed={rating === n}
+            onClick={() => {
+              setRating(n);
+              setReady(false);
+            }}
+          >
+            {n <= rating ? '★' : '☆'}
+          </button>
+        ))}
+      </div>
+      <label>
+        Your feedback
+        <textarea
+          required
+          maxLength={2000}
+          value={message}
+          onChange={(e) => {
+            setMessage(e.target.value);
+            setReady(false);
+          }}
+        />
+      </label>
+      <button type="submit" disabled={!rating}>
+        Prepare feedback
+      </button>
+      <p role="status">
+        {ready
+          ? `Draft ready: ${rating}/5 · ${message.length} characters. Connect a submission service to send it.`
+          : 'Your perspective helps shape what comes next.'}
+      </p>
+    </form>
+  );
 }
 export function LibraryBracket() {
-  const [first,setFirst]=useState(''), [second,setSecond]=useState(''), [winner,setWinner]=useState('');
-  return <section><h2>Choose your finalists.</h2><div className="rf-row">{['North','South'].map(team=><button type="button" key={team} aria-pressed={first===team} onClick={()=>{setFirst(team);setWinner('');}}>{team}</button>)}</div><div className="rf-row">{['East','West'].map(team=><button type="button" key={team} aria-pressed={second===team} onClick={()=>{setSecond(team);setWinner('');}}>{team}</button>)}</div>{first&&second&&<div><h3>Final</h3>{[first,second].map(team=><button type="button" key={team} onClick={()=>setWinner(team)}>{team}</button>)}</div>}<p role="status">{winner?`${winner} wins.`:'Select one winner from each pair.'}</p></section>;
+  const [first, setFirst] = useState(''),
+    [second, setSecond] = useState(''),
+    [winner, setWinner] = useState('');
+  return (
+    <section>
+      <h2>Choose your finalists.</h2>
+      <div className="rf-row">
+        {['North', 'South'].map((team) => (
+          <button
+            type="button"
+            key={team}
+            aria-pressed={first === team}
+            onClick={() => {
+              setFirst(team);
+              setWinner('');
+            }}
+          >
+            {team}
+          </button>
+        ))}
+      </div>
+      <div className="rf-row">
+        {['East', 'West'].map((team) => (
+          <button
+            type="button"
+            key={team}
+            aria-pressed={second === team}
+            onClick={() => {
+              setSecond(team);
+              setWinner('');
+            }}
+          >
+            {team}
+          </button>
+        ))}
+      </div>
+      {first && second && (
+        <div>
+          <h3>Final</h3>
+          {[first, second].map((team) => (
+            <button type="button" key={team} onClick={() => setWinner(team)}>
+              {team}
+            </button>
+          ))}
+        </div>
+      )}
+      <p role="status">{winner ? `${winner} wins.` : 'Select one winner from each pair.'}</p>
+    </section>
+  );
 }
-export function LibrarySwap({variant='swap'}:{variant?:string}={}) {
-  const [amount,setAmount]=useState('1'), [flipped,setFlipped]=useState(false), [choice,setChoice]=useState('Yes'); const n=Number(amount);
-  return <section><h2>{variant==='prediction-market'?'Explore a possibility.':'An exchange of ideas.'}</h2><p>Illustrative values only. No funds, wallet or trade execution.</p>{variant==='prediction-market'?<div className="rf-row">{['Yes','No'].map(v=><button type="button" key={v} aria-pressed={choice===v} onClick={()=>setChoice(v)}>{v}</button>)}</div>:<><label>Amount in {flipped?'B':'A'}<input type="number" min="0" step="any" value={amount} onChange={e=>setAmount(e.target.value)}/></label><button type="button" onClick={()=>setFlipped(!flipped)}>Reverse direction</button></>}<p role="status">{variant==='prediction-market'?`Selected: ${choice}. Connect your own market data.`:Number.isFinite(n)&&n>=0?`Illustrative estimate: ${(n*(flipped?.5:2)).toFixed(2)} ${flipped?'A':'B'}`:'Enter a nonnegative amount.'}</p></section>;
+export function LibrarySwap({ variant = 'swap' }: { variant?: string } = {}) {
+  const [amount, setAmount] = useState('1'),
+    [flipped, setFlipped] = useState(false),
+    [choice, setChoice] = useState('Yes');
+  const n = Number(amount);
+  return (
+    <section>
+      <h2>
+        {variant === 'prediction-market' ? 'Explore a possibility.' : 'An exchange of ideas.'}
+      </h2>
+      <p>Illustrative values only. No funds, wallet or trade execution.</p>
+      {variant === 'prediction-market' ? (
+        <div className="rf-row">
+          {['Yes', 'No'].map((v) => (
+            <button type="button" key={v} aria-pressed={choice === v} onClick={() => setChoice(v)}>
+              {v}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <>
+          <label>
+            Amount in {flipped ? 'B' : 'A'}
+            <input
+              type="number"
+              min="0"
+              step="any"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </label>
+          <button type="button" onClick={() => setFlipped(!flipped)}>
+            Reverse direction
+          </button>
+        </>
+      )}
+      <p role="status">
+        {variant === 'prediction-market'
+          ? `Selected: ${choice}. Connect your own market data.`
+          : Number.isFinite(n) && n >= 0
+            ? `Illustrative estimate: ${(n * (flipped ? 0.5 : 2)).toFixed(2)} ${flipped ? 'A' : 'B'}`
+            : 'Enter a nonnegative amount.'}
+      </p>
+    </section>
+  );
 }
 export function LibraryWallet() {
-  const [address,setAddress]=useState(''), [visible,setVisible]=useState(false);
-  return <section><h2>Your address, at hand.</h2><label>Public address<input value={address} onChange={e=>setAddress(e.target.value)} autoComplete="off"/></label><button type="button" aria-pressed={visible} onClick={()=>setVisible(!visible)}>{visible?'Mask address':'Reveal address'}</button><p>{visible?address||'No address entered':address?'•••• '+address.slice(-4):'Add a public address'}</p><small>Never enter a private key or recovery phrase. No wallet is connected.</small></section>;
+  const [address, setAddress] = useState(''),
+    [visible, setVisible] = useState(false);
+  return (
+    <section>
+      <h2>Your address, at hand.</h2>
+      <label>
+        Public address
+        <input value={address} onChange={(e) => setAddress(e.target.value)} autoComplete="off" />
+      </label>
+      <button type="button" aria-pressed={visible} onClick={() => setVisible(!visible)}>
+        {visible ? 'Mask address' : 'Reveal address'}
+      </button>
+      <p>
+        {visible
+          ? address || 'No address entered'
+          : address
+            ? '•••• ' + address.slice(-4)
+            : 'Add a public address'}
+      </p>
+      <small>Never enter a private key or recovery phrase. No wallet is connected.</small>
+    </section>
+  );
 }
 export function LibraryNotFound() {
-  const [home,setHome]=useState(false);
-  return <section><small>{home?'WELCOME BACK':'404'}</small><h2>{home?'A place to begin again.':'A small detour.'}</h2><p>{home?'You are back at the local start view.':'This view is unavailable. Find your way back.'}</p><button type="button" data-primary onClick={()=>setHome(!home)}>{home?'Show missing view':'Back to start'}</button></section>;
+  const [home, setHome] = useState(false);
+  return (
+    <section>
+      <small>{home ? 'WELCOME BACK' : '404'}</small>
+      <h2>{home ? 'A place to begin again.' : 'A small detour.'}</h2>
+      <p>
+        {home
+          ? 'You are back at the local start view.'
+          : 'This view is unavailable. Find your way back.'}
+      </p>
+      <button type="button" data-primary onClick={() => setHome(!home)}>
+        {home ? 'Show missing view' : 'Back to start'}
+      </button>
+    </section>
+  );
 }
-export function LibraryAgent({variant='message',content='Example content supplied locally. No model response is fabricated.'}:{variant?:string;content?:string}={}) {
-  const [text,setText]=useState(''),[messages,setMessages]=useState<string[]>([]),[expanded,setExpanded]=useState(false),[approved,setApproved]=useState('Awaiting decision'),[completed,setCompleted]=useState<string[]>([]),[level,setLevel]=useState(30),[position,setPosition]=useState(0),[running,setRunning]=useState(false),[copied,setCopied]=useState(''),[section,setSection]=useState('Overview');
-  const log=useRef<HTMLDivElement>(null);
-  useEffect(()=>{if(log.current)log.current.scrollTop=log.current.scrollHeight;},[messages]);
-  useEffect(()=>{if(!running)return;if(position>=content.length){setRunning(false);return;}const timer=setTimeout(()=>setPosition(value=>Math.min(value+3,content.length)),50);return()=>clearTimeout(timer);},[running,position,content]);
-  const approval=['approval-card','tool-approval'].includes(variant), todos=variant==='todo-list', code=['code-block','file-diff'].includes(variant), visual=['loading-states','voice-orb'].includes(variant);
-  return <section><small>YOUR OWN DATA AND SERVICE</small><h2>{approval?'Review before continuing.':todos?'One thoughtful step at a time.':code?'A closer look.':'A space for your ideas.'}</h2>{approval?<><p>Review the proposed action. This control records your decision locally.</p><div className="rf-row"><button type="button" onClick={()=>setApproved('Approved')}>Approve</button><button type="button" onClick={()=>setApproved('Declined')}>Decline</button></div><p role="status">{approved}</p></>:todos?<ul>{['Understand the idea','Review the details','Make it yours'].map(task=><li key={task}><label className="rf-row"><input type="checkbox" checked={completed.includes(task)} onChange={()=>setCompleted(completed.includes(task)?completed.filter(v=>v!==task):[...completed,task])}/>{task}</label></li>)}</ul>:code?<><pre tabIndex={0}>{variant==='file-diff'?(expanded?'  const title = "Your brand";\n- const status = "draft";\n+ const status = "ready";':'− draft\n+ ready'):content}</pre><button type="button" aria-expanded={expanded} onClick={()=>setExpanded(!expanded)}>{expanded?'Fold context':'Show context'}</button><button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(variant==='file-diff'?'  const title = "Your brand";\n- const status = "draft";\n+ const status = "ready";':content);setCopied('Copied.');}catch{setCopied('Clipboard unavailable. Select and copy the content manually.');}}}>Copy supplied content</button>{copied&&<p role="status">{copied}</p>}</>:variant==='streaming-response'?<><p aria-live="polite">{content.slice(0,position)}</p><div className="rf-row"><button type="button" onClick={()=>setRunning(!running)} disabled={position>=content.length}>{running?'Pause stream':'Reveal supplied content'}</button><button type="button" onClick={()=>{setPosition(0);setRunning(false);}}>Reset stream</button></div><small>Streams the supplied content; no model is called.</small></>:variant==='ai-sidebar'?<><nav className="rf-nav-vertical" aria-label="Assistant sections">{['Overview','Threads','Saved'].map(label=><button type="button" key={label} aria-current={section===label?'page':undefined} onClick={()=>setSection(label)}>{label}</button>)}</nav><p role="status">{section}</p></>:['agent-activity','tool-result'].includes(variant)?<><button type="button" aria-expanded={expanded} onClick={()=>setExpanded(!expanded)}>{expanded?'Fold activity':'Inspect activity'}</button>{expanded&&<ol><li>Input received</li><li>Awaiting your service</li><li>No tool has been executed</li></ol>}</>:visual?<><div className="rf-orb" style={{transform:`scale(${.7+level/100})`}} aria-hidden="true"/><label>Input level<input type="range" min="0" max="100" value={level} onChange={e=>setLevel(Number(e.target.value))}/></label><p>Data-driven visual. Supply your own live {variant==='voice-orb'?'audio level':'task progress'}.</p></>:['message','message-bubble'].includes(variant)?<><p className="rf-message">{expanded?content:content.slice(0,48)+(content.length>48?'…':'')}</p><button type="button" aria-expanded={expanded} onClick={()=>setExpanded(!expanded)}>{expanded?'Show less':'Show full message'}</button></>:<><div ref={log} className="rf-message-scroll" role="log" aria-label="Local message drafts">{messages.map((message,i)=><p key={i} className="rf-message">{message}</p>)}</div>{variant==='citations'&&<details><summary>Source 1</summary><a href="https://example.com" target="_blank" rel="noreferrer">Example public source</a></details>}<label>{variant==='image-generation'?'Image prompt':'Message draft'}<textarea maxLength={4000} value={text} onChange={e=>setText(e.target.value)}/></label><button type="button" disabled={!text.trim()} onClick={()=>{setMessages([...messages,text.trim()].slice(-50));setText('');}}>{variant==='image-generation'?'Prepare image prompt':'Add local draft'}</button><p role="status">{messages.length} local drafts · No {variant==='image-generation'?'image':'AI'} provider is connected.</p></>}</section>;
+export function LibraryAgent({
+  variant = 'message',
+  content = 'Example content supplied locally. No model response is fabricated.',
+}: { variant?: string; content?: string } = {}) {
+  const [text, setText] = useState(''),
+    [messages, setMessages] = useState<string[]>([]),
+    [expanded, setExpanded] = useState(false),
+    [approved, setApproved] = useState('Awaiting decision'),
+    [completed, setCompleted] = useState<string[]>([]),
+    [level, setLevel] = useState(30),
+    [position, setPosition] = useState(0),
+    [running, setRunning] = useState(false),
+    [copied, setCopied] = useState(''),
+    [section, setSection] = useState('Overview');
+  const log = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (log.current) log.current.scrollTop = log.current.scrollHeight;
+  }, [messages]);
+  useEffect(() => {
+    if (!running) return;
+    if (position >= content.length) {
+      setRunning(false);
+      return;
+    }
+    const timer = setTimeout(() => setPosition((value) => Math.min(value + 3, content.length)), 50);
+    return () => clearTimeout(timer);
+  }, [running, position, content]);
+  const approval = ['approval-card', 'tool-approval'].includes(variant),
+    todos = variant === 'todo-list',
+    code = ['code-block', 'file-diff'].includes(variant),
+    visual = ['loading-states', 'voice-orb'].includes(variant);
+  return (
+    <section>
+      <small>YOUR OWN DATA AND SERVICE</small>
+      <h2>
+        {approval
+          ? 'Review before continuing.'
+          : todos
+            ? 'One thoughtful step at a time.'
+            : code
+              ? 'A closer look.'
+              : 'A space for your ideas.'}
+      </h2>
+      {approval ? (
+        <>
+          <p>Review the proposed action. This control records your decision locally.</p>
+          <div className="rf-row">
+            <button type="button" onClick={() => setApproved('Approved')}>
+              Approve
+            </button>
+            <button type="button" onClick={() => setApproved('Declined')}>
+              Decline
+            </button>
+          </div>
+          <p role="status">{approved}</p>
+        </>
+      ) : todos ? (
+        <ul>
+          {['Understand the idea', 'Review the details', 'Make it yours'].map((task) => (
+            <li key={task}>
+              <label className="rf-row">
+                <input
+                  type="checkbox"
+                  checked={completed.includes(task)}
+                  onChange={() =>
+                    setCompleted(
+                      completed.includes(task)
+                        ? completed.filter((v) => v !== task)
+                        : [...completed, task],
+                    )
+                  }
+                />
+                {task}
+              </label>
+            </li>
+          ))}
+        </ul>
+      ) : code ? (
+        <>
+          <pre tabIndex={0}>
+            {variant === 'file-diff'
+              ? expanded
+                ? '  const title = "Your brand";\n- const status = "draft";\n+ const status = "ready";'
+                : '− draft\n+ ready'
+              : content}
+          </pre>
+          <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+            {expanded ? 'Fold context' : 'Show context'}
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(
+                  variant === 'file-diff'
+                    ? '  const title = "Your brand";\n- const status = "draft";\n+ const status = "ready";'
+                    : content,
+                );
+                setCopied('Copied.');
+              } catch {
+                setCopied('Clipboard unavailable. Select and copy the content manually.');
+              }
+            }}
+          >
+            Copy supplied content
+          </button>
+          {copied && <p role="status">{copied}</p>}
+        </>
+      ) : variant === 'streaming-response' ? (
+        <>
+          <p aria-live="polite">{content.slice(0, position)}</p>
+          <div className="rf-row">
+            <button
+              type="button"
+              onClick={() => setRunning(!running)}
+              disabled={position >= content.length}
+            >
+              {running ? 'Pause stream' : 'Reveal supplied content'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPosition(0);
+                setRunning(false);
+              }}
+            >
+              Reset stream
+            </button>
+          </div>
+          <small>Streams the supplied content; no model is called.</small>
+        </>
+      ) : variant === 'ai-sidebar' ? (
+        <>
+          <nav className="rf-nav-vertical" aria-label="Assistant sections">
+            {['Overview', 'Threads', 'Saved'].map((label) => (
+              <button
+                type="button"
+                key={label}
+                aria-current={section === label ? 'page' : undefined}
+                onClick={() => setSection(label)}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+          <p role="status">{section}</p>
+        </>
+      ) : ['agent-activity', 'tool-result'].includes(variant) ? (
+        <>
+          <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+            {expanded ? 'Fold activity' : 'Inspect activity'}
+          </button>
+          {expanded && (
+            <ol>
+              <li>Input received</li>
+              <li>Awaiting your service</li>
+              <li>No tool has been executed</li>
+            </ol>
+          )}
+        </>
+      ) : visual ? (
+        <>
+          <div
+            className="rf-orb"
+            style={{ transform: `scale(${0.7 + level / 100})` }}
+            aria-hidden="true"
+          />
+          <label>
+            Input level
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={level}
+              onChange={(e) => setLevel(Number(e.target.value))}
+            />
+          </label>
+          <p>
+            Data-driven visual. Supply your own live{' '}
+            {variant === 'voice-orb' ? 'audio level' : 'task progress'}.
+          </p>
+        </>
+      ) : ['message', 'message-bubble'].includes(variant) ? (
+        <>
+          <p className="rf-message">
+            {expanded ? content : content.slice(0, 48) + (content.length > 48 ? '…' : '')}
+          </p>
+          <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+            {expanded ? 'Show less' : 'Show full message'}
+          </button>
+        </>
+      ) : (
+        <>
+          <div ref={log} className="rf-message-scroll" role="log" aria-label="Local message drafts">
+            {messages.map((message, i) => (
+              <p key={i} className="rf-message">
+                {message}
+              </p>
+            ))}
+          </div>
+          {variant === 'citations' && (
+            <details>
+              <summary>Source 1</summary>
+              <a href="https://example.com" target="_blank" rel="noreferrer">
+                Example public source
+              </a>
+            </details>
+          )}
+          <label>
+            {variant === 'image-generation' ? 'Image prompt' : 'Message draft'}
+            <textarea maxLength={4000} value={text} onChange={(e) => setText(e.target.value)} />
+          </label>
+          <button
+            type="button"
+            disabled={!text.trim()}
+            onClick={() => {
+              setMessages([...messages, text.trim()].slice(-50));
+              setText('');
+            }}
+          >
+            {variant === 'image-generation' ? 'Prepare image prompt' : 'Add local draft'}
+          </button>
+          <p role="status">
+            {messages.length} local drafts · No {variant === 'image-generation' ? 'image' : 'AI'}{' '}
+            provider is connected.
+          </p>
+        </>
+      )}
+    </section>
+  );
 }
-export function LibraryChart({variant='donut-chart'}:{variant?:string}={}) {
-  const [selected,setSelected]=useState(0), [alternate,setAlternate]=useState(false); const values=alternate?[18,35,24,44,30,50]:[30,20,45,28,55,40], total=values.reduce((a,b)=>a+b,0), heat=variant.includes('calendar')||variant==='liquidity-heatmap', line=['bump-chart','price-target-fan'].includes(variant), donut=variant==='donut-chart';
-  return <section><small>SAMPLE DATA · REPLACE WITH YOUR DATA</small><h2>{variant.replaceAll('-',' ')}</h2><svg role="img" aria-label={`${variant}: ${values.join(', ')}`} viewBox="0 0 300 150" style={{width:'100%',maxHeight:220}}>{donut?<><circle cx="150" cy="75" r="52" fill="none" stroke="currentColor" opacity=".15" strokeWidth="22"/><circle cx="150" cy="75" r="52" fill="none" stroke="var(--rf-primary)" strokeWidth="22" strokeDasharray={`${values[selected]/total*327} 327`} transform="rotate(-90 150 75)"/><text x="150" y="80" textAnchor="middle" fill="currentColor">{Math.round(values[selected]/total*100)}%</text></>:line?<><polyline fill="none" stroke="var(--rf-primary)" strokeWidth="3" points={values.map((v,i)=>`${25+i*50},${125-v*1.8}`).join(' ')}/>{values.map((v,i)=><circle key={i} cx={25+i*50} cy={125-v*1.8} r={selected===i?7:4} fill="var(--rf-primary)"/>)}</>:heat?values.flatMap((v,i)=>[0,1,2,3].map(j=><rect key={`${i}-${j}`} x={i*48+8} y={j*35+5} width="40" height="28" rx="5" fill="var(--rf-primary)" opacity={.2+((v+j*12)%60)/75}/>)):values.map((v,i)=><g key={i} fill="var(--rf-primary)" opacity={selected===i?1:.45}>{variant==='candlestick-chart'?<><line x1={i*48+25} x2={i*48+25} y1={110-v*1.5} y2={140-v*.4} stroke="currentColor"/><rect x={i*48+16} y={125-v} width="18" height={v*.6}/></>:variant==='treemap'?<rect x={i%3*100+3} y={Math.floor(i/3)*75+3} width="92" height="67" rx="8"/>:variant==='funnel-chart'?<rect x={(300-(280-i*32))/2} y={i*24} width={280-i*32} height="19" rx="5"/>:['volume-profile','order-book'].includes(variant)?<rect x="8" y={i*24+2} width={v*4} height="18" rx="4"/>:<rect x={i*48+8} y={140-v*2} width="34" height={v*2} rx="5"/>}</g>)}</svg><div className="rf-row" role="group" aria-label="Select chart value">{values.map((_,i)=><button type="button" key={i} aria-pressed={selected===i} onClick={()=>setSelected(i)}>{i+1}</button>)}</div><p role="status">Period {selected+1}: {values[selected]} · Total {total}</p><button type="button" onClick={()=>setAlternate(!alternate)}>Switch sample dataset</button></section>;
+export function LibraryChart({ variant = 'donut-chart' }: { variant?: string } = {}) {
+  const [selected, setSelected] = useState(0),
+    [alternate, setAlternate] = useState(false);
+  const values = alternate ? [18, 35, 24, 44, 30, 50] : [30, 20, 45, 28, 55, 40],
+    total = values.reduce((a, b) => a + b, 0),
+    heat = variant.includes('calendar') || variant === 'liquidity-heatmap',
+    line = ['bump-chart', 'price-target-fan'].includes(variant),
+    donut = variant === 'donut-chart';
+  return (
+    <section>
+      <small>SAMPLE DATA · REPLACE WITH YOUR DATA</small>
+      <h2>{variant.replaceAll('-', ' ')}</h2>
+      <svg
+        role="img"
+        aria-label={`${variant}: ${values.join(', ')}`}
+        viewBox="0 0 300 150"
+        style={{ width: '100%', maxHeight: 220 }}
+      >
+        {donut ? (
+          <>
+            <circle
+              cx="150"
+              cy="75"
+              r="52"
+              fill="none"
+              stroke="currentColor"
+              opacity=".15"
+              strokeWidth="22"
+            />
+            <circle
+              cx="150"
+              cy="75"
+              r="52"
+              fill="none"
+              stroke="var(--rf-primary)"
+              strokeWidth="22"
+              strokeDasharray={`${(values[selected] / total) * 327} 327`}
+              transform="rotate(-90 150 75)"
+            />
+            <text x="150" y="80" textAnchor="middle" fill="currentColor">
+              {Math.round((values[selected] / total) * 100)}%
+            </text>
+          </>
+        ) : line ? (
+          <>
+            <polyline
+              fill="none"
+              stroke="var(--rf-primary)"
+              strokeWidth="3"
+              points={values.map((v, i) => `${25 + i * 50},${125 - v * 1.8}`).join(' ')}
+            />
+            {values.map((v, i) => (
+              <circle
+                key={i}
+                cx={25 + i * 50}
+                cy={125 - v * 1.8}
+                r={selected === i ? 7 : 4}
+                fill="var(--rf-primary)"
+              />
+            ))}
+          </>
+        ) : heat ? (
+          values.flatMap((v, i) =>
+            [0, 1, 2, 3].map((j) => (
+              <rect
+                key={`${i}-${j}`}
+                x={i * 48 + 8}
+                y={j * 35 + 5}
+                width="40"
+                height="28"
+                rx="5"
+                fill="var(--rf-primary)"
+                opacity={0.2 + ((v + j * 12) % 60) / 75}
+              />
+            )),
+          )
+        ) : (
+          values.map((v, i) => (
+            <g key={i} fill="var(--rf-primary)" opacity={selected === i ? 1 : 0.45}>
+              {variant === 'candlestick-chart' ? (
+                <>
+                  <line
+                    x1={i * 48 + 25}
+                    x2={i * 48 + 25}
+                    y1={110 - v * 1.5}
+                    y2={140 - v * 0.4}
+                    stroke="currentColor"
+                  />
+                  <rect x={i * 48 + 16} y={125 - v} width="18" height={v * 0.6} />
+                </>
+              ) : variant === 'treemap' ? (
+                <rect
+                  x={(i % 3) * 100 + 3}
+                  y={Math.floor(i / 3) * 75 + 3}
+                  width="92"
+                  height="67"
+                  rx="8"
+                />
+              ) : variant === 'funnel-chart' ? (
+                <rect
+                  x={(300 - (280 - i * 32)) / 2}
+                  y={i * 24}
+                  width={280 - i * 32}
+                  height="19"
+                  rx="5"
+                />
+              ) : ['volume-profile', 'order-book'].includes(variant) ? (
+                <rect x="8" y={i * 24 + 2} width={v * 4} height="18" rx="4" />
+              ) : (
+                <rect x={i * 48 + 8} y={140 - v * 2} width="34" height={v * 2} rx="5" />
+              )}
+            </g>
+          ))
+        )}
+      </svg>
+      <div className="rf-row" role="group" aria-label="Select chart value">
+        {values.map((_, i) => (
+          <button
+            type="button"
+            key={i}
+            aria-pressed={selected === i}
+            onClick={() => setSelected(i)}
+          >
+            {i + 1}
+          </button>
+        ))}
+      </div>
+      <p role="status">
+        Period {selected + 1}: {values[selected]} · Total {total}
+      </p>
+      <button type="button" onClick={() => setAlternate(!alternate)}>
+        Switch sample dataset
+      </button>
+    </section>
+  );
 }
-export function LibraryCommand({previewOnly=false}:{previewOnly?:boolean}={}) {
-  const [query,setQuery]=useState(''),[selected,setSelected]=useState(''),[targets,setTargets]=useState<{label:string;element:HTMLElement}[]>([]);
-  const host=useRef<HTMLElement>(null),dialog=useRef<HTMLDialogElement>(null),id=useId();
-  function open(){
-    const own=host.current?.closest('.rf-library'),labels=new Set<string>();
-    const found=host.current?.closest('.library-preview')?[]:[...document.querySelectorAll<HTMLElement>('main h1,main h2,main h3,[data-command-target]')].slice(0,200).filter(element=>{
-      const label=element.innerText?.replace(/\s+/g,' ').trim().slice(0,100)||'';
-      if(!label||own?.contains(element)||element.closest('dialog')||!element.getClientRects().length||labels.has(label))return false;
-      labels.add(label);return true;
-    }).slice(0,60).map(element=>({label:element.innerText.replace(/\s+/g,' ').trim().slice(0,100),element}));
-    setTargets(found);setQuery('');dialog.current?.showModal();
+export function LibraryCommand({ previewOnly = false }: { previewOnly?: boolean } = {}) {
+  const [query, setQuery] = useState(''),
+    [selected, setSelected] = useState(''),
+    [targets, setTargets] = useState<{ label: string; element: HTMLElement }[]>([]);
+  const host = useRef<HTMLElement>(null),
+    dialog = useRef<HTMLDialogElement>(null),
+    id = useId();
+  function open() {
+    const own = host.current?.closest('.rf-library'),
+      labels = new Set<string>();
+    const found = host.current?.closest('.library-preview')
+      ? []
+      : [...document.querySelectorAll<HTMLElement>('main h1,main h2,main h3,[data-command-target]')]
+          .slice(0, 200)
+          .filter((element) => {
+            const label = element.innerText?.replace(/\s+/g, ' ').trim().slice(0, 100) || '';
+            if (
+              !label ||
+              own?.contains(element) ||
+              element.closest('dialog') ||
+              !element.getClientRects().length ||
+              labels.has(label)
+            )
+              return false;
+            labels.add(label);
+            return true;
+          })
+          .slice(0, 60)
+          .map((element) => ({
+            label: element.innerText.replace(/\s+/g, ' ').trim().slice(0, 100),
+            element,
+          }));
+    setTargets(found);
+    setQuery('');
+    dialog.current?.showModal();
   }
-  useEffect(()=>{if(previewOnly||host.current?.closest('.library-preview'))return;function key(event:KeyboardEvent){if(!event.defaultPrevented&&(event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='k'&&!document.querySelector('dialog[open]')){event.preventDefault();open();}}document.addEventListener('keydown',key);return()=>document.removeEventListener('keydown',key);},[previewOnly]);
-  function choose(target:{label:string;element:HTMLElement}){
-    setSelected(target.label);dialog.current?.close();
-    requestAnimationFrame(()=>{if(!target.element.isConnected)return;const temporary=!target.element.hasAttribute('tabindex');if(temporary)target.element.tabIndex=-1;target.element.focus({preventScroll:true});target.element.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});if(temporary)target.element.addEventListener('blur',()=>target.element.removeAttribute('tabindex'),{once:true});});
+  useEffect(() => {
+    if (previewOnly || host.current?.closest('.library-preview')) return;
+    function key(event: KeyboardEvent) {
+      if (
+        !event.defaultPrevented &&
+        (event.metaKey || event.ctrlKey) &&
+        event.key.toLowerCase() === 'k' &&
+        !document.querySelector('dialog[open]')
+      ) {
+        event.preventDefault();
+        open();
+      }
+    }
+    document.addEventListener('keydown', key);
+    return () => document.removeEventListener('keydown', key);
+  }, [previewOnly]);
+  function choose(target: { label: string; element: HTMLElement }) {
+    setSelected(target.label);
+    dialog.current?.close();
+    requestAnimationFrame(() => {
+      if (!target.element.isConnected) return;
+      const temporary = !target.element.hasAttribute('tabindex');
+      if (temporary) target.element.tabIndex = -1;
+      target.element.focus({ preventScroll: true });
+      target.element.scrollIntoView({
+        block: 'start',
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+      });
+      if (temporary)
+        target.element.addEventListener('blur', () => target.element.removeAttribute('tabindex'), {
+          once: true,
+        });
+    });
   }
-  const options=targets.filter(target=>target.label.toLowerCase().includes(query.trim().toLowerCase()));
-  return <section ref={host}><h2>A shorter path.</h2><button type="button" onClick={open}>Open commands · ⌘K</button><dialog ref={dialog} aria-labelledby={id} onKeyDownCapture={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();dialog.current?.close();}}}><h2 id={id}>Find a workspace section</h2><label>Search commands<input type="search" value={query} onChange={e=>setQuery(e.target.value)} autoFocus/></label><div className="rf-nav-vertical">{options.map(target=><button type="button" key={target.label} onClick={()=>choose(target)}>{target.label}</button>)}</div>{!options.length&&<p>{targets.length?'No sections match your search.':'Install in an app with visible headings or data-command-target elements to discover its sections.'}</p>}<form method="dialog"><button type="submit">Close commands</button></form></dialog><p role="status">{selected?'Opened section: '+selected:'Find and jump to a visible section in this app. Ctrl/⌘K opens the palette.'}</p></section>;
+  const options = targets.filter((target) =>
+    target.label.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+  return (
+    <section ref={host}>
+      <h2>A shorter path.</h2>
+      <button type="button" onClick={open}>
+        Open commands · ⌘K
+      </button>
+      <dialog
+        ref={dialog}
+        aria-labelledby={id}
+        onKeyDownCapture={(event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
+            dialog.current?.close();
+          }
+        }}
+      >
+        <h2 id={id}>Find a workspace section</h2>
+        <label>
+          Search commands
+          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
+        </label>
+        <div className="rf-nav-vertical">
+          {options.map((target) => (
+            <button type="button" key={target.label} onClick={() => choose(target)}>
+              {target.label}
+            </button>
+          ))}
+        </div>
+        {!options.length && (
+          <p>
+            {targets.length
+              ? 'No sections match your search.'
+              : 'Install in an app with visible headings or data-command-target elements to discover its sections.'}
+          </p>
+        )}
+        <form method="dialog">
+          <button type="submit">Close commands</button>
+        </form>
+      </dialog>
+      <p role="status">
+        {selected
+          ? 'Opened section: ' + selected
+          : 'Find and jump to a visible section in this app. Ctrl/⌘K opens the palette.'}
+      </p>
+    </section>
+  );
 }

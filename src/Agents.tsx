@@ -1,52 +1,748 @@
-import {lazy,Suspense,useEffect,useRef,useState} from 'react';
-import {ArrowRight,Check,Download,Loader2,Play,Square,Upload} from 'lucide-react';
-import {zipSync,strToU8} from 'fflate';
-import {agents,skills,targets} from './agent-skills.js';
-import {api,download,slug,type ComponentItem,type Theme} from './model';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { ArrowRight, Check, Download, Loader2, Play, Square, Upload } from 'lucide-react';
+import { zipSync, strToU8 } from 'fflate';
+import { agents, skills, targets } from './agent-skills.js';
+import { api, download, slug, type ComponentItem, type Theme } from './model';
 import './agents.css';
-import AgentAvatar,{agentMood} from './AgentAvatar';
-const BrowserTesting=lazy(()=>import('./BrowserTesting')); 
-import {agentGuides,helpActions} from './agent-help.js';
+import AgentAvatar, { agentMood } from './AgentAvatar';
+const BrowserTesting = lazy(() => import('./BrowserTesting'));
+import { agentGuides, helpActions } from './agent-help.js';
 
-type Stage={id:string;status:string;summary?:string;details?:string[];provider?:string;confidence?:number|null;evidenceId?:string};
-type Run={id:string;createdAt:string;provider:string;model:string|null;target:string;goal:string;skills:{id:string;name:string;reference:string;instructions:string}[];decision:{summary:string;confidence:number|null;actions:{id:string;label:string;operation:string;reason:string}[];missing:string[];questions:string[]};stages:Stage[];ready:boolean;item:ComponentItem;files:Record<string,string>;requirements:string[];limitation:string};
-type Lab={available:boolean;running:boolean;version:string|null;url:string|null;setup:string};
-export default function Agents({item,library,theme,onSave,onNavigate,onEdit,onTalk,onAction,testInvite}:{item:ComponentItem;library:ComponentItem[];theme:Theme;onSave:(item:ComponentItem)=>boolean;onNavigate:(page:string)=>void;onEdit:(item:ComponentItem)=>void;onTalk:(id:string)=>void;onAction:(action:string)=>void;testInvite:number}){
-  const [testStatus,setTestStatus]=useState('');
-  const [captureUrl,setCaptureUrl]=useState('');
-  const [mode,setMode]=useState(testInvite?'testing':'workflow'),[selected,setSelected]=useState(item),[goal,setGoal]=useState(''),[target,setTarget]=useState('react'),[skill,setSkill]=useState(''),[source,setSource]=useState(''),[filename,setFilename]=useState('');
-  const [provider,setProvider]=useState('openai'),[apiKey,setApiKey]=useState(''),[configured,setConfigured]=useState(false),[model,setModel]=useState(''),[query,setQuery]=useState('');
-  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[stages,setStages]=useState<Stage[]>([]),[result,setResult]=useState<Run|null>(null),[reviewed,setReviewed]=useState(false),[saved,setSaved]=useState(false);
-  const [lab,setLab]=useState<Lab|null>(null),[labBusy,setLabBusy]=useState(false),[labVersion,setLabVersion]=useState(0);
-  const controller=useRef<AbortController|null>(null),upload=useRef<HTMLInputElement>(null);
-  useEffect(()=>{let current=true;api<{openAI:boolean;model:string}>('/api/agents/status').then(s=>{if(current){setConfigured(s.openAI);setModel(s.model);}}).catch(e=>{if(current)setError(e.message);});api<Lab>('/api/gradio/status').then(s=>{if(current)setLab(s);}).catch(()=>{});return()=>{current=false;controller.current?.abort();};},[]);
-  useEffect(()=>{setSelected(item);setResult(current=>current?.item.id===item.id?current:null);},[item.id]);
-  useEffect(()=>{if(testInvite)setMode('testing');},[testInvite]);
-  const choices=[...new Map([selected,item,...library].map(i=>[i.id,i])).values()];
-  function invalidate(){setResult(null);setReviewed(false);setSaved(false);setStages([]);setError('');}
-  async function run(){
-    invalidate();setBusy(true);const abort=new AbortController();controller.current=abort;
-    try{
-      const response=await fetch('/api/agents/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item:selected,...(captureUrl.trim()?{url:captureUrl.trim()}:{}),goal,target,skill,source,filename,provider,...(apiKey?{apiKey}:{}),theme}),signal:abort.signal});
-      if(!response.ok||!response.body)throw new Error('Could not start the agent workflow.');
-      const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='',complete=false;
-      function event(line:string){if(!line.trim())return;const value=JSON.parse(line);if(value.type==='stage')setStages(old=>[...old.filter(s=>s.id!==value.id),value]);if(value.type==='error')throw new Error(value.error);if(value.type==='result'){complete=true;setResult(value.result);}}
-      while(true){const {done,value}=await reader.read();buffer+=decoder.decode(value,{stream:!done});const lines=buffer.split('\n');buffer=lines.pop()||'';for(const line of lines)event(line);if(done)break;}if(buffer)event(buffer);if(!complete)throw new Error('The workflow ended before the report arrived. Retry safely; no project was changed.');
-    }catch(e){abort.abort();setStages(old=>old.map(s=>s.status==='running'?{...s,status:'stopped',summary:'Stopped before completion.'}:s));setError((e as Error).name==='AbortError'?'Workflow cancelled. No project files were changed.':(e as Error).message);}finally{setBusy(false);setApiKey('');controller.current=null;}
+type Stage = {
+  id: string;
+  status: string;
+  summary?: string;
+  details?: string[];
+  provider?: string;
+  confidence?: number | null;
+  evidenceId?: string;
+};
+type Run = {
+  id: string;
+  createdAt: string;
+  provider: string;
+  model: string | null;
+  target: string;
+  goal: string;
+  skills: { id: string; name: string; reference: string; instructions: string }[];
+  decision: {
+    summary: string;
+    confidence: number | null;
+    actions: { id: string; label: string; operation: string; reason: string }[];
+    missing: string[];
+    questions: string[];
+  };
+  stages: Stage[];
+  ready: boolean;
+  item: ComponentItem;
+  files: Record<string, string>;
+  requirements: string[];
+  limitation: string;
+};
+type Lab = {
+  available: boolean;
+  running: boolean;
+  version: string | null;
+  url: string | null;
+  setup: string;
+};
+export default function Agents({
+  item,
+  library,
+  theme,
+  onSave,
+  onNavigate,
+  onEdit,
+  onTalk,
+  onAction,
+  testInvite,
+}: {
+  item: ComponentItem;
+  library: ComponentItem[];
+  theme: Theme;
+  onSave: (item: ComponentItem) => boolean;
+  onNavigate: (page: string) => void;
+  onEdit: (item: ComponentItem) => void;
+  onTalk: (id: string) => void;
+  onAction: (action: string) => void;
+  testInvite: number;
+}) {
+  const [testStatus, setTestStatus] = useState('');
+  const [captureUrl, setCaptureUrl] = useState('');
+  const [mode, setMode] = useState(testInvite ? 'testing' : 'workflow'),
+    [selected, setSelected] = useState(item),
+    [goal, setGoal] = useState(''),
+    [target, setTarget] = useState('react'),
+    [skill, setSkill] = useState(''),
+    [source, setSource] = useState(''),
+    [filename, setFilename] = useState('');
+  const [provider, setProvider] = useState('openai'),
+    [apiKey, setApiKey] = useState(''),
+    [configured, setConfigured] = useState(false),
+    [model, setModel] = useState(''),
+    [query, setQuery] = useState('');
+  const [busy, setBusy] = useState(false),
+    [error, setError] = useState(''),
+    [stages, setStages] = useState<Stage[]>([]),
+    [result, setResult] = useState<Run | null>(null),
+    [reviewed, setReviewed] = useState(false),
+    [saved, setSaved] = useState(false);
+  const [lab, setLab] = useState<Lab | null>(null),
+    [labBusy, setLabBusy] = useState(false),
+    [labVersion, setLabVersion] = useState(0);
+  const controller = useRef<AbortController | null>(null),
+    upload = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    let current = true;
+    api<{ openAI: boolean; model: string }>('/api/agents/status')
+      .then((s) => {
+        if (current) {
+          setConfigured(s.openAI);
+          setModel(s.model);
+        }
+      })
+      .catch((e) => {
+        if (current) setError(e.message);
+      });
+    api<Lab>('/api/gradio/status')
+      .then((s) => {
+        if (current) setLab(s);
+      })
+      .catch(() => {});
+    return () => {
+      current = false;
+      controller.current?.abort();
+    };
+  }, []);
+  useEffect(() => {
+    setSelected(item);
+    setResult((current) => (current?.item.id === item.id ? current : null));
+  }, [item.id]);
+  useEffect(() => {
+    if (testInvite) setMode('testing');
+  }, [testInvite]);
+  const choices = [...new Map([selected, item, ...library].map((i) => [i.id, i])).values()];
+  function invalidate() {
+    setResult(null);
+    setReviewed(false);
+    setSaved(false);
+    setStages([]);
+    setError('');
   }
-  async function readSource(file?:File){if(!file)return;try{if(file.size>100000)throw new Error('Choose a source file under 100 KB.');const text=await file.text();if(text.includes('\u0000'))throw new Error('Choose a text source file, not a binary.');setSource(text);setFilename(file.name);invalidate();}catch(e){setError((e as Error).message);}}
-  function exportRun(){if(!result)return;const {item:captured,files,...report}=result;const zipped=zipSync(Object.fromEntries(Object.entries({...files,'brand.json':JSON.stringify(result.item.theme,null,2),'agent-report.json':JSON.stringify(report,null,2),'clipboard.json':JSON.stringify({version:1,items:[captured]},null,2)}).map(([name,text])=>[name,strToU8(text)])));download(slug(result.item.name)+'-agent-package.zip',zipped.buffer.slice(zipped.byteOffset,zipped.byteOffset+zipped.byteLength) as ArrayBuffer,'application/zip');}
-  async function startLab(){setError('');setLabBusy(true);try{setLab(await api('/api/gradio/start',{item:selected,goal,target,theme}));setLabVersion(v=>v+1);}catch(e){setError((e as Error).message);}finally{setLabBusy(false);}}
-  async function loadLab(){setError('');try{const data=await api<{result:Run|null}>('/api/gradio/result');if(!data.result)throw new Error('Run the workflow inside the lab first.');setResult(data.result);setSelected(data.result.item);setGoal(data.result.goal);setTarget(data.result.target);setStages(data.result.stages);setReviewed(false);setSaved(false);setMode('workflow');}catch(e){setError((e as Error).message);}}
-  return <section className="agents-page">
-    <div className="agents-intro"><span className="eyebrow">YOUR SPECIALIST TEAM</span><h2>Different minds.<br/>One clear way forward.</h2><p>From a captured idea to a component you can use. Every handoff stays visible.</p></div>
-    <div className="agent-team" aria-label="Specialist agents">{agents.map(agent=>{const stage=agent.id==='sentry'&&mode==='testing'&&testStatus?{status:testStatus}:stages.find(s=>s.id===agent.id);return <article className={'agent-card '+(stage?.status||'')} key={agent.id}><button className="agent-portrait" aria-label={`Meet ${agent.name}`} onClick={()=>onTalk(agent.id)}><AgentAvatar id={agent.id} name={agent.name} mood={agent.id==='atlas'&&stage?.status==='running'?'thinking':agentMood(stage?.status)}/></button><div><span>{agent.role}</span><h3>{agent.name}</h3><p>{agent.description}</p><span className="agent-live-state">{stage?.status==='running'?'Working':agentMood(stage?.status)==='success'?'Ready for handoff':agentMood(stage?.status)==='error'?'Needs attention':stage?.status==='stopped'?'Stopped':stage?.status==='skipped'?'Skipped':'Ready to help'}</span><button className="agent-talk" onClick={()=>onTalk(agent.id)}>Talk to {agent.name}</button><button className="agent-talk" onClick={()=>onAction(agentGuides[agent.id as keyof typeof agentGuides].action)}>{helpActions[agentGuides[agent.id as keyof typeof agentGuides].action as keyof typeof helpActions].label}</button></div></article>;})}</div>
-    <div className="agent-tabs" role="group" aria-label="Agent workspace">{[['workflow','Workflow'],['skills','Language & framework skills'],['gradio','Gradio lab'],['testing','Playwright tests']].map(([id,label])=><button key={id} aria-pressed={mode===id} onClick={()=>setMode(id)}>{label}</button>)}</div>
-    {error&&<p role="alert" className="error-banner">{error}<button onClick={()=>setError('')}>Dismiss</button></p>}
-    {mode==='workflow'&&<div className="agent-workflow"><section className="panel agent-brief"><h3>What are we making work?</h3><fieldset disabled={busy}><label>Capture from website URL<input type="url" aria-label="Agent capture URL" placeholder="Optional · capture a fresh component before planning" value={captureUrl} onChange={e=>{setCaptureUrl(e.target.value);invalidate();}}/></label><p className="agent-caption">Scout captures this public page when you run. Leave blank to use the selected component.</p><label>Captured component<select value={selected.id} onChange={e=>{setSelected(choices.find(i=>i.id===e.target.value)!);invalidate();}}>{choices.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></label><label>Destination<select value={target} onChange={e=>{setTarget(e.target.value);invalidate();}}>{targets.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></label><p className="agent-caption">{targets.find(t=>t.id===target)?.capability}</p><label>Intended behavior<textarea value={goal} maxLength={3000} onChange={e=>{setGoal(e.target.value);invalidate();}} placeholder="What should happen when someone uses this component? Include validation, services and states you need."/></label><details><summary>Inspect source or choose a skill</summary><label>Framework guidance<select value={skill} onChange={e=>{setSkill(e.target.value);invalidate();}}><option value="">Detect from source</option>{skills.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label><input ref={upload} type="file" hidden onChange={e=>{void readSource(e.target.files?.[0]);e.target.value='';}}/><button onClick={()=>upload.current?.click()}><Upload size={16}/> Add source file</button><label>Source to inspect {filename&&<small>{filename}</small>}<textarea className="agent-source" value={source} maxLength={100000} onChange={e=>{setSource(e.target.value);setFilename('');invalidate();}} placeholder="Optional HTML, TSX, Python, Java, Kotlin, Swift, or another source file"/></label><small>Source is inspected as text and never executed. OpenAI reads up to 32,000 source characters; use a focused component. Guidance does not add an installer for every framework.</small></details><label>Decision provider<select value={provider} onChange={e=>{setProvider(e.target.value);invalidate();}}><option value="local">Local rules · no AI inference</option><option value="openai">OpenAI · {model||'server model'}</option></select></label>{provider==='openai'&&<><label>OpenAI API key for this run {configured&&<small>Optional · a server key is configured</small>}<input type="password" autoComplete="off" value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder={configured?'Use server key, or supply your own':'Paste your OpenAI API key'}/></label><p className="agent-caption">Sends this capture, source and instructions to OpenAI. Your key is held in memory, used once and cleared after the run; it is never saved to the clipboard.</p></>}<button className="primary agent-run" disabled={provider==='openai'&&!configured&&!apiKey.trim()} onClick={()=>void run()}><Play size={16}/> Run {provider==='openai'?'with OpenAI':'local workflow'}</button></fieldset>{busy&&<button onClick={()=>controller.current?.abort()}><Square size={14}/> Cancel workflow</button>}</section>
-      <section className="panel agent-handoff" aria-live="polite"><h3>{result?'Your handoff':'A visible path from start to finish'}</h3>{!stages.length&&<p className="muted">Give the team a capture and a clear goal. You’ll see what each specialist did, what needs your input, and what’s ready to reuse.</p>}<ol className="agent-timeline">{stages.map(stage=><li key={stage.id}><AgentAvatar id={stage.id} name={agents.find(a=>a.id===stage.id)?.name||stage.id} mood={stage.id==='atlas'&&stage.status==='running'?'thinking':agentMood(stage.status)} size={42}/><div><strong>{agents.find(a=>a.id===stage.id)?.name} {stage.status==='running'&&'· working…'}</strong><p>{stage.summary||'Preparing the next handoff.'}</p>{stage.provider&&<small>{stage.provider}{typeof stage.confidence==='number'?' · '+Math.round(stage.confidence*100)+'% self-reported confidence':''}</small>}{stage.details?.length? <ul>{stage.details.map((s,i)=><li key={i}>{s}</li>)}</ul>:null}{stage.evidenceId&&<small className="agent-evidence">{stage.evidenceId}</small>}</div></li>)}</ol>{result&&<div className="agent-result"><p className="agent-result-state">{result.ready?'Ready for your review':'Your input is needed'}</p><h4>Behavior contract</h4>{result.decision.actions.length?<ul>{result.decision.actions.map(a=><li key={a.id}><strong>{a.label}</strong> → {a.operation}<small>{a.reason}</small></li>)}</ul>:<p>No captured actions. Local Original state, when present, stays in its authored source.</p>}<details><summary>Guidance loaded · {result.skills.length}</summary>{result.skills.map(s=><p key={s.id}><a href={s.reference} target="_blank" rel="noreferrer">{s.name} ↗</a><br/>{s.instructions}</p>)}</details><details><summary>Review generated source · {Object.keys(result.files).length} files</summary>{Object.entries(result.files).map(([name,code])=><details key={name}><summary>{name}</summary><pre tabIndex={0}>{code}</pre></details>)}</details><p className="muted">{result.limitation}</p><label className="agent-reviewed"><input type="checkbox" checked={reviewed} onChange={e=>setReviewed(e.target.checked)}/> I reviewed the behavior and source. Destination testing is still required.</label><div className="agent-result-actions"><button className="primary" disabled={!reviewed||!result.ready} onClick={()=>{if(onSave(result.item))setSaved(true);}}>{saved?<><Check size={16}/> Saved to clipboard</>:'Save complete component'}</button><button disabled={!reviewed||!result.ready} onClick={()=>{if(onSave(result.item)){setSaved(true);onNavigate('Projects');}}}>Open Projects <ArrowRight size={16}/></button><button onClick={exportRun}><Download size={16}/> Export handoff</button>{!result.ready&&<button onClick={()=>onEdit(result.item)}>Define missing behavior</button>}</div></div>}</section></div>}
-    {mode==='testing'&&<Suspense fallback={<p role="status">Loading browser lab…</p>}><BrowserTesting onStatus={setTestStatus}/></Suspense>}
-    {mode==='skills'&&<section className="agent-skills"><div className="intro"><h3>Knowledge where it helps.</h3><p>{skills.length} built-in guidance packs help agents recognize structure and plan a port. They do not retrain a model or promise installation in every language.</p><label>Find a language or framework<input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="React, Java, Python…"/></label></div><div className="agent-skill-grid">{skills.filter(s=>(s.name+' '+s.languages).toLowerCase().includes(query.toLowerCase())).map(s=><article className="panel" key={s.id}><span>{s.languages}</span><h3>{s.name}</h3><p>{s.instructions}</p><a href={s.reference} target="_blank" rel="noreferrer">Official reference ↗</a></article>)}</div></section>}
-    {mode==='gradio'&&<section className="panel agent-lab"><div className="intro"><h3>Gradio, built in.</h3><p>A real Python Blocks UI, launched locally by Reframe. It uses the same decision, generation and review pipeline. Nothing is publicly shared.</p><small>Selected capture: {selected.name} · {lab?.available?'Gradio '+lab.version:'Setup: npm run gradio:setup'}</small></div><div className="agent-result-actions"><button className="primary" disabled={labBusy} onClick={()=>void startLab()}>{labBusy?<Loader2 size={16} className="spin"/>:<Play size={16}/>} {lab?.running?'Reload with selected capture':'Start embedded lab'}</button><button onClick={()=>void loadLab()}>Load lab result</button>{lab?.running&&<button onClick={()=>{void api<Lab>('/api/gradio/stop',{}).then(()=>setLab(lab?{...lab,running:false,url:null}:null)).catch(e=>setError(e.message));}}>Stop lab</button>}</div>{lab?.running&&lab.url&&<iframe key={labVersion} title="Embedded Gradio agent lab" src={lab.url+'/?__theme=dark'} className="gradio-frame"/>}</section>}
-  </section>;
+  async function run() {
+    invalidate();
+    setBusy(true);
+    const abort = new AbortController();
+    controller.current = abort;
+    try {
+      const response = await fetch('/api/agents/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          item: selected,
+          ...(captureUrl.trim() ? { url: captureUrl.trim() } : {}),
+          goal,
+          target,
+          skill,
+          source,
+          filename,
+          provider,
+          ...(apiKey ? { apiKey } : {}),
+          theme,
+        }),
+        signal: abort.signal,
+      });
+      if (!response.ok || !response.body) throw new Error('Could not start the agent workflow.');
+      const reader = response.body.getReader(),
+        decoder = new TextDecoder();
+      let buffer = '',
+        complete = false;
+      function event(line: string) {
+        if (!line.trim()) return;
+        const value = JSON.parse(line);
+        if (value.type === 'stage')
+          setStages((old) => [...old.filter((s) => s.id !== value.id), value]);
+        if (value.type === 'error') throw new Error(value.error);
+        if (value.type === 'result') {
+          complete = true;
+          setResult(value.result);
+        }
+      }
+      while (true) {
+        const { done, value } = await reader.read();
+        buffer += decoder.decode(value, { stream: !done });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) event(line);
+        if (done) break;
+      }
+      if (buffer) event(buffer);
+      if (!complete)
+        throw new Error(
+          'The workflow ended before the report arrived. Retry safely; no project was changed.',
+        );
+    } catch (e) {
+      abort.abort();
+      setStages((old) =>
+        old.map((s) =>
+          s.status === 'running'
+            ? { ...s, status: 'stopped', summary: 'Stopped before completion.' }
+            : s,
+        ),
+      );
+      setError(
+        (e as Error).name === 'AbortError'
+          ? 'Workflow cancelled. No project files were changed.'
+          : (e as Error).message,
+      );
+    } finally {
+      setBusy(false);
+      setApiKey('');
+      controller.current = null;
+    }
+  }
+  async function readSource(file?: File) {
+    if (!file) return;
+    try {
+      if (file.size > 100000) throw new Error('Choose a source file under 100 KB.');
+      const text = await file.text();
+      if (text.includes('\u0000')) throw new Error('Choose a text source file, not a binary.');
+      setSource(text);
+      setFilename(file.name);
+      invalidate();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  function exportRun() {
+    if (!result) return;
+    const { item: captured, files, ...report } = result;
+    const zipped = zipSync(
+      Object.fromEntries(
+        Object.entries({
+          ...files,
+          'brand.json': JSON.stringify(result.item.theme, null, 2),
+          'agent-report.json': JSON.stringify(report, null, 2),
+          'clipboard.json': JSON.stringify({ version: 1, items: [captured] }, null, 2),
+        }).map(([name, text]) => [name, strToU8(text)]),
+      ),
+    );
+    download(
+      slug(result.item.name) + '-agent-package.zip',
+      zipped.buffer.slice(zipped.byteOffset, zipped.byteOffset + zipped.byteLength) as ArrayBuffer,
+      'application/zip',
+    );
+  }
+  async function startLab() {
+    setError('');
+    setLabBusy(true);
+    try {
+      setLab(await api('/api/gradio/start', { item: selected, goal, target, theme }));
+      setLabVersion((v) => v + 1);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLabBusy(false);
+    }
+  }
+  async function loadLab() {
+    setError('');
+    try {
+      const data = await api<{ result: Run | null }>('/api/gradio/result');
+      if (!data.result) throw new Error('Run the workflow inside the lab first.');
+      setResult(data.result);
+      setSelected(data.result.item);
+      setGoal(data.result.goal);
+      setTarget(data.result.target);
+      setStages(data.result.stages);
+      setReviewed(false);
+      setSaved(false);
+      setMode('workflow');
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  return (
+    <section className="agents-page">
+      <div className="agents-intro">
+        <span className="eyebrow">YOUR SPECIALIST TEAM</span>
+        <h2>
+          Different minds.
+          <br />
+          One clear way forward.
+        </h2>
+        <p>From a captured idea to a component you can use. Every handoff stays visible.</p>
+      </div>
+      <div className="agent-team" aria-label="Specialist agents">
+        {agents.map((agent) => {
+          const stage =
+            agent.id === 'sentry' && mode === 'testing' && testStatus
+              ? { status: testStatus }
+              : stages.find((s) => s.id === agent.id);
+          return (
+            <article className={'agent-card ' + (stage?.status || '')} key={agent.id}>
+              <button
+                className="agent-portrait"
+                aria-label={`Meet ${agent.name}`}
+                onClick={() => onTalk(agent.id)}
+              >
+                <AgentAvatar
+                  id={agent.id}
+                  name={agent.name}
+                  mood={
+                    agent.id === 'atlas' && stage?.status === 'running'
+                      ? 'thinking'
+                      : agentMood(stage?.status)
+                  }
+                />
+              </button>
+              <div>
+                <span>{agent.role}</span>
+                <h3>{agent.name}</h3>
+                <p>{agent.description}</p>
+                <span className="agent-live-state">
+                  {stage?.status === 'running'
+                    ? 'Working'
+                    : agentMood(stage?.status) === 'success'
+                      ? 'Ready for handoff'
+                      : agentMood(stage?.status) === 'error'
+                        ? 'Needs attention'
+                        : stage?.status === 'stopped'
+                          ? 'Stopped'
+                          : stage?.status === 'skipped'
+                            ? 'Skipped'
+                            : 'Ready to help'}
+                </span>
+                <button className="agent-talk" onClick={() => onTalk(agent.id)}>
+                  Talk to {agent.name}
+                </button>
+                <button
+                  className="agent-talk"
+                  onClick={() => onAction(agentGuides[agent.id as keyof typeof agentGuides].action)}
+                >
+                  {
+                    helpActions[
+                      agentGuides[agent.id as keyof typeof agentGuides]
+                        .action as keyof typeof helpActions
+                    ].label
+                  }
+                </button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+      <div className="agent-tabs" role="group" aria-label="Agent workspace">
+        {[
+          ['workflow', 'Workflow'],
+          ['skills', 'Language & framework skills'],
+          ['gradio', 'Gradio lab'],
+          ['testing', 'Playwright tests'],
+        ].map(([id, label]) => (
+          <button key={id} aria-pressed={mode === id} onClick={() => setMode(id)}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {error && (
+        <p role="alert" className="error-banner">
+          {error}
+          <button onClick={() => setError('')}>Dismiss</button>
+        </p>
+      )}
+      {mode === 'workflow' && (
+        <div className="agent-workflow">
+          <section className="panel agent-brief">
+            <h3>What are we making work?</h3>
+            <fieldset disabled={busy}>
+              <label>
+                Capture from website URL
+                <input
+                  type="url"
+                  aria-label="Agent capture URL"
+                  placeholder="Optional · capture a fresh component before planning"
+                  value={captureUrl}
+                  onChange={(e) => {
+                    setCaptureUrl(e.target.value);
+                    invalidate();
+                  }}
+                />
+              </label>
+              <p className="agent-caption">
+                Scout captures this public page when you run. Leave blank to use the selected
+                component.
+              </p>
+              <label>
+                Captured component
+                <select
+                  value={selected.id}
+                  onChange={(e) => {
+                    setSelected(choices.find((i) => i.id === e.target.value)!);
+                    invalidate();
+                  }}
+                >
+                  {choices.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Destination
+                <select
+                  value={target}
+                  onChange={(e) => {
+                    setTarget(e.target.value);
+                    invalidate();
+                  }}
+                >
+                  {targets.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="agent-caption">{targets.find((t) => t.id === target)?.capability}</p>
+              <label>
+                Intended behavior
+                <textarea
+                  value={goal}
+                  maxLength={3000}
+                  onChange={(e) => {
+                    setGoal(e.target.value);
+                    invalidate();
+                  }}
+                  placeholder="What should happen when someone uses this component? Include validation, services and states you need."
+                />
+              </label>
+              <details>
+                <summary>Inspect source or choose a skill</summary>
+                <label>
+                  Framework guidance
+                  <select
+                    value={skill}
+                    onChange={(e) => {
+                      setSkill(e.target.value);
+                      invalidate();
+                    }}
+                  >
+                    <option value="">Detect from source</option>
+                    {skills.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <input
+                  ref={upload}
+                  type="file"
+                  hidden
+                  onChange={(e) => {
+                    void readSource(e.target.files?.[0]);
+                    e.target.value = '';
+                  }}
+                />
+                <button onClick={() => upload.current?.click()}>
+                  <Upload size={16} /> Add source file
+                </button>
+                <label>
+                  Source to inspect {filename && <small>{filename}</small>}
+                  <textarea
+                    className="agent-source"
+                    value={source}
+                    maxLength={100000}
+                    onChange={(e) => {
+                      setSource(e.target.value);
+                      setFilename('');
+                      invalidate();
+                    }}
+                    placeholder="Optional HTML, TSX, Python, Java, Kotlin, Swift, or another source file"
+                  />
+                </label>
+                <small>
+                  Source is inspected as text and never executed. OpenAI reads up to 32,000 source
+                  characters; use a focused component. Guidance does not add an installer for every
+                  framework.
+                </small>
+              </details>
+              <label>
+                Decision provider
+                <select
+                  value={provider}
+                  onChange={(e) => {
+                    setProvider(e.target.value);
+                    invalidate();
+                  }}
+                >
+                  <option value="local">Local rules · no AI inference</option>
+                  <option value="openai">OpenAI · {model || 'server model'}</option>
+                </select>
+              </label>
+              {provider === 'openai' && (
+                <>
+                  <label>
+                    OpenAI API key for this run{' '}
+                    {configured && <small>Optional · a server key is configured</small>}
+                    <input
+                      type="password"
+                      autoComplete="off"
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      placeholder={
+                        configured
+                          ? 'Use server key, or supply your own'
+                          : 'Paste your OpenAI API key'
+                      }
+                    />
+                  </label>
+                  <p className="agent-caption">
+                    Sends this capture, source and instructions to OpenAI. Your key is held in
+                    memory, used once and cleared after the run; it is never saved to the clipboard.
+                  </p>
+                </>
+              )}
+              <button
+                className="primary agent-run"
+                disabled={provider === 'openai' && !configured && !apiKey.trim()}
+                onClick={() => void run()}
+              >
+                <Play size={16} /> Run {provider === 'openai' ? 'with OpenAI' : 'local workflow'}
+              </button>
+            </fieldset>
+            {busy && (
+              <button onClick={() => controller.current?.abort()}>
+                <Square size={14} /> Cancel workflow
+              </button>
+            )}
+          </section>
+          <section className="panel agent-handoff" aria-live="polite">
+            <h3>{result ? 'Your handoff' : 'A visible path from start to finish'}</h3>
+            {!stages.length && (
+              <p className="muted">
+                Give the team a capture and a clear goal. You’ll see what each specialist did, what
+                needs your input, and what’s ready to reuse.
+              </p>
+            )}
+            <ol className="agent-timeline">
+              {stages.map((stage) => (
+                <li key={stage.id}>
+                  <AgentAvatar
+                    id={stage.id}
+                    name={agents.find((a) => a.id === stage.id)?.name || stage.id}
+                    mood={
+                      stage.id === 'atlas' && stage.status === 'running'
+                        ? 'thinking'
+                        : agentMood(stage.status)
+                    }
+                    size={42}
+                  />
+                  <div>
+                    <strong>
+                      {agents.find((a) => a.id === stage.id)?.name}{' '}
+                      {stage.status === 'running' && '· working…'}
+                    </strong>
+                    <p>{stage.summary || 'Preparing the next handoff.'}</p>
+                    {stage.provider && (
+                      <small>
+                        {stage.provider}
+                        {typeof stage.confidence === 'number'
+                          ? ' · ' +
+                            Math.round(stage.confidence * 100) +
+                            '% self-reported confidence'
+                          : ''}
+                      </small>
+                    )}
+                    {stage.details?.length ? (
+                      <ul>
+                        {stage.details.map((s, i) => (
+                          <li key={i}>{s}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    {stage.evidenceId && (
+                      <small className="agent-evidence">{stage.evidenceId}</small>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+            {result && (
+              <div className="agent-result">
+                <p className="agent-result-state">
+                  {result.ready ? 'Ready for your review' : 'Your input is needed'}
+                </p>
+                <h4>Behavior contract</h4>
+                {result.decision.actions.length ? (
+                  <ul>
+                    {result.decision.actions.map((a) => (
+                      <li key={a.id}>
+                        <strong>{a.label}</strong> → {a.operation}
+                        <small>{a.reason}</small>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>
+                    No captured actions. Local Original state, when present, stays in its authored
+                    source.
+                  </p>
+                )}
+                <details>
+                  <summary>Guidance loaded · {result.skills.length}</summary>
+                  {result.skills.map((s) => (
+                    <p key={s.id}>
+                      <a href={s.reference} target="_blank" rel="noreferrer">
+                        {s.name} ↗
+                      </a>
+                      <br />
+                      {s.instructions}
+                    </p>
+                  ))}
+                </details>
+                <details>
+                  <summary>
+                    Review generated source · {Object.keys(result.files).length} files
+                  </summary>
+                  {Object.entries(result.files).map(([name, code]) => (
+                    <details key={name}>
+                      <summary>{name}</summary>
+                      <pre tabIndex={0}>{code}</pre>
+                    </details>
+                  ))}
+                </details>
+                <p className="muted">{result.limitation}</p>
+                <label className="agent-reviewed">
+                  <input
+                    type="checkbox"
+                    checked={reviewed}
+                    onChange={(e) => setReviewed(e.target.checked)}
+                  />{' '}
+                  I reviewed the behavior and source. Destination testing is still required.
+                </label>
+                <div className="agent-result-actions">
+                  <button
+                    className="primary"
+                    disabled={!reviewed || !result.ready}
+                    onClick={() => {
+                      if (onSave(result.item)) setSaved(true);
+                    }}
+                  >
+                    {saved ? (
+                      <>
+                        <Check size={16} /> Saved to clipboard
+                      </>
+                    ) : (
+                      'Save complete component'
+                    )}
+                  </button>
+                  <button
+                    disabled={!reviewed || !result.ready}
+                    onClick={() => {
+                      if (onSave(result.item)) {
+                        setSaved(true);
+                        onNavigate('Projects');
+                      }
+                    }}
+                  >
+                    Open Projects <ArrowRight size={16} />
+                  </button>
+                  <button onClick={exportRun}>
+                    <Download size={16} /> Export handoff
+                  </button>
+                  {!result.ready && (
+                    <button onClick={() => onEdit(result.item)}>Define missing behavior</button>
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+      {mode === 'testing' && (
+        <Suspense fallback={<p role="status">Loading browser lab…</p>}>
+          <BrowserTesting onStatus={setTestStatus} />
+        </Suspense>
+      )}
+      {mode === 'skills' && (
+        <section className="agent-skills">
+          <div className="intro">
+            <h3>Knowledge where it helps.</h3>
+            <p>
+              {skills.length} built-in guidance packs help agents recognize structure and plan a
+              port. They do not retrain a model or promise installation in every language.
+            </p>
+            <label>
+              Find a language or framework
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="React, Java, Python…"
+              />
+            </label>
+          </div>
+          <div className="agent-skill-grid">
+            {skills
+              .filter((s) =>
+                (s.name + ' ' + s.languages).toLowerCase().includes(query.toLowerCase()),
+              )
+              .map((s) => (
+                <article className="panel" key={s.id}>
+                  <span>{s.languages}</span>
+                  <h3>{s.name}</h3>
+                  <p>{s.instructions}</p>
+                  <a href={s.reference} target="_blank" rel="noreferrer">
+                    Official reference ↗
+                  </a>
+                </article>
+              ))}
+          </div>
+        </section>
+      )}
+      {mode === 'gradio' && (
+        <section className="panel agent-lab">
+          <div className="intro">
+            <h3>Gradio, built in.</h3>
+            <p>
+              A real Python Blocks UI, launched locally by Reframe. It uses the same decision,
+              generation and review pipeline. Nothing is publicly shared.
+            </p>
+            <small>
+              Selected capture: {selected.name} ·{' '}
+              {lab?.available ? 'Gradio ' + lab.version : 'Setup: npm run gradio:setup'}
+            </small>
+          </div>
+          <div className="agent-result-actions">
+            <button className="primary" disabled={labBusy} onClick={() => void startLab()}>
+              {labBusy ? <Loader2 size={16} className="spin" /> : <Play size={16} />}{' '}
+              {lab?.running ? 'Reload with selected capture' : 'Start embedded lab'}
+            </button>
+            <button onClick={() => void loadLab()}>Load lab result</button>
+            {lab?.running && (
+              <button
+                onClick={() => {
+                  void api<Lab>('/api/gradio/stop', {})
+                    .then(() => setLab(lab ? { ...lab, running: false, url: null } : null))
+                    .catch((e) => setError(e.message));
+                }}
+              >
+                Stop lab
+              </button>
+            )}
+          </div>
+          {lab?.running && lab.url && (
+            <iframe
+              key={labVersion}
+              title="Embedded Gradio agent lab"
+              src={lab.url + '/?__theme=dark'}
+              className="gradio-frame"
+            />
+          )}
+        </section>
+      )}
+    </section>
+  );
 }

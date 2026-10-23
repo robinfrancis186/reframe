@@ -1,24 +1,183 @@
-import {lazy,Suspense,useEffect,useRef,useState} from 'react';
-import {Play,Square,RotateCcw,Smartphone,Monitor} from 'lucide-react';
-import {api,type ComponentItem,type Theme} from './model';
-const BrowserTesting=lazy(()=>import('./BrowserTesting'));
-type Session={themeKey?:string;id:string;name:string;url:string;expiresAt:string;limitations:string[];actions:{label:string;operation:string}[]};
-export default function WorkingPreview({item,theme}:{item:ComponentItem;theme:Theme}){
- const [session,setSession]=useState<Session|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[mobile,setMobile]=useState(false),[testing,setTesting]=useState(false),[testStatus,setTestStatus]=useState(''),[reload,setReload]=useState(0);
- const current=useRef<Session|null>(null),request=useRef<AbortController|null>(null),live=useRef(true);
- useEffect(()=>{live.current=true;return()=>{live.current=false;request.current?.abort();if(current.current)void api('/api/previews/stop',{id:current.current.id}).catch(()=>{});};},[]);
- useEffect(()=>{if(!session)return;const timer=setTimeout(()=>{void stop().catch(()=>{});setError('Preview expired. Start a fresh preview to continue.');},Math.max(0,Date.parse(session.expiresAt)-Date.now()));return()=>clearTimeout(timer);},[session]);
- async function stop(){request.current?.abort();const old=current.current;current.current=null;setSession(null);setTesting(false);setTestStatus('');if(old)await api('/api/previews/stop',{id:old.id});}
- async function start(){setBusy(true);setError('');try{await stop();const controller=new AbortController();request.current=controller;const response=await fetch('/api/previews/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item,theme}),signal:controller.signal});const result=await response.json();if(!response.ok)throw new Error(result.error||'Preview could not start.');if(!live.current||controller.signal.aborted){void api('/api/previews/stop',{id:result.id});return;}current.current=result;setSession({...result,themeKey:JSON.stringify(theme)});}catch(e){if(live.current&&(e as Error).name!=='AbortError')setError((e as Error).message);}finally{if(live.current)setBusy(false);}}
- return <section className="panel working-preview" aria-label="Working component preview"><div className="section-heading"><div><span className="eyebrow">TRY BEFORE YOU INSTALL</span><h2>Test the real behavior.</h2></div>{session&&<span className="preview-running">Running · disposable data</span>}</div><p>Run the generated React interface and its own backend in a separate local process. Your installed apps and their records are untouched.</p>
- {!session&&<button className="primary" disabled={busy} onClick={()=>void start()}><Play size={16}/>{busy?'Building and starting preview…':'Start working preview'}</button>}
- {busy&&<p role="status">Compiling trusted source and preparing temporary storage…</p>}{error&&<p className="error-banner" role="alert">{error}</p>}
- {session&&<>{session.themeKey!==JSON.stringify(theme)&&<p role="status">Branding changed. Reset this preview to apply the new branding; resetting clears its test data.</p>}<div className="preview-controls"><div role="group" aria-label="Preview viewport"><button aria-pressed={!mobile} onClick={()=>setMobile(false)}><Monitor size={15}/> Desktop</button><button aria-pressed={mobile} onClick={()=>setMobile(true)}><Smartphone size={15}/> Mobile</button></div><button onClick={()=>setReload(n=>n+1)}><RotateCcw size={15}/> Reload · keep test data</button><button disabled={busy} onClick={()=>void start()}>Reset test data</button><button onClick={()=>void stop().catch(e=>setError(e.message))}><Square size={15}/> Stop preview</button></div>
- <a href={session.url} target="_blank" rel="noreferrer">Open working preview in a tab ↗</a>
- <div className={'working-frame '+(mobile?'mobile':'')}><iframe key={session.id+':'+reload} src={session.url} title={`Working preview: ${session.name}`} sandbox="allow-scripts allow-same-origin allow-forms allow-downloads" referrerPolicy="no-referrer"/></div>
- <p className="muted">Expires at {new Date(session.expiresAt).toLocaleTimeString()}. Use throwaway account details. Real API keys and external calls are disabled.</p>
- <details><summary>Behavior to verify · {session.actions.length} actions</summary><ul>{session.actions.map((action,i)=><li key={i}><strong>{action.label}</strong> — {action.operation}</li>)}</ul><p>Check the normal result, invalid input, reload persistence and narrow layout. Reset removes this preview’s test data only.</p>{session.limitations.map(text=><p key={text}>{text}</p>)}</details>
- <button onClick={()=>setTesting(v=>!v)}>{testing?'Hide automated checks':'Test this preview with Playwright'}</button>{testStatus&&<span role="status"> Test {testStatus}</span>}
- {testing&&<Suspense fallback={<p role="status">Loading browser tests…</p>}><BrowserTesting key={session.id} initialTarget={session.id} onStatus={setTestStatus}/></Suspense>}</>}
- </section>;
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { Play, Square, RotateCcw, Smartphone, Monitor } from 'lucide-react';
+import { api, type ComponentItem, type Theme } from './model';
+const BrowserTesting = lazy(() => import('./BrowserTesting'));
+type Session = {
+  themeKey?: string;
+  id: string;
+  name: string;
+  url: string;
+  expiresAt: string;
+  limitations: string[];
+  actions: { label: string; operation: string }[];
+};
+export default function WorkingPreview({ item, theme }: { item: ComponentItem; theme: Theme }) {
+  const [session, setSession] = useState<Session | null>(null),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState(''),
+    [mobile, setMobile] = useState(false),
+    [testing, setTesting] = useState(false),
+    [testStatus, setTestStatus] = useState(''),
+    [reload, setReload] = useState(0);
+  const current = useRef<Session | null>(null),
+    request = useRef<AbortController | null>(null),
+    live = useRef(true);
+  useEffect(() => {
+    live.current = true;
+    return () => {
+      live.current = false;
+      request.current?.abort();
+      if (current.current)
+        void api('/api/previews/stop', { id: current.current.id }).catch(() => {});
+    };
+  }, []);
+  useEffect(() => {
+    if (!session) return;
+    const timer = setTimeout(
+      () => {
+        void stop().catch(() => {});
+        setError('Preview expired. Start a fresh preview to continue.');
+      },
+      Math.max(0, Date.parse(session.expiresAt) - Date.now()),
+    );
+    return () => clearTimeout(timer);
+  }, [session]);
+  async function stop() {
+    request.current?.abort();
+    const old = current.current;
+    current.current = null;
+    setSession(null);
+    setTesting(false);
+    setTestStatus('');
+    if (old) await api('/api/previews/stop', { id: old.id });
+  }
+  async function start() {
+    setBusy(true);
+    setError('');
+    try {
+      await stop();
+      const controller = new AbortController();
+      request.current = controller;
+      const response = await fetch('/api/previews/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item, theme }),
+        signal: controller.signal,
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Preview could not start.');
+      if (!live.current || controller.signal.aborted) {
+        void api('/api/previews/stop', { id: result.id });
+        return;
+      }
+      current.current = result;
+      setSession({ ...result, themeKey: JSON.stringify(theme) });
+    } catch (e) {
+      if (live.current && (e as Error).name !== 'AbortError') setError((e as Error).message);
+    } finally {
+      if (live.current) setBusy(false);
+    }
+  }
+  return (
+    <section className="panel working-preview" aria-label="Working component preview">
+      <div className="section-heading">
+        <div>
+          <span className="eyebrow">TRY BEFORE YOU INSTALL</span>
+          <h2>Test the real behavior.</h2>
+        </div>
+        {session && <span className="preview-running">Running · disposable data</span>}
+      </div>
+      <p>
+        Run the generated React interface and its own backend in a separate local process. Your
+        installed apps and their records are untouched.
+      </p>
+      {!session && (
+        <button className="primary" disabled={busy} onClick={() => void start()}>
+          <Play size={16} />
+          {busy ? 'Building and starting preview…' : 'Start working preview'}
+        </button>
+      )}
+      {busy && <p role="status">Compiling trusted source and preparing temporary storage…</p>}
+      {error && (
+        <p className="error-banner" role="alert">
+          {error}
+        </p>
+      )}
+      {session && (
+        <>
+          {session.themeKey !== JSON.stringify(theme) && (
+            <p role="status">
+              Branding changed. Reset this preview to apply the new branding; resetting clears its
+              test data.
+            </p>
+          )}
+          <div className="preview-controls">
+            <div role="group" aria-label="Preview viewport">
+              <button aria-pressed={!mobile} onClick={() => setMobile(false)}>
+                <Monitor size={15} /> Desktop
+              </button>
+              <button aria-pressed={mobile} onClick={() => setMobile(true)}>
+                <Smartphone size={15} /> Mobile
+              </button>
+            </div>
+            <button onClick={() => setReload((n) => n + 1)}>
+              <RotateCcw size={15} /> Reload · keep test data
+            </button>
+            <button disabled={busy} onClick={() => void start()}>
+              Reset test data
+            </button>
+            <button onClick={() => void stop().catch((e) => setError(e.message))}>
+              <Square size={15} /> Stop preview
+            </button>
+          </div>
+          <a href={session.url} target="_blank" rel="noreferrer">
+            Open working preview in a tab ↗
+          </a>
+          <div className={'working-frame ' + (mobile ? 'mobile' : '')}>
+            <iframe
+              key={session.id + ':' + reload}
+              src={session.url}
+              title={`Working preview: ${session.name}`}
+              sandbox="allow-scripts allow-same-origin allow-forms allow-downloads"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <p className="muted">
+            Expires at {new Date(session.expiresAt).toLocaleTimeString()}. Use throwaway account
+            details. Real API keys and external calls are disabled.
+          </p>
+          <details>
+            <summary>Behavior to verify · {session.actions.length} actions</summary>
+            <ul>
+              {session.actions.map((action, i) => (
+                <li key={i}>
+                  <strong>{action.label}</strong> — {action.operation}
+                </li>
+              ))}
+            </ul>
+            <p>
+              Check the normal result, invalid input, reload persistence and narrow layout. Reset
+              removes this preview’s test data only.
+            </p>
+            {session.limitations.map((text) => (
+              <p key={text}>{text}</p>
+            ))}
+          </details>
+          <button onClick={() => setTesting((v) => !v)}>
+            {testing ? 'Hide automated checks' : 'Test this preview with Playwright'}
+          </button>
+          {testStatus && <span role="status"> Test {testStatus}</span>}
+          {testing && (
+            <Suspense fallback={<p role="status">Loading browser tests…</p>}>
+              <BrowserTesting
+                key={session.id}
+                initialTarget={session.id}
+                onStatus={setTestStatus}
+              />
+            </Suspense>
+          )}
+        </>
+      )}
+    </section>
+  );
 }

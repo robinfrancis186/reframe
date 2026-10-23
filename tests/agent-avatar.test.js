@@ -1,27 +1,162 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,writeFile,readFile,rm,mkdir} from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, rm, mkdir } from 'node:fs/promises';
 import path from 'node:path';
-import {createServer} from 'node:http';
-import {build} from 'vite';
-import {chromium} from 'playwright';
-test('live agents react to real request lifecycle and respect reduced motion',{timeout:120000},async()=>{
- await mkdir('.reframe',{recursive:true});const root=await mkdtemp(path.resolve('.reframe/avatar-test-'));let server,browser;
- try{
-  await writeFile(path.join(root,'index.html'),'<div id="root"></div><script type="module" src="/main.tsx"></script>');
-  await writeFile(path.join(root,'main.tsx'),`import React from 'react';import {createRoot} from 'react-dom/client';import AgentHelper from '../../src/AgentHelper';import Clipboard from '../../src/Clipboard';import {libraryItem,catalog} from '../../src/library/catalog';import AgentAvatar,{agentMood} from '../../src/AgentAvatar';import '../../src/styles.css';import '../../src/redesign.css';import '../../src/appearance.css';document.documentElement.dataset.appearance='light';function Saved(){const [opened,setOpened]=React.useState(false);return <><Clipboard items={[libraryItem(catalog.find(c=>c.id==='search'))]} onOpen={()=>setOpened(true)} onDelete={()=>{}}/><output aria-label="Opened component">{opened?'Opened':'Closed'}</output></>}const states=['idle','greeting','thinking','working','success','error','stopped'];createRoot(document.getElementById('root')).render(<><main><h1>Agent reactions</h1><div style={{display:'flex',flexWrap:'wrap'}}>{states.map(mood=><div key={mood}><AgentAvatar id="atlas" name="Atlas" mood={mood}/><p>{mood}</p></div>)}</div><output>{agentMood('passed-with-issues')}</output><Saved/></main><AgentHelper page="Home" item={{id:'fixture',name:'Fixture',html:'<button>Save</button>'}} invite={null} hidden={false} onAction={()=>{}}/></>);`);
-  await build({root,configFile:false,envFile:false,logLevel:'error',esbuild:{jsx:'automatic'},build:{outDir:'dist'}});
-  server=createServer(async(req,res)=>{const name=new URL(req.url,'http://localhost').pathname;try{const file=name==='/'?'index.html':name.slice(1);const data=await readFile(name.startsWith('/agents/')?path.resolve('public',name.slice(1)):path.join(root,'dist',file));res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.webp')?'image/webp':'text/html');res.end(data);}catch{res.writeHead(404);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
-  try{browser=await chromium.launch({headless:true,channel:'chrome'});}catch{browser=await chromium.launch({headless:true});}const page=await browser.newPage({viewport:{width:1280,height:900}});const errors=[],nesting=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(/nested|descendant/.test(m.text()))nesting.push(m.text());});
-  await page.route('**/api/agents/status',r=>r.fulfill({json:{openAI:false}}));let release;let mode='success';
-  await page.route('**/api/agents/help',async r=>{await new Promise(resolve=>{release=resolve;});await r.fulfill(mode==='error'?{status:500,json:{error:'Fixture request failed'}}:{json:{answer:'Ready for review.',action:'none',provider:'local',model:null,limitation:'Local fixture'}}).catch(()=>{});});
-  await page.goto('http://127.0.0.1:'+server.address().port);assert.equal(await page.locator('output').first().innerText(),'error');
-  await page.getByRole('button',{name:'Open agent help'}).click();const dialog=page.getByRole('dialog');await dialog.getByRole('img',{name:'Scout: Hello!'}).waitFor();
-  await dialog.getByRole('button',{name:'Show guided help'}).click();await dialog.getByRole('img',{name:'Scout: Thinking…'}).waitFor();await page.waitForFunction(()=>!!document.querySelector('[role=dialog] .avatar-bulb'));assert.equal(await dialog.locator('.avatar-rays').evaluate(el=>getComputedStyle(el).animationName),'avatar-glow');
-  assert.equal(await dialog.locator('.agent-original').getAttribute('src'),'/agents/scout.webp');await page.screenshot({path:'/tmp/reframe-original-agents-thinking.png'});while(!release)await new Promise(r=>setTimeout(r,10));release();release=null;await dialog.getByRole('img',{name:'Scout: Complete'}).waitFor();
-  mode='error';await dialog.getByRole('button',{name:'Show guided help'}).click();await dialog.getByRole('img',{name:'Scout: Thinking…'}).waitFor();while(!release)await new Promise(r=>setTimeout(r,10));release();release=null;await dialog.getByRole('img',{name:'Scout: Needs attention'}).waitFor();assert.equal(await dialog.getByRole('alert').innerText(),'Fixture request failed');
-  await dialog.getByRole('button',{name:'Show guided help'}).click();await dialog.getByRole('img',{name:'Scout: Thinking…'}).waitFor();while(!release)await new Promise(r=>setTimeout(r,10));await dialog.getByRole('button',{name:'Stop',exact:true}).click();await dialog.getByRole('img',{name:'Scout: Stopped'}).waitFor();release();release=null;
-  await page.emulateMedia({reducedMotion:'reduce'});assert.ok(await page.locator('.agent-avatar').evaluateAll(els=>els.every(el=>[el,...el.querySelectorAll('*')].every(n=>getComputedStyle(n).animationName==='none'))));
-  await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:'/tmp/reframe-agents-mobile.png'});await dialog.getByRole('button',{name:'Close agent help'}).click();assert.equal(await page.getByRole('button',{name:'Open agent help'}).evaluate(el=>el===document.activeElement),true);await page.getByRole('button',{name:'Open Searchable list',exact:true}).focus();await page.keyboard.press('Enter');assert.equal(await page.getByLabel('Opened component').innerText(),'Opened');assert.deepEqual(nesting,[]);assert.deepEqual(errors,[]);
- }finally{await browser?.close();if(server)await new Promise(r=>server.close(r));await rm(root,{recursive:true,force:true});}
-});
+import { createServer } from 'node:http';
+import { build } from 'vite';
+import { chromium } from 'playwright';
+test(
+  'live agents react to real request lifecycle and respect reduced motion',
+  { timeout: 120000 },
+  async () => {
+    await mkdir('.reframe', { recursive: true });
+    const root = await mkdtemp(path.resolve('.reframe/avatar-test-'));
+    let server, browser;
+    try {
+      await writeFile(
+        path.join(root, 'index.html'),
+        '<div id="root"></div><script type="module" src="/main.tsx"></script>',
+      );
+      await writeFile(
+        path.join(root, 'main.tsx'),
+        `import React from 'react';import {createRoot} from 'react-dom/client';import AgentHelper from '../../src/AgentHelper';import Clipboard from '../../src/Clipboard';import {libraryItem,catalog} from '../../src/library/catalog';import AgentAvatar,{agentMood} from '../../src/AgentAvatar';import '../../src/styles.css';import '../../src/redesign.css';import '../../src/appearance.css';document.documentElement.dataset.appearance='light';function Saved(){const [opened,setOpened]=React.useState(false);return <><Clipboard items={[libraryItem(catalog.find(c=>c.id==='search'))]} onOpen={()=>setOpened(true)} onDelete={()=>{}}/><output aria-label="Opened component">{opened?'Opened':'Closed'}</output></>}const states=['idle','greeting','thinking','working','success','error','stopped'];createRoot(document.getElementById('root')).render(<><main><h1>Agent reactions</h1><div style={{display:'flex',flexWrap:'wrap'}}>{states.map(mood=><div key={mood}><AgentAvatar id="atlas" name="Atlas" mood={mood}/><p>{mood}</p></div>)}</div><output>{agentMood('passed-with-issues')}</output><Saved/></main><AgentHelper page="Home" item={{id:'fixture',name:'Fixture',html:'<button>Save</button>'}} invite={null} hidden={false} onAction={()=>{}}/></>);`,
+      );
+      await build({
+        root,
+        configFile: false,
+        envFile: false,
+        logLevel: 'error',
+        esbuild: { jsx: 'automatic' },
+        build: { outDir: 'dist' },
+      });
+      server = createServer(async (req, res) => {
+        const name = new URL(req.url, 'http://localhost').pathname;
+        try {
+          const file = name === '/' ? 'index.html' : name.slice(1);
+          const data = await readFile(
+            name.startsWith('/agents/')
+              ? path.resolve('public', name.slice(1))
+              : path.join(root, 'dist', file),
+          );
+          res.setHeader(
+            'Content-Type',
+            file.endsWith('.js')
+              ? 'text/javascript'
+              : file.endsWith('.css')
+                ? 'text/css'
+                : file.endsWith('.webp')
+                  ? 'image/webp'
+                  : 'text/html',
+          );
+          res.end(data);
+        } catch {
+          res.writeHead(404);
+          res.end();
+        }
+      });
+      await new Promise((r) => server.listen(0, '127.0.0.1', r));
+      try {
+        browser = await chromium.launch({ headless: true, channel: 'chrome' });
+      } catch {
+        browser = await chromium.launch({ headless: true });
+      }
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      const errors = [],
+        nesting = [];
+      page.on('pageerror', (e) => errors.push(e.message));
+      page.on('console', (m) => {
+        if (/nested|descendant/.test(m.text())) nesting.push(m.text());
+      });
+      await page.route('**/api/agents/status', (r) => r.fulfill({ json: { openAI: false } }));
+      let release;
+      let mode = 'success';
+      await page.route('**/api/agents/help', async (r) => {
+        await new Promise((resolve) => {
+          release = resolve;
+        });
+        await r
+          .fulfill(
+            mode === 'error'
+              ? { status: 500, json: { error: 'Fixture request failed' } }
+              : {
+                  json: {
+                    answer: 'Ready for review.',
+                    action: 'none',
+                    provider: 'local',
+                    model: null,
+                    limitation: 'Local fixture',
+                  },
+                },
+          )
+          .catch(() => {});
+      });
+      await page.goto('http://127.0.0.1:' + server.address().port);
+      assert.equal(await page.locator('output').first().innerText(), 'error');
+      await page.getByRole('button', { name: 'Open agent help' }).click();
+      const dialog = page.getByRole('dialog');
+      await dialog.getByRole('img', { name: 'Scout: Hello!' }).waitFor();
+      await dialog.getByRole('button', { name: 'Show guided help' }).click();
+      await dialog.getByRole('img', { name: 'Scout: Thinking…' }).waitFor();
+      await page.waitForFunction(() => !!document.querySelector('[role=dialog] .avatar-bulb'));
+      assert.equal(
+        await dialog.locator('.avatar-rays').evaluate((el) => getComputedStyle(el).animationName),
+        'avatar-glow',
+      );
+      assert.equal(
+        await dialog.locator('.agent-original').getAttribute('src'),
+        '/agents/scout.webp',
+      );
+      await page.screenshot({ path: '/tmp/reframe-original-agents-thinking.png' });
+      while (!release) await new Promise((r) => setTimeout(r, 10));
+      release();
+      release = null;
+      await dialog.getByRole('img', { name: 'Scout: Complete' }).waitFor();
+      mode = 'error';
+      await dialog.getByRole('button', { name: 'Show guided help' }).click();
+      await dialog.getByRole('img', { name: 'Scout: Thinking…' }).waitFor();
+      while (!release) await new Promise((r) => setTimeout(r, 10));
+      release();
+      release = null;
+      await dialog.getByRole('img', { name: 'Scout: Needs attention' }).waitFor();
+      assert.equal(await dialog.getByRole('alert').innerText(), 'Fixture request failed');
+      await dialog.getByRole('button', { name: 'Show guided help' }).click();
+      await dialog.getByRole('img', { name: 'Scout: Thinking…' }).waitFor();
+      while (!release) await new Promise((r) => setTimeout(r, 10));
+      await dialog.getByRole('button', { name: 'Stop', exact: true }).click();
+      await dialog.getByRole('img', { name: 'Scout: Stopped' }).waitFor();
+      release();
+      release = null;
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      assert.ok(
+        await page
+          .locator('.agent-avatar')
+          .evaluateAll((els) =>
+            els.every((el) =>
+              [el, ...el.querySelectorAll('*')].every(
+                (n) => getComputedStyle(n).animationName === 'none',
+              ),
+            ),
+          ),
+      );
+      await page.setViewportSize({ width: 390, height: 844 });
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      await page.screenshot({ path: '/tmp/reframe-agents-mobile.png' });
+      await dialog.getByRole('button', { name: 'Close agent help' }).click();
+      assert.equal(
+        await page
+          .getByRole('button', { name: 'Open agent help' })
+          .evaluate((el) => el === document.activeElement),
+        true,
+      );
+      await page.getByRole('button', { name: 'Open Searchable list', exact: true }).focus();
+      await page.keyboard.press('Enter');
+      assert.equal(await page.getByLabel('Opened component').innerText(), 'Opened');
+      assert.deepEqual(nesting, []);
+      assert.deepEqual(errors, []);
+    } finally {
+      await browser?.close();
+      if (server) await new Promise((r) => server.close(r));
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+);

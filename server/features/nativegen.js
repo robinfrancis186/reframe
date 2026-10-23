@@ -1,7 +1,11 @@
 import { load } from 'cheerio';
 
 export function nativeSources(html, spec) {
-  const $ = load(html), text = $('h1,h2,h3,p,li').toArray().slice(0, 100).map(el => ({ text: $(el).text().slice(0, 2000), heading: /^h[123]$/.test(el.name) }));
+  const $ = load(html),
+    text = $('h1,h2,h3,p,li')
+      .toArray()
+      .slice(0, 100)
+      .map((el) => ({ text: $(el).text().slice(0, 2000), heading: /^h[123]$/.test(el.name) }));
   const encoded = Buffer.from(JSON.stringify(spec)).toString('base64');
   const paragraphs = Buffer.from(JSON.stringify(text)).toString('base64');
   const swift = `import SwiftUI
@@ -218,5 +222,9 @@ public class ReframeFeatureView extends LinearLayout {
     @Override protected void onAttachedToWindow(){super.onAttachedToWindow();if(worker.isShutdown()){worker=Executors.newSingleThreadExecutor();load();}}
 }
 `;
-  return { 'Component.swift': swift, 'ReframeFeatureView.java': java, 'Component.kt': `import androidx.compose.runtime.Composable\nimport androidx.compose.material3.MaterialTheme\nimport androidx.compose.ui.graphics.toArgb\nimport androidx.compose.ui.viewinterop.AndroidView\n\n@Composable fun ReframeFeature(apiBase: String = "http://10.0.2.2:5176") {\n    val colors = MaterialTheme.colorScheme\n    AndroidView(factory = { context -> ReframeFeatureView(context, apiBase) }, update = { it.applyTheme(colors.primary.toArgb(), colors.onSurface.toArgb(), colors.onPrimary.toArgb()) })\n}\n` };
+  return {
+    'Component.swift': swift,
+    'ReframeFeatureView.java': java,
+    'Component.kt': `import androidx.compose.runtime.Composable\nimport androidx.compose.material3.MaterialTheme\nimport androidx.compose.ui.graphics.toArgb\nimport androidx.compose.ui.viewinterop.AndroidView\n\n@Composable fun ReframeFeature(apiBase: String = "http://10.0.2.2:5176") {\n    val colors = MaterialTheme.colorScheme\n    AndroidView(factory = { context -> ReframeFeatureView(context, apiBase) }, update = { it.applyTheme(colors.primary.toArgb(), colors.onSurface.toArgb(), colors.onPrimary.toArgb()) })\n}\n`,
+  };
 }

@@ -1,0 +1,10 @@
+node_modules
+.reframe
+.desktop-runtime
+out
+dist
+vendor
+examples
+extension/generated
+graphify-out
+package-lock.json
