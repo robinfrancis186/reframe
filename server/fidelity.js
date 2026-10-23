@@ -202,6 +202,23 @@ async function withDocument(html, page, { browser, resource }, use) {
   }
 }
 
+/** Opens one document at several viewport widths in the same sealed, script-free context (export CSS minimiser). */
+export async function withDocumentAtWidths(html, page, widths, options, use) {
+  return withDocument(html, page, options, async (first) => {
+    const tabs = [first];
+    await first.setViewportSize({ width: widths[0], height: 900 });
+    for (const width of widths.slice(1)) {
+      const tab = await first.context().newPage();
+      tab.setDefaultTimeout(15000);
+      await tab.setViewportSize({ width, height: 900 });
+      await tab.setContent(html, { waitUntil: 'load', timeout: 20000 });
+      await tab.evaluate(() => document.fonts.ready);
+      tabs.push(tab);
+    }
+    return use(tabs);
+  });
+}
+
 // The computed-style snapshot taken at capture is written as low-specificity rules at the start of the stylesheet, so
 // the site's own :hover and state rules still apply. Contextual site rules whose ancestors were not captured can then
 // win with the wrong value (e.g. a generic `.button` size). These are the snapshot rules, parsed back.

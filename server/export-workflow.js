@@ -5,11 +5,15 @@ import { exportComponentCode } from './code-export.js';
 import { scoreExport } from './fidelity.js';
 import { validateVariants } from './capture-variants.js';
 import { structuredDecision } from './openai.js';
+import { minimizeCss } from './css-minimize.js';
 
 /** @param {import('./contracts.js').ExportOptions} options */
 export async function reviewedExport(item, options = {}) {
   const { mode = 'faithful', names = {}, browser, resource } = options;
-  const code = exportComponentCode(item, { mode, names });
+  let code = exportComponentCode(item, { mode, names }),
+    minified = null;
+  if (mode === 'clean' && browser)
+    ({ code, minified } = await minimized(item, code, { names, browser, resource }));
   if (mode === 'clean')
     for (const [file, source] of Object.entries(code.files)) {
       const parser = file.endsWith('.tsx')
@@ -64,7 +68,84 @@ export async function reviewedExport(item, options = {}) {
     warnings: code.warnings || [],
     variants,
     removedRules: code.removedRules || 0,
+    minified,
   };
+}
+
+/**
+ * Clean export with redundant CSS removed (see css-minimize.js). The minimised export is used only when its fidelity
+ * is no worse than the unminimised clean export; otherwise the unminimised code is returned with a warning.
+ */
+async function minimized(item, code, { names, browser, resource }) {
+  const site = item.feature.spec.website,
+    page = site.pages[0];
+  try {
+    const widths = validateVariants(item.captureVariants)
+      .filter((v) => v.state === 'default')
+      .map((v) => v.width);
+    const result = await minimizeCss(
+      {
+        css: code.css,
+        markup: code.markup,
+        scope: code.scope,
+        fonts: code.fonts,
+        page,
+        rootStyle: page.rootStyle,
+      },
+      { browser, resource, widths },
+    );
+    const slim = exportComponentCode(
+      {
+        ...item,
+        feature: {
+          ...item.feature,
+          spec: {
+            ...item.feature.spec,
+            website: {
+              ...site,
+              pages: [{ ...page, rootStyle: result.rootStyle }, ...site.pages.slice(1)],
+            },
+          },
+        },
+      },
+      { mode: 'clean', names },
+    );
+    slim.files[`${slim.name}.css`] = slim.css = result.css;
+    const [before, after] = await Promise.all([
+      scoreExport(item, code, { browser, resource }).catch(() => null),
+      scoreExport(item, slim, { browser, resource }).catch(() => null),
+    ]);
+    const stats = {
+      ...result.stats,
+      scoreBefore: before?.score ?? null,
+      scoreAfter: after?.score ?? null,
+    };
+    if (before && after && after.score < before.score - 0.5)
+      return {
+        code: {
+          ...code,
+          warnings: [
+            ...(code.warnings || []),
+            `Minimised CSS matched the original less closely (${after.score} vs ${before.score}), so the complete clean CSS was kept.`,
+          ],
+        },
+        minified: { ...stats, used: false },
+      };
+    slim.files['README.md'] +=
+      `\nRedundant CSS removed: ${stats.declarationsBefore - stats.declarationsAfter} of ${stats.declarationsBefore} declarations (${stats.unusedVariables} unused variables), checked at ${stats.widths.join(', ')}px.${stats.complete ? '' : ' The time budget ran out before every rule was checked; the rest is kept as captured.'}\n`;
+    return { code: slim, minified: { ...stats, used: true } };
+  } catch (error) {
+    return {
+      code: {
+        ...code,
+        warnings: [
+          ...(code.warnings || []),
+          `CSS could not be minimised (${error.message}); the complete clean CSS is used.`,
+        ],
+      },
+      minified: null,
+    };
+  }
 }
 
 /** AI may suggest names only; executable code and behaviors always come from validated local generators. */

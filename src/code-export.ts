@@ -21,6 +21,17 @@ export interface ExportedCode {
     error?: string;
   }[];
   removedRules?: number;
+  /** Clean mode: what the render-checked CSS minimiser removed (see server/css-minimize.js). */
+  minified?: {
+    used: boolean;
+    declarationsBefore: number;
+    declarationsAfter: number;
+    unusedVariables: number;
+    widths: number[];
+    complete: boolean;
+    scoreBefore: number | null;
+    scoreAfter: number | null;
+  } | null;
 }
 export const canExportCode = (item: ComponentItem) =>
   !!(item.hasCode || item.feature?.spec.website?.pages[0]?.component);

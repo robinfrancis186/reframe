@@ -296,6 +296,18 @@ export default function CaptureEditor({
                   {exportedFiles.removedRules} unused rule groups removed · React interactions:{' '}
                   {exportedFiles.patterns?.join(', ') || 'none identified'}
                 </p>
+                {exportedFiles.minified?.used && (
+                  <p>
+                    Redundant CSS removed:{' '}
+                    {exportedFiles.minified.declarationsBefore -
+                      exportedFiles.minified.declarationsAfter}{' '}
+                    of {exportedFiles.minified.declarationsBefore} declarations, including{' '}
+                    {exportedFiles.minified.unusedVariables} unused variables · checked at{' '}
+                    {exportedFiles.minified.widths.join(', ')}px · match{' '}
+                    {exportedFiles.minified.scoreBefore ?? '—'} →{' '}
+                    {exportedFiles.minified.scoreAfter ?? '—'}
+                  </p>
+                )}
                 {exportedFiles.warnings?.map((w) => (
                   <p key={w}>{w}</p>
                 ))}
