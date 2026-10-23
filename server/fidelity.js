@@ -357,15 +357,20 @@ export async function repairAndScore(item, options = {}) {
     rules = snapshotRules(css);
   let repaired = css;
   const shot = await withRendered({ ...site, css }, { browser, resource }, async (tab) => {
-    const pins = rules.length ? await findRepairs(tab, rules) : '';
-    if (pins && (css + MARK + pins).length < 500000) {
-      repaired = css + MARK + pins;
+    // A pin can expose another override (pinning display:block lets a site `width:auto` fill the row), so the
+    // check repeats on the repaired page until nothing else differs.
+    let all = '';
+    for (let pass = 0; pass < 3 && rules.length; pass++) {
+      const pins = await findRepairs(tab, rules);
+      if (!pins || (css + MARK + all + pins).length >= 500000) break;
+      all += pins;
       await tab.evaluate((pins) => {
         const style = document.createElement('style');
         style.textContent = pins;
         document.head.append(style);
       }, pins);
     }
+    if (all) repaired = css + MARK + all;
     return canScore(item) ? shoot(tab, site) : null;
   });
   return {

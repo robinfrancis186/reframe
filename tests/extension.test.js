@@ -192,7 +192,7 @@ test(
       assert.ok(isItem(item), 'saved in the shape the app loads');
       assert.match(
         item.feature.spec.website.pages[0].html,
-        /^<div class="inner"[\s\S]*Team plan[\s\S]*Start trial/,
+        /<div class="inner" data-rf-picked="true"[\s\S]*Team plan[\s\S]*Start trial/,
         '↑ from the link selects its container',
       );
       assert.equal(item.feature.spec.website.pages[0].rem, 10);

@@ -37,7 +37,10 @@ export const siteOf = (item) => {
 function rootOf(item) {
   const page = item.feature?.spec?.website?.pages?.[0];
   const html = (page?.html || item.html || '').trim();
-  const match = html.match(/<([a-z][\w-]*)\b([^>]*)>/i);
+  // Captures wrap the picked element in ancestor wrappers (data-rf-shell); the element itself has snapshot index 0.
+  const match =
+    html.match(/<([a-z][\w-]*)\b([^>]*\bdata-rf-rendered="0"[^>]*)>/i) ||
+    html.match(/<([a-z][\w-]*)\b([^>]*)>/i);
   return {
     tag: match?.[1].toLowerCase() || '',
     attributes: match?.[2] || '',

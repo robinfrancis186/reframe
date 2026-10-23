@@ -4,16 +4,16 @@ import { ReferenceBrowser } from '../server/browser.js';
 import { scoreFidelity, snapshotRules, fidelityGrade, canScore } from '../server/fidelity.js';
 import { pageContext } from '../server/replica.js';
 
-// A page where a generic `.btn` rule would override the button's real, context-dependent size, and where an
+// A page where a generic `.btn` rule would override the button's real size, which depends on a sibling of an ancestor, and where an
 // absolutely positioned banner overlaps the card that is picked.
 const page = `<html><head><title>Fidelity fixture</title><style>
 body{margin:0;background:#f4f1ea;font:16px/1.4 Arial,sans-serif}
 .btn{font-size:12px;padding:4px 6px;background:#225;color:#fff;border-radius:4px;display:inline-block}
-.hero .cta .btn{font-size:22px;padding:14px 28px}
+.intro~.cta .btn{font-size:22px;padding:14px 28px}
 .card{width:360px;margin:40px;padding:24px;background:#fff;border:2px solid #334}
 .badge{position:absolute;right:8px;top:8px;background:#c33;color:#fff;padding:2px 6px}
 .overlay{position:absolute;left:30px;top:60px;width:300px;height:40px;background:#0a0}
-</style></head><body><main class="hero"><div class="cta"><section class="card" id="card" style="position:relative"><h2>Plans</h2><p>Everything you need to start.</p><a class="btn" id="btn" href="/buy">Buy now</a><span class="badge">New</span></section></div></main><div class="overlay"></div></body></html>`;
+</style></head><body><main class="hero"><span class="intro"></span><div class="cta"><section class="card" id="card" style="position:relative"><h2>Plans</h2><p>Everything you need to start.</p><a class="btn" id="btn" href="/buy">Buy now</a><span class="badge">New</span></section></div></main><div class="overlay"></div></body></html>`;
 
 test(
   'captures are repaired, scored against an isolated reference, and broken copies score lower',
@@ -57,7 +57,8 @@ test(
       assert.equal(card.feature.spec.website.pages[0].viewport, 1280);
       assert.ok(card.fidelity.score >= 90, `card scored ${card.fidelity.score}`);
       assert.equal(card.fidelity.grade, 'Close match');
-      // The button relies on `.hero .cta .btn`; without its ancestors the generic `.btn` would shrink it. The repair pass pins it.
+      // The button relies on `.intro~.cta .btn`. Ancestors are rebuilt around a capture, but their siblings are not, so the
+      // generic `.btn` would shrink it. The repair pass pins it.
       await browser.act({ id, action: 'pick', ...(await point('#btn')), depth: 0 });
       const button = (await browser.act({ id, action: 'capture' })).items[0];
       assert.match(button.feature.spec.website.css, /reframe:fidelity-repair[\s\S]*font-size:22px/);

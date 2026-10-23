@@ -1,3 +1,4 @@
+import postcss from 'postcss';
 import { load } from 'cheerio';
 import { bundleImages, safeImageData } from './portable-assets.js';
 import sanitize from 'sanitize-html';
@@ -243,6 +244,64 @@ export function usedFaces(css, rawPages) {
   }
   return css.replace(/@font-face\s*\{[^}]*\}/gi, (face) => (keep.has(face) ? face : ''));
 }
+/**
+ * Stylesheets the page could not read (other domains without CORS, e.g. Google Fonts) are fetched here through the
+ * same public-network broker. Their @font-face rules are kept (usedFaces later keeps only faces the component renders)
+ * and so are style rules whose selector matches the captured markup, with url() resolved against the stylesheet.
+ */
+async function recoverStylesheets(raw, $, resource) {
+  const urls = [
+      ...new Set((raw.missing || []).filter((u) => /^https?:\/\//.test(String(u)))),
+    ].slice(0, 8),
+    unavailable = (raw.missing || []).filter((u) => !urls.includes(u)),
+    parts = [];
+  const matches = (selector) => {
+    const plain = selector.replace(/::?[\w-]+(?:\([^)]*\))?/g, (m) =>
+      /^:(?:not|is|where|has)\(/.test(m) ? m : '',
+    );
+    try {
+      return $(plain || '*').length > 0;
+    } catch {
+      return false;
+    }
+  };
+  for (const url of urls) {
+    try {
+      const response = await resource(url, { accept: 'text/css,*/*;q=0.1', referer: raw.url });
+      const text = response.body.toString('utf8');
+      if (response.status !== 200 || response.body.length > 2_000_000 || /^\s*</.test(text))
+        throw new Error('not a stylesheet');
+      const sheet = postcss.parse(text);
+      sheet.walkAtRules('import', (rule) => {
+        rule.remove();
+      });
+      sheet.walkRules((rule) => {
+        if (rule.parent?.type === 'atrule' && /keyframes$/i.test(rule.parent.name)) return;
+        const keep = rule.selectors.filter(matches);
+        if (keep.length) rule.selectors = keep;
+        else rule.remove();
+      });
+      sheet.walkAtRules((rule) => {
+        if (rule.nodes && !rule.nodes.length) rule.remove();
+      });
+      sheet.walkDecls((decl) => {
+        decl.value = decl.value.replace(/url\(\s*(['"]?)(.*?)\1\s*\)/gi, (all, quote, ref) => {
+          if (/^(?:data:|#)/.test(ref)) return all;
+          try {
+            return 'url("' + new URL(ref, url).href + '")';
+          } catch {
+            return 'none';
+          }
+        });
+      });
+      parts.push(sheet.toString());
+    } catch {
+      unavailable.push(url);
+    }
+  }
+  return { css: parts.length ? '\n' + parts.join('\n') : '', unavailable };
+}
+
 export async function prepareReplica(rawPages, { resource = referenceResource } = {}) {
   const attachments = [],
     warnings = [],
@@ -310,7 +369,8 @@ export async function prepareReplica(rawPages, { resource = referenceResource } 
       throw new Error(
         'This selection carries more than 500 KB of styles. Pick a smaller region, or capture its sections separately.',
       );
-    const nextCSS = replicaCSS(raw.css || '');
+    const recovered = await recoverStylesheets(raw, $, resource);
+    const nextCSS = replicaCSS((raw.css || '') + recovered.css);
     if (nextCSS && !css.includes(nextCSS)) css += '\n' + nextCSS;
     const rootStyle = typeof raw.rootStyle === 'string' ? raw.rootStyle.replace(/[<>]/g, '') : '';
     pages.push({
@@ -325,7 +385,7 @@ export async function prepareReplica(rawPages, { resource = referenceResource } 
       component: !!raw.component,
       ...pageContext(raw),
     });
-    warnings.push(...(raw.missing || []).map((u) => 'Stylesheet unavailable: ' + u));
+    warnings.push(...recovered.unavailable.map((u) => 'Stylesheet unavailable: ' + u));
   }
   css = usedFaces(css, rawPages);
   // Inline public fonts, so exports do not silently fall back to a different typeface. Browsers load the first

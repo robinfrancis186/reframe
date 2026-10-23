@@ -131,7 +131,7 @@ const BLOCK = new Set([
 // Properties a component inherits from the page's html/body.
 const INHERITED =
   /^(?:--|font|color$|line-height|letter-spacing|word-spacing|text-(?:align|indent|transform|rendering|shadow|decoration-skip|size-adjust|underline)|white-space|direction|cursor|quotes|tab-size|hyphens|-webkit-(?:font-smoothing|text-size-adjust|tap-highlight-color)|-moz-osx-font-smoothing|font-feature-settings|font-variant|writing-mode|caret-color|accent-color|color-scheme)/i;
-const INTERNAL = /^data-rf-(?:picked|unavailable|form|image-loaded|isolate)$/;
+const INTERNAL = /^data-rf-(?:picked|unavailable|form|image-loaded|isolate|element)$/;
 
 const camel = (name) => name.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
 export const componentName = (name) => {
@@ -177,6 +177,7 @@ export function scopeCss(css, scope, rem = 16) {
       const local = selector
         .trim()
         .replace(/\[data-rf-rendered="(\d+)"\]/g, (_, n) => `.${scope}-${n}`)
+        .replace(/\[data-rf-shell\]/g, `.${scope}-shell`)
         .replace(/(^|[\s>+~(,])(?::root|html)(?=$|[\s>+~.#[:)])/g, `$1.${scope}-html`)
         .replace(/(^|[\s>+~(,])body(?=$|[\s>+~.#[:)])/g, `$1.${scope}-body`);
       return `.${scope} ${local}`;
@@ -227,8 +228,8 @@ export function toJsx(html, scope, indent = '          ', bindings = {}) {
       bound = bindings[el.attribs?.['data-rf-rendered']] || {};
     for (const [name, value] of Object.entries(el.attribs || {})) {
       if (INTERNAL.test(name) || Object.hasOwn(bound, ATTRIBUTES[name] || name)) continue;
-      if (name === 'data-rf-rendered') {
-        classes.push(`${scope}-${value}`);
+      if (name === 'data-rf-rendered' || name === 'data-rf-shell') {
+        classes.push(`${scope}-${name === 'data-rf-shell' ? 'shell' : value}`);
         continue;
       }
       if (name === 'class') {
@@ -308,6 +309,8 @@ function toHtml(html, scope) {
     if (index !== undefined) {
       $(el).removeAttr('data-rf-rendered').addClass(`${scope}-${index}`);
     }
+    if ($(el).attr('data-rf-shell') !== undefined)
+      $(el).removeAttr('data-rf-shell').addClass(`${scope}-shell`);
   });
   return $.html();
 }
