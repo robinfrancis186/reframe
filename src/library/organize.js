@@ -93,6 +93,7 @@ export function elementType(item) {
 const cache = new WeakMap();
 /** Automatic tags: site, element type, font families and up to three main colors. */
 export function autoTags(item) {
+  if (item._summary && item.automatic) return item.automatic;
   let tags = cache.get(item);
   if (!tags) {
     const assets = collectAssets([item]);

@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { onSyncStatus, syncStatus } from './storage';
 import { ArrowRight, Check } from 'lucide-react';
 import { componentReadiness } from './component-workflow.js';
 import type { ComponentItem } from './model';
@@ -17,21 +19,32 @@ export default function ComponentJourney({
   onSave: () => void;
   onIntegrate: () => void;
 }) {
+  const [sync, setSync] = useState(syncStatus);
+  useEffect(() => onSyncStatus(setSync), []);
   const state = componentReadiness(item),
     hasBehavior = state.kind !== 'reference';
   return (
-    <section className="component-journey panel" aria-label="Component next steps">
+    <section tabIndex={-1} className="component-journey panel" aria-label="Component next steps">
       <div className="journey-heading">
         <div>
           <span className="eyebrow">{state.label}</span>
           <h2>{item.name}</h2>
         </div>
-        <span className="muted">{saved ? 'Saved in clipboard' : 'Unsaved changes'}</span>
+        <span className="muted">
+          {saved
+            ? sync.state === 'synced'
+              ? 'Saved on this computer'
+              : sync.state === 'saving'
+                ? 'Saving to Library…'
+                : 'Pending Library sync'
+            : 'Unsaved changes'}
+        </span>
       </div>
       <p>{state.detail}</p>
       <ol className="journey-steps">
         <li>
           <button
+            aria-label={hasBehavior ? 'Review included behavior' : 'Define behavior'}
             onClick={item.feature?.spec.website ? onTest : onBuild}
             disabled={!!item.libraryId}
           >
@@ -43,7 +56,7 @@ export default function ComponentJourney({
           </button>
         </li>
         <li>
-          <button onClick={onTest} disabled={!hasBehavior}>
+          <button aria-label="Test behavior" onClick={onTest} disabled={!hasBehavior}>
             <span>2</span>
             <strong>Test behavior</strong>
             <small>
@@ -58,7 +71,7 @@ export default function ComponentJourney({
         <li>
           <button onClick={onSave} disabled={!item.name.trim()}>
             <span>{saved ? <Check size={16} /> : 3}</span>
-            <strong>{saved ? 'Saved together' : 'Save to clipboard'}</strong>
+            <strong>{saved ? 'Saved together' : 'Save to Library'}</strong>
             <small>Keep source and behavior together</small>
           </button>
         </li>

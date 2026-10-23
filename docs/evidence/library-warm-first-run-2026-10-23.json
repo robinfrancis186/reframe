@@ -1,0 +1,60 @@
+{
+  "measuredAt": "2026-10-23T08:34:56.749Z",
+  "method": "Isolated production Library surface; baseline HEAD 2f5bdde versus current, 24 visible cards. Library increments are measured after an empty Library shell has loaded; cold shell latency is reported separately. Process-tree RSS includes shared-page double counting; compare same-method deltas. Local filesystem metadata save times exclude HTTP latency. The separate cold-start JSON retains the first measurement including initial browser/app overhead.",
+  "results": [
+    {
+      "count": 150,
+      "legacyCompactBytes": 10118545,
+      "summaryBytes": 149112,
+      "metadataSaveP95Ms": 4.22,
+      "metadataSourceBytesUploaded": 0,
+      "baseline": {
+        "coldShellMs": 1128,
+        "loadMs": 824,
+        "incrementalRendererHeapBytes": 29863760,
+        "cardIframes": 24,
+        "rendererHeapBytes": 32029972,
+        "incrementalBrowserRSSBytes": 109002752
+      },
+      "current": {
+        "coldShellMs": 942,
+        "loadMs": 48,
+        "incrementalRendererHeapBytes": 1294076,
+        "cardIframes": 0,
+        "rendererHeapBytes": 3422188,
+        "incrementalBrowserRSSBytes": 27443200
+      },
+      "memoryReductionPercent": 74.8
+    },
+    {
+      "count": 500,
+      "legacyCompactBytes": 33729895,
+      "summaryBytes": 497303,
+      "metadataSaveP95Ms": 11.41,
+      "metadataSourceBytesUploaded": 0,
+      "current": {
+        "coldShellMs": 1053,
+        "loadMs": 47,
+        "incrementalRendererHeapBytes": 1675068,
+        "cardIframes": 0,
+        "rendererHeapBytes": 3840240,
+        "incrementalBrowserRSSBytes": 22953984
+      }
+    },
+    {
+      "count": 1000,
+      "legacyCompactBytes": 67460395,
+      "summaryBytes": 994731,
+      "metadataSaveP95Ms": 19.53,
+      "metadataSourceBytesUploaded": 0,
+      "current": {
+        "coldShellMs": 1019,
+        "loadMs": 58,
+        "incrementalRendererHeapBytes": 2155140,
+        "cardIframes": 0,
+        "rendererHeapBytes": 4283080,
+        "incrementalBrowserRSSBytes": 23986176
+      }
+    }
+  ]
+}

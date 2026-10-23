@@ -1,0 +1,52 @@
+{
+  "measuredAt": "2026-10-23T08:09:48.476Z",
+  "method": "Isolated production Library surface; baseline HEAD 2f5bdde versus current, 24 visible cards. Browser process-tree RSS includes shared-page double counting; compare same-method incremental results. Local filesystem metadata save times exclude HTTP latency.",
+  "results": [
+    {
+      "count": 150,
+      "legacyCompactBytes": 10118545,
+      "summaryBytes": 143885,
+      "metadataSaveP95Ms": 7.73,
+      "metadataSourceBytesUploaded": 0,
+      "baseline": {
+        "loadMs": 3567,
+        "cardIframes": 24,
+        "rendererHeapBytes": 31301316,
+        "incrementalBrowserRSSBytes": 152027136
+      },
+      "current": {
+        "loadMs": 1054,
+        "cardIframes": 0,
+        "rendererHeapBytes": 2808652,
+        "incrementalBrowserRSSBytes": 103514112
+      },
+      "memoryReductionPercent": 31.9
+    },
+    {
+      "count": 500,
+      "legacyCompactBytes": 33729895,
+      "summaryBytes": 479885,
+      "metadataSaveP95Ms": 23.79,
+      "metadataSourceBytesUploaded": 0,
+      "current": {
+        "loadMs": 1029,
+        "cardIframes": 0,
+        "rendererHeapBytes": 3105544,
+        "incrementalBrowserRSSBytes": 112721920
+      }
+    },
+    {
+      "count": 1000,
+      "legacyCompactBytes": 67460395,
+      "summaryBytes": 959885,
+      "metadataSaveP95Ms": 33.04,
+      "metadataSourceBytesUploaded": 0,
+      "current": {
+        "loadMs": 1081,
+        "cardIframes": 0,
+        "rendererHeapBytes": 3558880,
+        "incrementalBrowserRSSBytes": 100581376
+      }
+    }
+  ]
+}

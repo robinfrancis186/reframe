@@ -8,16 +8,22 @@ import {
   createCipheriv,
   createDecipheriv,
 } from 'node:crypto';
-import { promisify } from 'node:util';
 import { lookup } from 'node:dns/promises';
 import { BlockList, isIP } from 'node:net';
 import https from 'node:https';
 import path from 'node:path';
 
-const derive = promisify(scrypt),
-  services = new Map();
+const services = new Map();
 const passwordHash = (password, salt) =>
-  derive(password, salt, 64, { N: 131072, r: 8, p: 1, maxmem: 256 * 1024 * 1024 });
+  new Promise((resolve, reject) =>
+    scrypt(
+      password,
+      salt,
+      64,
+      { N: 131072, r: 8, p: 1, maxmem: 256 * 1024 * 1024 },
+      (error, key) => (error ? reject(error) : resolve(key)),
+    ),
+  );
 export const fail = (status, message) => {
   throw Object.assign(new Error(message), { status });
 };
@@ -224,7 +230,7 @@ for (const [address, bits] of [
   ['203.0.113.0', 24],
   ['224.0.0.0', 3],
 ])
-  blocked4.addSubnet(address, bits);
+  blocked4.addSubnet(String(address), Number(bits));
 allowed6.addSubnet('2000::', 3, 'ipv6');
 for (const [address, bits] of [
   ['2001::', 23],
@@ -232,7 +238,7 @@ for (const [address, bits] of [
   ['2002::', 16],
   ['3fff::', 20],
 ])
-  blocked6.addSubnet(address, bits, 'ipv6');
+  blocked6.addSubnet(String(address), Number(bits), 'ipv6');
 export function publicAPIAddress(address) {
   return isIP(address) === 4
     ? !blocked4.check(address)

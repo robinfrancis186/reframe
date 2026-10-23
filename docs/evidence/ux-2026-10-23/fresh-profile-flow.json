@@ -1,0 +1,185 @@
+{
+  "base": "http://127.0.0.1:54691",
+  "marks": {
+    "home": 2671,
+    "captured": 3419,
+    "behaviorSaved": 11080,
+    "workingPreview": 12522,
+    "reopened": 13045,
+    "installedAndLaunched": 23971,
+    "persistedAfterReload": 24551
+  },
+  "errors": [],
+  "requests": [
+    {
+      "url": "/api/library/index",
+      "method": "GET"
+    },
+    {
+      "url": "/api/agents/status",
+      "method": "GET"
+    },
+    {
+      "url": "/api/quality",
+      "method": "POST"
+    },
+    {
+      "url": "/api/status",
+      "method": "GET"
+    },
+    {
+      "url": "/api/capture",
+      "method": "POST"
+    },
+    {
+      "url": "/api/quality",
+      "method": "POST"
+    },
+    {
+      "url": "/api/features/inspect",
+      "method": "POST"
+    },
+    {
+      "url": "/api/features/build",
+      "method": "POST"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/library/items/8dffd15a-1c80-43dc-b14d-420577f33397",
+      "method": "PUT"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/library/index",
+      "method": "GET"
+    },
+    {
+      "url": "/api/previews/start",
+      "method": "POST"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/previews/stop",
+      "method": "POST"
+    },
+    {
+      "url": "/api/extension",
+      "method": "GET"
+    },
+    {
+      "url": "/api/library/items/8dffd15a-1c80-43dc-b14d-420577f33397",
+      "method": "GET"
+    },
+    {
+      "url": "/api/downloads",
+      "method": "POST"
+    },
+    {
+      "url": "/api/extension",
+      "method": "GET"
+    },
+    {
+      "url": "/api/agents/status",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/history",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/demo",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/feature-starter",
+      "method": "POST"
+    },
+    {
+      "url": "/api/projects",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/history",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/branding",
+      "method": "POST"
+    },
+    {
+      "url": "/api/agents/status",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/targets",
+      "method": "POST"
+    },
+    {
+      "url": "/api/library/settings",
+      "method": "PATCH"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/library/index",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/plan",
+      "method": "POST"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/fit",
+      "method": "POST"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/apply",
+      "method": "POST"
+    },
+    {
+      "url": "/api/projects",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/history",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/demo/launch",
+      "method": "POST"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    }
+  ],
+  "libraryItems": 1,
+  "demoUrl": "http://127.0.0.1:54733/"
+}

@@ -1,15 +1,4 @@
-import {
-  ArrowRight,
-  Camera,
-  Code2,
-  Film,
-  Folder,
-  Globe,
-  ImagePlus,
-  Link,
-  Loader2,
-  Scan,
-} from 'lucide-react';
+import { ArrowRight, Folder, Globe, Link, Loader2, Scan } from 'lucide-react';
 import Preview from './Preview';
 import { starters, type ComponentItem, type Theme } from './model';
 import './home.css';
@@ -45,9 +34,6 @@ export default function Home({
       <div className="home-intro">
         <h2>Good ideas deserve a new home.</h2>
         <p>Capture a reference. Make it fit. Keep it yours.</p>
-        <button className="text-button" onClick={() => onNavigate('Agents')}>
-          Meet your specialist agents <ArrowRight size={16} />
-        </button>
       </div>
       <div className="home-actions">
         <button className="home-action browse-action" onClick={() => onNavigate('Browser')}>
@@ -75,7 +61,7 @@ export default function Home({
             <Folder size={28} />
           </span>
           <span>
-            <strong>Open your clipboard</strong>
+            <strong>Open your Library</strong>
             <small>Your saved components, ready to reuse</small>
           </span>
           <ArrowRight size={20} />
@@ -111,24 +97,11 @@ export default function Home({
             </button>
           </div>
         )}
-        <div className="home-sources">
-          {[
-            { id: 'image', name: 'Screenshot', Icon: ImagePlus },
-            { id: 'video', name: 'Video', Icon: Film },
-            { id: 'camera', name: 'Camera', Icon: Camera },
-            { id: 'html', name: 'HTML', Icon: Code2 },
-          ].map(({ id, name, Icon }) => (
-            <button key={id} onClick={() => onCapture(id)}>
-              <Icon size={18} />
-              {name}
-            </button>
-          ))}
-        </div>
       </section>
       {recent && (
         <section className="home-resume" aria-label="Continue recent component">
           <div>
-            <span className="eyebrow">FROM YOUR CLIPBOARD</span>
+            <span className="eyebrow">FROM YOUR LIBRARY</span>
             <p>
               <strong>{recent.name}</strong> · {componentReadiness(recent).label}
             </p>
@@ -162,7 +135,7 @@ export default function Home({
         <div className="home-section-heading">
           <h2>Start with a component</h2>
           <button onClick={() => onNavigate('Clipboard')}>
-            View clipboard
+            View Library
             <ArrowRight size={16} />
           </button>
         </div>

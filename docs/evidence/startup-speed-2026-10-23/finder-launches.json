@@ -1,0 +1,73 @@
+{
+  "folder": "/tmp/reframe-speed-launch-XPqO4Z",
+  "app": "/tmp/reframe-speed-dmg/Reframe.app",
+  "samples": [
+    {
+      "label": "fresh",
+      "homeMs": 23482,
+      "phases": [
+        {
+          "phase": "startup-visible",
+          "elapsedMs": 4904
+        },
+        {
+          "phase": "runtime-cache-prepared",
+          "elapsedMs": 12886
+        },
+        {
+          "phase": "backend-ready",
+          "elapsedMs": 18214
+        },
+        {
+          "phase": "home-ready",
+          "elapsedMs": 21430
+        }
+      ]
+    },
+    {
+      "label": "repeat",
+      "homeMs": 6419,
+      "phases": [
+        {
+          "phase": "startup-visible",
+          "elapsedMs": 2377
+        },
+        {
+          "phase": "runtime-cache-reused",
+          "elapsedMs": 2589
+        },
+        {
+          "phase": "backend-ready",
+          "elapsedMs": 3998
+        },
+        {
+          "phase": "home-ready",
+          "elapsedMs": 4681
+        }
+      ]
+    },
+    {
+      "label": "repeat-2",
+      "homeMs": 4193,
+      "phases": [
+        {
+          "phase": "startup-visible",
+          "elapsedMs": 1777
+        },
+        {
+          "phase": "runtime-cache-reused",
+          "elapsedMs": 1989
+        },
+        {
+          "phase": "backend-ready",
+          "elapsedMs": 3381
+        },
+        {
+          "phase": "home-ready",
+          "elapsedMs": 3642
+        }
+      ]
+    }
+  ],
+  "compileCacheEntries": 738
+}

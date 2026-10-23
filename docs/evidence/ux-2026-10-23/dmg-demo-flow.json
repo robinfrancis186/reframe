@@ -1,0 +1,14 @@
+{
+  "readOnlyDMG": true,
+  "elapsedMs": 55626,
+  "libraryItems": 1,
+  "security": {
+    "sandbox": true,
+    "contextIsolation": true,
+    "nodeIntegration": false
+  },
+  "errors": [],
+  "ownedProcessesClosed": 7,
+  "restartRecordsPersisted": true,
+  "systemPathOnly": "/usr/bin:/bin:/usr/sbin:/sbin"
+}

@@ -85,7 +85,7 @@ export default function CaptureDialog({
           backup.items.length > 200 ||
           !backup.items.every(isItem)
         )
-          throw new Error('This is not a valid Reframe clipboard backup.');
+          throw new Error('This is not a valid Reframe Library backup.');
         const items: ComponentItem[] = [];
         for (const item of backup.items) {
           if (item.feature) {

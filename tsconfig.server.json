@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node"]
+  },
+  "include": [
+    "server/analyze.js",
+    "server/extension.js",
+    "server/library-store.js",
+    "server/capture-variants.js",
+    "server/code-export.js",
+    "server/clean-export.js",
+    "server/export-workflow.js",
+    "server/thumbnails.js",
+    "server/desktop-demo.js",
+    "server/demo-launcher.js"
+  ]
+}

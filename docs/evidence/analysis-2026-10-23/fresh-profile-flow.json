@@ -1,0 +1,209 @@
+{
+  "base": "http://127.0.0.1:58370",
+  "marks": {
+    "home": 1738,
+    "captured": 3192,
+    "behaviorSaved": 21628,
+    "workingPreview": 22545,
+    "reopened": 23098,
+    "installedAndLaunched": 26171,
+    "persistedAfterReload": 26829
+  },
+  "errors": [],
+  "requests": [
+    {
+      "url": "/api/library/index",
+      "method": "GET"
+    },
+    {
+      "url": "/api/agents/status",
+      "method": "GET"
+    },
+    {
+      "url": "/api/quality",
+      "method": "POST"
+    },
+    {
+      "url": "/api/status",
+      "method": "GET"
+    },
+    {
+      "url": "/api/capture",
+      "method": "POST"
+    },
+    {
+      "url": "/api/quality",
+      "method": "POST"
+    },
+    {
+      "url": "/api/features/inspect",
+      "method": "POST"
+    },
+    {
+      "url": "/api/features/build",
+      "method": "POST"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/features/build",
+      "method": "POST"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/previews/start",
+      "method": "POST"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/previews/stop",
+      "method": "POST"
+    },
+    {
+      "url": "/api/library/items/f848ca7a-1633-425f-912b-2e8166fc89c2",
+      "method": "PUT"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/library/index",
+      "method": "GET"
+    },
+    {
+      "url": "/api/previews/start",
+      "method": "POST"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/previews/stop",
+      "method": "POST"
+    },
+    {
+      "url": "/api/extension",
+      "method": "GET"
+    },
+    {
+      "url": "/api/library/items/f848ca7a-1633-425f-912b-2e8166fc89c2",
+      "method": "GET"
+    },
+    {
+      "url": "/api/downloads",
+      "method": "POST"
+    },
+    {
+      "url": "/api/extension",
+      "method": "GET"
+    },
+    {
+      "url": "/api/agents/status",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/history",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/demo",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/feature-starter",
+      "method": "POST"
+    },
+    {
+      "url": "/api/projects",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/history",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/branding",
+      "method": "POST"
+    },
+    {
+      "url": "/api/agents/status",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/targets",
+      "method": "POST"
+    },
+    {
+      "url": "/api/library/settings",
+      "method": "PATCH"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    },
+    {
+      "url": "/api/library/index",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/plan",
+      "method": "POST"
+    },
+    {
+      "url": "/api/projects/fit",
+      "method": "POST"
+    },
+    {
+      "url": "/api/projects/plan",
+      "method": "POST"
+    },
+    {
+      "url": "/api/projects/apply",
+      "method": "POST"
+    },
+    {
+      "url": "/api/projects",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/history",
+      "method": "GET"
+    },
+    {
+      "url": "/api/projects/demo/launch",
+      "method": "POST"
+    },
+    {
+      "url": "/api/library/revision",
+      "method": "GET"
+    }
+  ],
+  "libraryItems": 1,
+  "demoUrl": "http://127.0.0.1:58401/"
+}

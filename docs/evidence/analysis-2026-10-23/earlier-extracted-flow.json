@@ -1,0 +1,64 @@
+{
+  "artifact": "/Users/robinfrancis/Documents/ChatGPT/devinhack/out/Reframe-darwin-arm64/Reframe.app/Contents/MacOS/Reframe",
+  "publicSiteCaptured": true,
+  "twoComponentsInstalled": true,
+  "timings": [
+    {
+      "endpoint": "/api/features/build",
+      "ms": 11548,
+      "reused": false,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/projects/plan",
+      "ms": 98,
+      "reused": true,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/tabs",
+      "ms": 5883,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 925,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 139,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 103,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 1842,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/projects/plan",
+      "ms": 14919,
+      "reused": false,
+      "status": 200
+    }
+  ],
+  "elapsedMs": 90454,
+  "libraryItems": 2,
+  "security": {
+    "sandbox": true,
+    "contextIsolation": true,
+    "nodeIntegration": false
+  },
+  "errors": [],
+  "ownedProcessesClosed": 16,
+  "restartRecordsPersisted": true,
+  "bundledOCR": true,
+  "ocrMs": 7011,
+  "appBundleStoreAbsent": true,
+  "systemPathOnly": "/usr/bin:/bin:/usr/sbin:/sbin"
+}

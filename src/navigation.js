@@ -1,11 +1,10 @@
 export const sections = [
   { name: 'Home', pages: [['Home', 'Home']] },
   {
-    name: 'Studio',
+    name: 'Capture',
     pages: [
-      ['Workbench', 'Canvas'],
-      ['Browser', 'Browser'],
-      ['Native capture', 'Devices'],
+      ['Browser', 'Browse & pick'],
+      ['Workbench', 'Editor'],
     ],
   },
   {
@@ -24,11 +23,12 @@ export const sections = [
     ],
   },
   {
-    name: 'Agents',
+    name: 'Labs',
     pages: [
-      ['Agents', 'Team & workflows'],
+      ['Agents', 'Agents & testing'],
+      ['Native capture', 'Device capture'],
       ['Engines', 'Review tools'],
-      ['Connections', 'Connections'],
+      ['Connections', 'Assistant connections'],
     ],
   },
 ];

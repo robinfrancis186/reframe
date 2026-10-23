@@ -4,7 +4,6 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { referenceUrl } from './browser-network.js';
-import { cleanHtml } from './capture.js';
 import { atomicJSON } from './features/services.mjs';
 import { readRendered, replicaItem, replicaDocument, websiteServer } from './replica.js';
 import { reviewFeature } from './engines.js';

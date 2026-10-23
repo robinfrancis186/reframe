@@ -223,3 +223,24 @@ test(
     }
   },
 );
+
+test('finishing captures cannot resurrect revoked tokens or replace a new pairing; counters serialize', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'pairing-race-'));
+  try {
+    const pairing = new ExtensionPairing(dir),
+      first = await pairing.pair(),
+      state = await pairing.verify('Bearer ' + first.token);
+    await Promise.all(Array.from({ length: 12 }, () => pairing.used(state)));
+    assert.equal((await pairing.status()).captures, 12);
+    await pairing.revoke();
+    await pairing.used(state);
+    assert.deepEqual(await pairing.status(), { paired: false });
+    await assert.rejects(pairing.verify('Bearer ' + first.token), (e) => e.status === 401);
+    const second = await pairing.pair();
+    await pairing.used(state);
+    await pairing.verify('Bearer ' + second.token);
+    await assert.rejects(pairing.verify('Bearer ' + first.token), (e) => e.status === 401);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

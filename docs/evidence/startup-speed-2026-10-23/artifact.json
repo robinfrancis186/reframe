@@ -1,0 +1,12 @@
+{
+  "path": "out/make/Reframe-arm64-local-unsigned.dmg",
+  "bytes": 407465476,
+  "sha256": "dcbb7b07cf9325d723ced6bbedcd7941a029b7e5e6eba5f6fcedad1564f9869e",
+  "previousBytes": 510275333,
+  "sizeReductionPercent": 20.1479182612184,
+  "signature": "codesign --verify --deep --strict passed on read-only DMG and copied app",
+  "distribution": "local ad-hoc; no Developer ID or notarization",
+  "engineArchiveEntries": 17645,
+  "forbiddenArchiveEntries": 0,
+  "libraryIndexSha256": "f62f2b4e5a2594c3d400c019fd46177f7883d60a9178b9b2c0552795fd35f9ad"
+}

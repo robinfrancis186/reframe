@@ -1,3 +1,4 @@
+import { browserErrorMessage } from '../server/browser.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ReferenceBrowser } from '../server/browser.js';
@@ -337,3 +338,71 @@ test(
     }
   },
 );
+
+test(
+  'asset redirects resolve once per response URL, and strip credentials across origins',
+  { timeout: 30000 },
+  async () => {
+    const hits = [];
+    const browser = new ReferenceBrowser({
+      resource: async (url, headers) => {
+        hits.push({ url, headers });
+        const response = (body, type = 'text/html') => ({
+          status: 200,
+          headers: { 'content-type': type },
+          body: Buffer.from(body),
+        });
+        if (url === 'https://example.com/')
+          return response(
+            '<link rel="stylesheet" href="/assets/main.css"><h1>Redirect fixture</h1>',
+          );
+        if (url.endsWith('/assets/main.css'))
+          return { status: 302, headers: { location: 'v2/main.css' }, body: Buffer.alloc(0) };
+        if (url === 'https://example.com/assets/v2/main.css')
+          return {
+            status: 302,
+            headers: { location: 'https://cdn.example/final.css' },
+            body: Buffer.alloc(0),
+          };
+        if (url === 'https://cdn.example/final.css')
+          return response('h1{color:rgb(10,20,30)}', 'text/css');
+        return { status: 404, headers: {}, body: Buffer.alloc(0) };
+      },
+    });
+    try {
+      const { id } = await browser.create();
+      await browser.act({ id, action: 'navigate', url: 'https://example.com' });
+      assert.ok(hits.some((h) => h.url === 'https://example.com/assets/v2/main.css'));
+      assert.ok(!hits.some((h) => h.url.includes('v2/v2')));
+      const cdn = hits.find((h) => h.url === 'https://cdn.example/final.css');
+      assert.ok(cdn);
+      assert.equal(cdn.headers.cookie, undefined);
+      assert.equal(cdn.headers.authorization, undefined);
+      assert.equal(
+        await browser.tabs
+          .get(id)
+          .page.locator('h1')
+          .evaluate((el) => getComputedStyle(el).color),
+        'rgb(10, 20, 30)',
+      );
+    } finally {
+      await browser.close();
+    }
+  },
+);
+
+test('browser errors keep useful selection guidance without automation stacks', () => {
+  assert.equal(
+    browserErrorMessage(
+      new Error(
+        'page.evaluate: Error: Select a component, rather than the entire document.\n    at eval (capture:1)',
+      ),
+    ),
+    'Select a component, rather than the entire document.',
+  );
+  assert.match(
+    browserErrorMessage(new Error('page.screenshot: Timeout 5000ms exceeded.\nCall log:')),
+    /Refresh it, then pick/,
+  );
+  assert.equal(browserErrorMessage(new Error('Pick an element first.')), 'Pick an element first.');
+});

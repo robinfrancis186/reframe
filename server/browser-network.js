@@ -18,6 +18,7 @@ export function referenceUrl(input) {
 }
 
 // Every resource uses the same validated, pinned DNS address; Chromium has no direct network path.
+/** @type {import('./contracts.js').Resource} */
 export async function referenceResource(input, requestHeaders = {}, { method = 'GET', body } = {}) {
   const url = referenceUrl(input);
   if (!['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(method))
@@ -27,6 +28,7 @@ export async function referenceResource(input, requestHeaders = {}, { method = '
   if (!addresses.length || addresses.some((a) => !publicAddress(a.address)))
     throw new Error('Private and local network destinations are blocked.');
   const address = addresses[0];
+  /** @type {import('node:http').OutgoingHttpHeaders} */
   const headers = {};
   for (const [key, value] of Object.entries(requestHeaders))
     if (
@@ -66,6 +68,7 @@ export async function referenceResource(input, requestHeaders = {}, { method = '
         });
         response.on('error', reject);
         response.on('end', () => {
+          /** @type {Record<string,string>} */
           const headers = {};
           for (const [key, value] of Object.entries(response.headers)) {
             if (value && !['connection', 'transfer-encoding', 'content-length'].includes(key))

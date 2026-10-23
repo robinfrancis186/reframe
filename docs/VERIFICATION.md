@@ -1,4 +1,95 @@
-# Verification — 22 October 2026
+# Verification — 23 October 2026
+
+## 23 October 2026 — self-contained captures and Ready to reuse
+
+- Supported public raster assets are bundled into website packages; editor and installation review show asset dependencies and a source-blocked check. Older captures can bundle supported assets before saving.
+- Live RobinFrancis.in About/CV card captured, saved, reopened and installed in a separate React demo. Both portraits and the byte-identical CV worked on desktop, after reload and at 390px with all non-local requests blocked.
+- Main Library received one new self-contained item; all five existing summaries remained unchanged. Legacy upgrade/save/reopen and phone-width report checks passed.
+- Final `npm run verify`: **168 tests**, formatting, ESLint, client/server type checks and all three builds passed. [Evidence and limitations](PORTABLE_COMPONENTS_2026-10-23.md). This does not rebuild or revalidate the packaged macOS release.
+
+
+## 23 October 2026 — archived backend and compile-cache startup refinement
+
+Current delivery: `out/make/Reframe-arm64-local-unsigned.dmg`, SHA-256 `dcbb7b07cf9325d723ced6bbedcd7941a029b7e5e6eba5f6fcedad1564f9869e`, 407,465,476 bytes.
+
+- Normal Launch Services DMG Home: fresh profile **23,482 ms**, repeats **6,419 / 4,193 ms**. Native UI visibly reached unchanged Home after preparation.
+- Packaged DMG full flows: **74,964 / 68,574 ms**; Home **23,971 / 18,255 ms**, restart **5,239 / 4,442 ms**.
+- Writable copied app: complete flow **56,875 ms**, Home **16,550 ms**, restart **4,573 ms**. First-use extraction is a known additional cost for installed copies.
+- All three packaged flows passed capture, working preview, required-field validation, real demo writes, second public-site component installation, restart persistence, forced backend recovery, sandbox/isolation assertions and owned-process cleanup.
+- Final DMG run additionally passed existing-Library import from a disposable folder and asserted compile-cache files exist. The actual IPC and import implementation run; only the native folder picker is stubbed.
+- New archive tests cover extraction, installed-to-portable cache preparation, interrupted/corrupt preparation, reuse and preserving a previous complete version. No Library data is touched by cache repair.
+- Final clean `npm run verify`: **162 tests passed**, formatting, ESLint, client/server type checks and all three production builds passed. [Complete log](evidence/startup-speed-2026-10-23/verification.log).
+- Initial broader suite: 161 passed, one scheduling-dependent analysis test failed. Corrected the test to accept either concurrent caller owning the single real analysis, while requiring exact evidence reuse. The targeted analysis suite then passed.
+- Local signature checks passed on mounted and copied app; archive scan excluded credentials and user workspace data. Development Library SHA-256 remains `f62f2b4e5a2594c3d400c019fd46177f7883d60a9178b9b2c0552795fd35f9ad`.
+
+Timings use fresh application profiles, not rebooted/OS-cold machines. Independent newcomer/second-Mac tests and signed/notarized distribution remain pending. Details and screenshots: [release assessment](RELEASE_ASSESSMENT_2026-10-23.md), [raw evidence](evidence/startup-speed-2026-10-23/).
+
+
+## macOS startup and direct-DMG follow-up
+
+- **162 tests passed**, plus formatting, lint, client/server type checks and all three production builds. [Verification log](evidence/startup-2026-10-23/verification.log).
+- Added a visible startup/preparation screen and safe in-app retry. A failed or timed-out backend is stopped before replacement; recovery controls accept only the app's own top-level recovery document. A full/unwritable disk no longer prevents displaying recovery.
+- Read-only launches prepare a private versioned execution cache for the bundled backend, Node, Chromium and OCR. Preparation is atomic, interrupted stages are cleaned, missing files are repaired and complete versions are reused. Installed copies use their bundled files directly. The cache uses about 760 MB; it contains application code, not the Library.
+- Fresh-profile read-only DMG workflow passed: capture, real behavior, isolated preview, Library, reviewed install, submission/reload, example.com browser capture, second install, restart and forced-backend-exit recovery. Both saved components and the real record survived. Renderer security remained enabled, no page errors, 16 observed owned processes closed. [DMG proof](evidence/startup-2026-10-23/dmg-flow.json).
+- The copied application also passed the full workflow including recovery in **59.4 s**, Home **11.8 s**, restart **4.8 s**. [Installed proof](evidence/startup-2026-10-23/installed-flow.json).
+- Native Launch Services startup with no debugger was visibly observed: fresh-profile Home **32.7 s**, cached repeat **9.3 s**. First-launch preparation is still a meaningful polish gap. Automation took 50.4 s to first Home, demonstrating that attachment/cache conditions affect startup measurements. [Finder-style launches](evidence/startup-2026-10-23/finder-launches.json).
+- The final sealed delivery image was retested after the recovery wording change: **280.8 s** full flow, Home **79.6 s**, restart **18.0 s**. All functional assertions passed, but startup latency remains variable and is not presented as solved. [Final delivery proof](evidence/startup-2026-10-23/delivery-flow.json).
+- Strict ad-hoc signatures pass for the mounted and copied application. No credentials, Library or external runtime links were found in the bundle. Developer ID signing, notarization and another Mac remain unverified. A new-user simulation is not an independent usability study.
+
+## Earlier source-analysis latency and desktop rebuild follow-up
+
+- **158 tests passed**, formatting, lint, client/server checks and all three production builds. [Earlier verification log](evidence/analysis-2026-10-23/verification.log).
+- Exact-source REA evidence is reused with a bounded eight-entry / 16 MiB process-local cache and concurrent request coalescing. Changed filenames, content or engine version trigger fresh analysis. Validation and canonical review remain active; failures are not cached.
+- Controlled full-feature review: before **5,654 / 3,947 / 3,490 ms**, after **5,112 / 56 / 38 ms**. Repeated reviews improved approximately **98.7%**; cold analysis remains roughly five seconds. [Before](evidence/analysis-2026-10-23/analysis-before.json), [after](evidence/analysis-2026-10-23/analysis-after.json).
+- Fresh-profile capture → behavior → isolated preview → save/reopen/export → review/install → launch → submit/reload passed in **27.1 seconds** during the full suite. No runtime errors, automatic AI requests or whole-workspace routine saves. [Workflow evidence](evidence/analysis-2026-10-23/fresh-profile-flow.json).
+- Different packages now receive stable distinct installation identifiers; Library renames retain their identity. A two-component installation into one demo is included in the packaged check.
+- macOS OCR is bundled instead of compiling inside the app. Its deployment target is macOS 13. Development helper caching respects `REFRAME_STORE`. Missing bundled helpers report unavailable rather than writing into the application.
+- A read-only DMG probe exposed a macOS Neural Engine compilation stall in OCR. The helper now uses CPU execution; three probes recognized 29 blocks in **964 / 472 / 671 ms**. All **nine desktop/native regression tests** passed after this fix. [Regression log](evidence/analysis-2026-10-23/ocr-regressions.log).
+- Development server restarted with the new backend; Home was visually checked in the in-app browser with no console errors. The Library index is byte-identical before and after restart.
+- Provisional assessment **8.8/10**. Signing/notarization, real newcomer trials and installation on a second Mac remain separate validation gates.
+
+The final DMG passes `codesign --verify --deep --strict` with a local ad-hoc resource seal. Its app was copied into an isolated installation folder outside the project and passed the full workflow in **75.6 seconds**: screenshot OCR, HTML capture → authored form behavior → isolated preview → Library → reviewed install → real submission/reload; then live example.com capture and a second installation alongside the form. Restart retained the real record and excluded preview-only data. All **16 observed owned processes** closed, both endpoints stopped, and no page errors occurred. Sandbox/context isolation remained enabled with Node disabled; only bundled runtimes and a system-only PATH were used.
+
+In that final run, OCR took **1.1 s**, first feature review **5.7 s**, reused installation review **88 ms**, bundled Chromium startup **5.5 s**, and the first review of the website package **11.0 s**. These are workflow observations, separate from the controlled repeated-review benchmark.
+
+Packaging now seals a temporary copy outside the project folder, removes only FinderInfo/resource-fork metadata, preserves executable entitlements/flags, and verifies the seal before creating the DMG. Finder metadata was observed reappearing on the standalone `.app` inside the Documents project folder, so the verified DMG is the delivery artifact. An ad-hoc seal is **not** Developer ID signing or notarization.
+
+**Historical counterexample, before the startup follow-up above:** earlier compressed DMG probes exceeded browser deadlines, even without the development server. An uncompressed image completed the full flow but took **244.3 s**. The corrected sealed DMG passed signature verification but its direct-launch automation still exceeded the 60-second Electron connection deadline. At that stage the copied-app flow passed, while mounted-image startup was unreliable. The newer startup follow-up above supersedes that result. [Uncompressed comparison](evidence/analysis-2026-10-23/uncompressed-dmg-flow.json), [sealed-image timeout](evidence/analysis-2026-10-23/sealed-dmg-launch-timeout.log), [strict signature check](evidence/analysis-2026-10-23/signature-check.log).
+
+[Packaged workflow evidence](evidence/analysis-2026-10-23/packaged-app-flow.json), [installed demo screenshot](evidence/analysis-2026-10-23/packaged-two-components.png), [cold-DMG failure](evidence/analysis-2026-10-23/dmg-cold-failure.log), [artifact hash and bundle scan](evidence/analysis-2026-10-23/artifact.json).
+
+## Behavior builder and installation review follow-up
+
+- **154 tests passed**, formatting, lint, client/server type checks and all three production builds. Current run: `/tmp/reframe-behavior-verify.log`.
+- Fresh-profile HTML capture → behavior choice → edit/rebuild → isolated preview → save/reopen/export → review/back/review → install → launch → submit/reload passed. Empty and invalid inputs were rejected; preview records stayed separate from installed data. No automatic AI call or whole-workspace upload occurred.
+- Action choices survive switching modes. Saving returns focus to the next steps. Installation approval remains explicit; code and runtime details remain available without dominating the review. Owned-demo instructions match the one-click launcher.
+- Desktop 1280×900 and mobile 390×844 layouts passed overflow checks and visual review. Source-analysis waits made the expanded automated flow take 52.0–102.3 seconds, including repeated builds/reviews. This is not a human usability time.
+- Home unchanged; live development Library still five items, revision 14. The app was restarted and its Home/console checked in the in-app browser. The automated checks used installed Playwright because the Browser plugin was unavailable.
+- Provisional assessment **8.7/10**. Real newcomer trials and a second Mac remain unverified. The prior packaged desktop artifact was not rebuilt in this UI pass.
+
+## Simplified editor, Library and one-click demo — 23 October 2026
+
+- **154 tests passed**, Prettier, ESLint, client/server checks and all three production builds. [Final log](evidence/ux-2026-10-23/verification.log).
+- Library keeps search prominent and reveals filters, sorting, rename/tag/export/delete actions on demand. Keyboard filtering, canceling edits, light/dark phone layouts and image-only cards passed. Home's visual design is preserved.
+- Editor appearance/export controls and source selection are collapsed. Saving a feature closes its builder and leaves one working preview. Capture waits for disk acknowledgement; offline queues remain recoverable.
+- A fresh profile with no API key or destination folder completed capture → authored subscription backend → save/reopen/export → install → one-click demo launch → record submission/reload. Preview records remained separate from installed records. Automation took 16.5–24.6 seconds across runs, not a human usability measurement.
+- A separately captured example.com paragraph saved durably and rendered in the installed demo in 14.9 seconds, with 100% fidelity for that small static capture. Nested website framing now allows only the specific local Reframe parent origins; forms and receipt reload are covered by a regression.
+- The updated unsigned Apple Silicon package and final read-only DMG repeated the workflow using bundled Node and a system-only PATH, retained demo records across application restart and closed all seven observed owned processes. Demo launches run no connected-project scripts, Vite config or .env; only the owned demo can launch automatically.
+- The original **8,947 data files** still match their baseline hashes. Development Library remains five items. All new workflow tests used isolated temporary stores/profiles.
+- Provisional assessment **8.5/10**. Actual newcomer trials, signing/notarization, second-Mac installation and physical native runtime remain unverified. [Assessment and screenshots](RELEASE_ASSESSMENT_2026-10-23.md).
+
+## Focused, scalable macOS release — 23 October 2026
+
+- **151 tests passed**, plus Prettier, ESLint, client/server type checks and all three web builds. Production dependency audit: zero reported vulnerabilities.
+- Fixed pairing/revocation races, recapture metadata loss and relative redirect chains. Added immutable per-item Library storage, a small index, hashed media/fonts, ten manifests, safe migration, individual offline operations and conflict-copy recovery.
+- Library cards now use images. Benchmarked 150/500/1,000 realistic packages: final metadata API p95 **58.47/15.07/55.27 ms**; 150-item warm incremental browser RSS **79.4% lower** (first warm run 74.8%). Cold-start comparison was only 31.9% lower and is retained separately.
+- Faithful and Clean exports compile/render; nine viewport/state comparisons and accessible tabs, disclosures, menus and carousels pass in both exported React and an actually installed React demo. Explicit live OpenAI naming proposal validated/applied without changing the saved component.
+- Apple and Wikipedia captured in the desktop build. Apple was reopened, previewed and installed into a fresh demo; its uncaptured route is reported locally. The demo's JSX configuration and framework-link packaging defects found during this work were fixed.
+- Apple Silicon `.app` and unsigned DMG produced with bundled Node/Chromium. A mounted-DMG capture passed with build staging unavailable; renderer isolation and absence of Node access were inspected at runtime. Restart retained the test Library and stable port; owned processes shut down.
+- **All 8,947 pre-existing data files under `.reframe` remained byte-for-byte unchanged**. The five-item development Library was not replaced with an earlier history. Desktop tests used a separate temporary store.
+- Local unsigned artifact only. Signing/notarization, another Mac, newcomer usability, physical camera use and Android/iOS runtime remain unverified. Deferred features remain as agreed.
+
+See [the nine-area assessment, measured results and next polish](RELEASE_ASSESSMENT_2026-10-23.md) and [full verification log](evidence/release-2026-10-23/verification.log).
 
 ## Robin Francis faithful capture and working packages — 22 October 2026
 

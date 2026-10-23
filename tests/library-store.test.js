@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import express from 'express';
+import { themes } from '../src/model.ts';
 import { LibraryStore, mountLibrary } from '../server/library-store.js';
 
 const font = (text) => 'data:font/woff2;base64,' + Buffer.from(text).toString('base64');
@@ -12,10 +13,14 @@ const hash = (data) => createHash('sha256').update(data).digest('hex');
 const workspace = (names, fonts = []) =>
   JSON.stringify({
     version: 1,
-    theme: {},
+    theme: themes[0],
     items: names.map((name, i) => ({
       id: 'id' + i,
       name,
+      source: 'https://example.com',
+      kind: 'section',
+      capturedAt: '2026-10-23',
+      evidence: 'Test',
       html: '<p>' + name + '</p>',
       css: fonts.map((f) => 'url("reframe-font:' + hash(f) + '")').join(),
     })),
@@ -164,7 +169,19 @@ test('library HTTP API accepts large libraries and reports conflicts as JSON', a
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-    const big = workspace(['Big ' + 'x'.repeat(12_000_000)]);
+    const big = JSON.stringify({
+      version: 1,
+      theme: themes[0],
+      items: Array.from({ length: 12 }, (_, i) => ({
+        id: 'large-' + i,
+        name: 'Large ' + i,
+        html: '<p>' + 'x'.repeat(900000) + '</p>',
+        source: 'https://example.com',
+        kind: 'section',
+        capturedAt: '2026-10-23',
+        evidence: 'Large-library test',
+      })),
+    });
     const saved = await put({ baseRevision: 0, workspace: big, fonts: {} });
     assert.equal(saved.status, 200, 'bodies above the general 8 MB limit are accepted');
     const stale = await put({ baseRevision: 0, workspace: workspace(['Old']), fonts: {} });
@@ -175,6 +192,48 @@ test('library HTTP API accepts large libraries and reports conflicts as JSON', a
     assert.equal((await (await fetch(url)).json()).revision, 1);
   } finally {
     server.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('recapturing refreshes source while keeping the user name, labels, theme and identity', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'recapture-'));
+  try {
+    const library = new LibraryStore(dir),
+      old = {
+        id: 'kept',
+        name: 'My button',
+        source: 'https://example.com',
+        html: '<button>Go</button>',
+        kind: 'button',
+        capturedAt: '2026-10-23',
+        evidence: 'Fixture',
+        tags: ['important'],
+        collections: ['Client'],
+        theme: { ...themes[1], name: 'Selected' },
+      };
+    await library.write({
+      baseRevision: 0,
+      workspace: JSON.stringify({ version: 1, items: [old], theme: themes[0] }),
+      fonts: {},
+    });
+    await library.add(
+      {
+        ...old,
+        id: 'new',
+        name: 'Go',
+        tags: undefined,
+        collections: undefined,
+        theme: undefined,
+        evidence: 'Refreshed',
+      },
+      { theme: {} },
+    );
+    const [saved] = JSON.parse((await library.read()).workspace).items;
+    for (const key of ['id', 'name', 'tags', 'collections', 'theme'])
+      assert.deepEqual(saved[key], old[key]);
+    assert.equal(saved.evidence, 'Refreshed');
+  } finally {
     await rm(dir, { recursive: true, force: true });
   }
 });

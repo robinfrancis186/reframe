@@ -1,47 +1,19 @@
-import * as Expanded from './library/Expanded';
-import * as Originals from './library/Components.jsx';
-import { libraryEntry, libraryStyles } from './library/catalog';
-import { themeStyle } from './branding.js';
-import type { CSSProperties, ComponentType } from 'react';
-import { useMemo, useEffect, useRef } from 'react';
+import { lazy, Suspense, useMemo, useEffect, useRef } from 'react';
 import { documentHtml } from './export';
 import type { ComponentItem, Theme } from './model';
+const OriginalPreview = lazy(() => import('./OriginalPreview'));
 export default function Preview(props: {
   item: ComponentItem;
   theme: Theme;
   mini?: boolean;
   onPick?: (html: string) => void;
 }) {
-  const entry = libraryEntry(props.item.libraryId);
-  if (!entry) return <HtmlPreview {...props} />;
-  const implementations = { ...Originals, ...Expanded };
-  const Component = implementations[
-    entry.component as keyof typeof implementations
-  ] as ComponentType<{
-    variant?: string;
-    brandName?: string;
-    tagline?: string;
-    logo?: string;
-    previewOnly?: boolean;
-  }>;
-  const style = themeStyle(props.theme) as CSSProperties;
-  return (
-    <div
-      className={props.mini ? 'library-preview mini' : 'library-preview'}
-      inert={props.mini || undefined}
-      aria-hidden={props.mini || undefined}
-    >
-      <div className="rf-library" style={style}>
-        <style>{libraryStyles(entry)}</style>
-        <Component
-          {...entry.props}
-          previewOnly={props.mini}
-          brandName={props.theme.brandName}
-          tagline={props.theme.tagline}
-          logo={props.theme.logo}
-        />
-      </div>
-    </div>
+  return props.item.libraryId ? (
+    <Suspense fallback={<p role="status">Loading interactive preview…</p>}>
+      <OriginalPreview {...props} />
+    </Suspense>
+  ) : (
+    <HtmlPreview {...props} />
   );
 }
 function HtmlPreview({

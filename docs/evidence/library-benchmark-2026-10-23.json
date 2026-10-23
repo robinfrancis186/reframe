@@ -1,0 +1,63 @@
+{
+  "measuredAt": "2026-10-23T08:59:41.042Z",
+  "method": "Isolated production Library surface; baseline HEAD 2f5bdde versus current, 24 visible cards. Library increments are measured after an empty Library shell has loaded; cold shell latency is reported separately. Process-tree RSS includes shared-page double counting; compare same-method deltas. Local filesystem metadata save times exclude HTTP latency; metadataHttpP95Ms separately measures 25 loopback PATCH requests. The separate cold-start JSON retains the first measurement including initial browser/app overhead.",
+  "results": [
+    {
+      "count": 150,
+      "legacyCompactBytes": 10118545,
+      "summaryBytes": 149112,
+      "metadataSaveP95Ms": 5.35,
+      "metadataSourceBytesUploaded": 0,
+      "baseline": {
+        "coldShellMs": 1292,
+        "loadMs": 935,
+        "incrementalRendererHeapBytes": 29867200,
+        "cardIframes": 24,
+        "rendererHeapBytes": 32033532,
+        "incrementalBrowserRSSBytes": 81625088
+      },
+      "metadataHttpP95Ms": 58.47,
+      "current": {
+        "coldShellMs": 1070,
+        "loadMs": 45,
+        "incrementalRendererHeapBytes": 1298932,
+        "cardIframes": 0,
+        "rendererHeapBytes": 3427188,
+        "incrementalBrowserRSSBytes": 16826368
+      },
+      "memoryReductionPercent": 79.4
+    },
+    {
+      "count": 500,
+      "legacyCompactBytes": 33729895,
+      "summaryBytes": 497303,
+      "metadataSaveP95Ms": 34.46,
+      "metadataSourceBytesUploaded": 0,
+      "metadataHttpP95Ms": 15.07,
+      "current": {
+        "coldShellMs": 1018,
+        "loadMs": 67,
+        "incrementalRendererHeapBytes": 1683628,
+        "cardIframes": 0,
+        "rendererHeapBytes": 3848636,
+        "incrementalBrowserRSSBytes": 23773184
+      }
+    },
+    {
+      "count": 1000,
+      "legacyCompactBytes": 67460395,
+      "summaryBytes": 994731,
+      "metadataSaveP95Ms": 52.46,
+      "metadataSourceBytesUploaded": 0,
+      "metadataHttpP95Ms": 55.27,
+      "current": {
+        "coldShellMs": 1219,
+        "loadMs": 91,
+        "incrementalRendererHeapBytes": 2163208,
+        "cardIframes": 0,
+        "rendererHeapBytes": 4291336,
+        "incrementalBrowserRSSBytes": 44564480
+      }
+    }
+  ]
+}

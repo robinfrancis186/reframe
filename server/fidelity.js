@@ -332,7 +332,9 @@ async function measure(browser, reference, shot, diff) {
  * At capture: renders once, pins snapshot values the site's own rules overrode (keeping its hover and state rules
  * for everything else), then scores the repaired result. Returns the stylesheet to save and its fidelity.
  */
-export async function repairAndScore(item, { browser, resource = referenceResource } = {}) {
+/** @param {import('./contracts.js').RenderingOptions} options */
+export async function repairAndScore(item, options = {}) {
+  const { browser, resource = referenceResource } = options;
   const site = validateReplica(item.feature.spec.website),
     css = site.css.split(MARK)[0],
     rules = snapshotRules(css);
@@ -378,10 +380,9 @@ export async function finishCapture(item, { browser, resource = referenceResourc
 }
 
 /** Scores one saved component. `browser` is the shared ReferenceBrowser, whose Chromium and network policy are reused. */
-export async function scoreFidelity(
-  item,
-  { browser, resource = referenceResource, diff = false } = {},
-) {
+/** @param {import('./contracts.js').RenderingOptions} options */
+export async function scoreFidelity(item, options = {}) {
+  const { browser, resource = referenceResource, diff = false } = options;
   if (!canScore(item))
     throw new Error(
       'Fidelity needs a component picked in the reference browser, with its original reference image.',
@@ -396,11 +397,9 @@ export async function scoreFidelity(
 }
 
 /** Scores exported code (scoped stylesheet and markup) against the reference, the same way as a saved capture. */
-export async function scoreExport(
-  item,
-  { css, markup, scope, fonts },
-  { browser, resource = referenceResource } = {},
-) {
+/** @param {import('./contracts.js').RenderingOptions} options */
+export async function scoreExport(item, { css, markup, scope, fonts, rootSelector }, options = {}) {
+  const { browser, resource = referenceResource, state = 'default' } = options;
   if (!canScore(item)) return null;
   const site = validateReplica(item.feature.spec.website),
     page = site.pages[0];
@@ -408,9 +407,23 @@ export async function scoreExport(
     fonts[file] ? `url("data:font/${file.split('.').pop()};base64,${fonts[file]}")` : all,
   );
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>${inline.replace(/<\/style/gi, '')}html,body{margin:0;padding:0;background:${page.backdrop || '#ffffff'}}</style></head><body>${markup}</body></html>`;
-  const shot = await withDocument(html, page, { browser, resource }, (tab) =>
-    shoot(tab, site, `.${scope}-0`),
-  );
+  const shot = await withDocument(html, page, { browser, resource }, async (tab) => {
+    const root = tab.locator(rootSelector || `.${scope}-0`);
+    if (state === 'hover') await root.hover();
+    if (state === 'focus') {
+      const candidate = await root.evaluate((el) =>
+        el.matches('a[href],button,input,textarea,select,[tabindex="0"]'),
+      );
+      if (candidate) await root.focus();
+      else {
+        const focusable = root
+          .locator('a[href],button,input,textarea,select,[tabindex="0"]')
+          .first();
+        if (await focusable.count()) await focusable.focus();
+      }
+    }
+    return shoot(tab, site, rootSelector || `.${scope}-0`);
+  });
   const { score, grade, fitted, reference, rendered, differing, checkedAt } = await measure(
     browser,
     item.referenceImage,

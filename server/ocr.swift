@@ -12,6 +12,8 @@ do {
         throw NSError(domain: "ReframeOCR", code: 1, userInfo: [NSLocalizedDescriptionKey: "Use a valid image under 25 megapixels."])
     }
     let request = VNRecognizeTextRequest()
+    // Keep short captures independent of the system Neural Engine compilation queue.
+    request.usesCPUOnly = true
     request.recognitionLevel = .accurate
     request.usesLanguageCorrection = false
     let handler = VNImageRequestHandler(url: URL(fileURLWithPath: CommandLine.arguments[1]), options: [:])

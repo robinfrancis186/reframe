@@ -1,3 +1,8 @@
+import { checkReuse } from './reuse-check.js';
+import { bundleImages } from './portable-assets.js';
+import { validateReplica } from './replica.js';
+import { DemoLauncher } from './demo-launcher.js';
+import { desktopDemo } from './desktop-demo.js';
 import { load } from 'cheerio';
 import { referenceResource } from './browser-network.js';
 import { Websites } from './websites.js';
@@ -34,8 +39,9 @@ import { buildReplicaFeature } from './replica.js';
 import { randomUUID } from 'node:crypto';
 import { mountDownloads } from './downloads.js';
 import { LibraryStore, mountLibrary } from './library-store.js';
-import { scoreExport, scoreFidelity } from './fidelity.js';
-import { exportComponentCode } from './code-export.js';
+import { Thumbnails } from './thumbnails.js';
+import { scoreFidelity } from './fidelity.js';
+import { reviewedExport, proposeExportNames } from './export-workflow.js';
 import { ExtensionPairing, isExtensionRoute, mountExtension } from './extension.js';
 import { isItem, themes } from '../src/model.ts';
 
@@ -45,6 +51,7 @@ const referenceBrowser = new ReferenceBrowser();
 const store = process.env.REFRAME_STORE || path.join(root, '.reframe');
 const projects = new Projects(store);
 const libraryStore = new LibraryStore(store);
+const thumbnails = new Thumbnails(store, referenceBrowser);
 const extensionPairing = new ExtensionPairing(store);
 const connections = new Connections(store);
 const websites = new Websites(store, referenceBrowser);
@@ -52,6 +59,7 @@ const websiteHandlers = new Map();
 const gradio = new GradioLab();
 const browserTests = new BrowserTests();
 const port = Number(process.env.PORT || 5173);
+const demo = new DemoLauncher(store, projects, `http://localhost:${port} http://127.0.0.1:${port}`);
 const previews = new WorkingPreviews(store, `http://localhost:${port} http://127.0.0.1:${port}`);
 app.disable('x-powered-by');
 app.use((req, res, next) => {
@@ -78,7 +86,7 @@ app.use((req, res, next) => {
   next();
 });
 // The library carries its own larger body limit, so it is mounted before the general 8 MB parser.
-mountLibrary(app, express, libraryStore);
+mountLibrary(app, express, libraryStore, { thumbnail: (data, hash) => thumbnails.get(data, hash) });
 mountExtension(app, express, {
   pairing: extensionPairing,
   library: libraryStore,
@@ -87,8 +95,8 @@ mountExtension(app, express, {
   theme: themes[0],
   folder: path.join(root, 'extension'),
 });
-app.use(express.json({ limit: '8mb' }));
 mountDownloads(app);
+app.use(express.json({ limit: '8mb' }));
 mountMcp(app, connections, projects);
 app.get('/api/health', (_req, res) =>
   res.json({
@@ -212,7 +220,22 @@ const route = (method, url, action) =>
       next(error);
     }
   });
-route('get', '/api/testing/targets', () => [...testTargets, ...previews.targets()]);
+route('post', '/api/reuse/check', (req, options) => checkReuse(req.body.item, options));
+route('post', '/api/reuse/bundle', async (req) => {
+  const item = req.body.item;
+  if (!isItem(item) || !item.feature?.spec?.website)
+    throw new Error('Choose a captured website component.');
+  const site = await bundleImages(validateReplica(item.feature.spec.website));
+  return {
+    ...item,
+    feature: await buildReplicaFeature(item.html, item.name, site, item.feature.spec.id),
+  };
+});
+route('get', '/api/testing/targets', () => [
+  ...testTargets,
+  ...previews.targets(),
+  ...demo.targets(),
+]);
 route('post', '/api/previews/start', (req, options) =>
   previews.start(req.body, { ...options, hostname: req.headers.host.split(':')[0] }),
 );
@@ -233,7 +256,7 @@ app.post('/api/testing/run', async (req, res) => {
       result: await browserTests.run(req.body, {
         signal: controller.signal,
         onEvent: send,
-        targets: [...testTargets, ...previews.targets()],
+        targets: [...testTargets, ...previews.targets(), ...demo.targets()],
       }),
     });
   } catch (error) {
@@ -466,14 +489,16 @@ route('post', '/api/browser/action', (req) => referenceBrowser.act(req.body));
 route('post', '/api/fidelity', (req) =>
   scoreFidelity(req.body.item, { browser: referenceBrowser, diff: req.body.diff === true }),
 );
-route('post', '/api/export/code', async (req) => {
-  const code = exportComponentCode(req.body.item);
-  // The exported code is rendered and scored against the original, so its fidelity is known before it is used.
-  const fidelity = await scoreExport(req.body.item, code, { browser: referenceBrowser }).catch(
-    () => null,
-  );
-  return { name: code.name, scope: code.scope, files: code.files, fonts: code.fonts, fidelity };
-});
+route('post', '/api/export/code', (req) =>
+  reviewedExport(req.body.item, {
+    mode: req.body.mode || 'faithful',
+    names: req.body.names || {},
+    browser: referenceBrowser,
+  }),
+);
+route('post', '/api/export/assist', (req) =>
+  proposeExportNames(req.body.item, { apiKey: req.body.apiKey }),
+);
 route('post', '/api/refine', (req) => refineCopy(req.body.html));
 route('post', '/api/refine/source', (req) => refineSourceComments(req.body.code));
 route('post', '/api/refine/document', (req) => refineDocument(req.body));
@@ -509,18 +534,34 @@ route('post', '/api/features/validate', async (req) => {
     feature: { ...feature, review: await reviewFeature(feature.files, req.body.item.html) },
   };
 });
-route('post', '/api/projects/feature-starter', () =>
-  projects.connect(path.join(root, 'examples/integrated-app')),
+route('post', '/api/projects/feature-starter', async () =>
+  projects.connect(await desktopDemo(store, path.join(root, 'node_modules'))),
 );
+route('get', '/api/projects/demo', () => demo.status());
+route('post', '/api/projects/demo/launch', (req, options) =>
+  demo.start(req.body.projectId, options),
+);
+route('post', '/api/projects/demo/stop', async () => {
+  await demo.close();
+  return { stopped: true };
+});
 route('post', '/api/projects/native-starter', (req) => {
   if (!['ios', 'android'].includes(req.body.platform)) throw new Error('Choose iOS or Android.');
+  if (process.env.REFRAME_DESKTOP)
+    throw Error(
+      'Connect your own SwiftUI or Compose project folder. Native starter projects are available in the source checkout.',
+    );
   return projects.connect(path.join(root, 'examples/native-' + req.body.platform));
 });
 route('get', '/api/projects', () => projects.registry());
 route('get', '/api/projects/history', () => projects.history());
 route('post', '/api/projects/connect', (req) => projects.connect(req.body.path));
-route('post', '/api/projects/starter', () =>
-  projects.connect(path.join(root, 'examples/connected-app')),
+route('post', '/api/projects/starter', async () =>
+  projects.connect(
+    process.env.REFRAME_DESKTOP
+      ? await desktopDemo(store, path.join(root, 'node_modules'))
+      : path.join(root, 'examples/connected-app'),
+  ),
 );
 route('post', '/api/library/source', (req) =>
   librarySource(
@@ -576,6 +617,11 @@ app.listen(port, '127.0.0.1', () => console.log(`Reframe is ready at http://loca
 
 for (const signal of ['SIGINT', 'SIGTERM'])
   process.once(signal, async () => {
-    await Promise.allSettled([referenceBrowser.close(), gradio.stop(), previews.close()]);
+    await Promise.allSettled([
+      thumbnails.close().then(() => referenceBrowser.close()),
+      gradio.stop(),
+      previews.close(),
+      demo.close(),
+    ]);
     process.exit(0);
   });

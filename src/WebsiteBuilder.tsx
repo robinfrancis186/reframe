@@ -219,9 +219,10 @@ export default function WebsiteBuilder({
       )}
       <p className="notice">
         Source styling and inline SVG are preserved. Public PDFs and fonts are bundled where
-        available; images remain online. Reframe authors local navigation, search, theme controls
-        and form storage. Contact forms save locally with receipts and do not send email. Private
-        backends, AI services and unsupported custom actions need explicit implementations.
+        available; supported images are bundled with remaining external resources reported. Reframe
+        authors local navigation, search, theme controls and form storage. Contact forms save
+        locally with receipts and do not send email. Private backends, AI services and unsupported
+        custom actions need explicit implementations.
       </p>
       {!!saved.length && (
         <label>
@@ -340,11 +341,11 @@ export default function WebsiteBuilder({
                 setMessage('');
                 if (onImport([site.item!]))
                   setMessage(
-                    'Working website saved to clipboard. Choose Fit & install to add it to another app.',
+                    'Working website saved to Library. Choose Fit & install to add it to another app.',
                   );
               }}
             >
-              Save working website to clipboard
+              Save working website to Library
             </button>
           )}
           <button
@@ -361,14 +362,14 @@ export default function WebsiteBuilder({
                     'Clipboard could not save these components. Back up storage and retry.',
                   );
                 setMessage(
-                  `${items.length} styled, reusable components saved to clipboard with their local behavior.`,
+                  `${items.length} styled, reusable components saved to Library with their local behavior.`,
                 );
               } catch (e) {
                 setError((e as Error).message);
               }
             }}
           >
-            Save reusable components to clipboard
+            Save reusable components to Library
           </button>
           {message && <p role="status">{message}</p>}
         </>

@@ -19,12 +19,16 @@ async function binary() {
         throw new Error(
           'Local OCR requires macOS Vision. Configure OpenAI for this operating system.',
         );
+      if (process.env.REFRAME_OCR) {
+        await access(process.env.REFRAME_OCR);
+        return process.env.REFRAME_OCR;
+      }
       const source = path.join(root, 'server/ocr.swift');
       const hash = createHash('sha256')
         .update(await readFile(source))
         .digest('hex')
         .slice(0, 16);
-      const folder = path.join(root, '.reframe/bin');
+      const folder = path.join(process.env.REFRAME_STORE || path.join(root, '.reframe'), 'bin');
       await mkdir(folder, { recursive: true, mode: 0o700 });
       const output = path.join(folder, 'ocr-' + hash);
       try {

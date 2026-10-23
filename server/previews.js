@@ -86,7 +86,8 @@ export class WorkingPreviews {
         const timer = setTimeout(() => reject(new Error('Preview startup timed out.')), 10000);
         child.once('message', (m) => {
           clearTimeout(timer);
-          Number.isInteger(m?.port) ? resolve(m.port) : reject(new Error('Invalid preview port.'));
+          if (Number.isInteger(m?.port)) resolve(m.port);
+          else reject(new Error('Invalid preview port.'));
         });
         child.once('error', (e) => {
           clearTimeout(timer);
@@ -129,9 +130,10 @@ export class WorkingPreviews {
     } catch (error) {
       if (child) {
         child.kill('SIGKILL');
-        await new Promise((resolve) =>
-          child.exitCode !== null || child.signalCode ? resolve() : child.once('exit', resolve),
-        );
+        await new Promise((resolve) => {
+          if (child.exitCode !== null || child.signalCode) resolve();
+          else child.once('exit', resolve);
+        });
       }
       if (root) await rm(root, { recursive: true, force: true });
       throw error;
@@ -145,11 +147,10 @@ export class WorkingPreviews {
     this.sessions.delete(id);
     clearTimeout(session.timer);
     session.child.kill('SIGKILL');
-    await new Promise((resolve) =>
-      session.child.exitCode !== null || session.child.signalCode
-        ? resolve()
-        : session.child.once('exit', resolve),
-    );
+    await new Promise((resolve) => {
+      if (session.child.exitCode !== null || session.child.signalCode) resolve();
+      else session.child.once('exit', resolve);
+    });
     await rm(session.root, { recursive: true, force: true });
     return { stopped: true };
   }

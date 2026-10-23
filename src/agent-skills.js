@@ -28,7 +28,7 @@ export const agents = [
     id: 'relay',
     name: 'Relay',
     role: 'Connect',
-    description: 'Prepares clipboard, Gradio and project handoff.',
+    description: 'Prepares Library, Gradio and project handoff.',
   },
 ];
 // These are reviewed guidance packs, not trained models or universal compiler adapters.
@@ -38,7 +38,7 @@ export const skills = [
     'Whole website reconstruction',
     'HTML, CSS, responsive websites',
     'https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Structuring_content/Creating_links',
-    'Studio → Browser → Rebuild website captures up to eight same-origin public pages, rendered DOM and computed styles at desktop/mobile widths. Link captured pages locally, export a runnable static site, and review uncaptured routes, excluded assets and action gaps. Never claim private backends or original scripts were recovered. Build supported behavior independently for selected components, then preview and install it.',
+    'Capture → Browse & pick → Rebuild website captures up to eight same-origin public pages, rendered DOM and computed styles at desktop/mobile widths. Link captured pages locally, export a runnable static site, and review uncaptured routes, excluded assets and action gaps. Never claim private backends or original scripts were recovered. Build supported behavior independently for selected components, then preview and install it.',
   ],
   [
     'playwright',

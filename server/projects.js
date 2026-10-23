@@ -343,7 +343,14 @@ export class Projects {
       }
     }
     await scan(project.root);
-    return { ...project, files };
+    return { ...project, demo: await this.isDemo(project), files };
+  }
+  async isDemo(project) {
+    const demoRoot = await realpath(path.join(this.store, 'Demo App')).catch((error) => {
+      if (error.code === 'ENOENT') return null;
+      throw error;
+    });
+    return project.root === demoRoot;
   }
   async source(project, relative) {
     if (
@@ -1042,8 +1049,9 @@ export class Projects {
       framework: 'react',
       actions: bundle.spec.actions,
       warnings: [
-        'Restart the destination after updating a feature so its API contract reloads.',
-        'Start the destination with npm run reframe:dev. Its frontend and backend run together on port 5175 (override PORT if needed).',
+        (await this.isDemo(project))
+          ? 'Launch demo app after installing or updating to build and start the current interface and backend.'
+          : 'Start or restart the destination with npm run reframe:dev. Its frontend and backend run together on port 5175 (override PORT if needed).',
         'Optional accounts and API keys remain local. Add TLS, identity recovery and database transactions before public hosting.',
         'Undo keeps runtime data in .reframe/data so saved user records are never deleted.',
       ],

@@ -1,41 +1,92 @@
-// The clipboard library is saved to disk by the local server (.reframe/library), so captures survive cleared browser
-// data and are shared by every browser on this machine. IndexedDB keeps a local cache, so the app still opens and
-// edits are kept if the server is unreachable; those edits sync on the next save. Reads stay synchronous through a
-// cache hydrated before the app renders; writes are serialized so the latest workspace always wins.
-// Embedded font files are stored once under their SHA-256 and referenced as "reframe-font:<hash>", both in the
-// browser cache and on disk, so components captured from the same site share a single copy.
-const KEY = 'reframe-workspace',
-  SYNC = 'reframe-sync';
-const FONT = /data:font\/(?:woff2|woff|ttf);base64,[A-Za-z0-9+/=]+/g,
-  FONT_REF = /reframe-font:([a-f0-9]{64})/g;
+import { autoTags } from './library/organize.js';
+import { componentReadiness, componentSignature } from './component-workflow.js';
+import { themes, type ComponentItem, type Theme } from './model';
+
 export type SyncState = {
   state: 'synced' | 'saving' | 'offline' | 'conflict' | 'browser-only';
   revision: number;
   savedAt?: string | null;
   message?: string;
 };
-let cached: string | null = null;
+type Index = {
+  version: number;
+  revision: number;
+  savedAt?: string | null;
+  theme: Theme;
+  items: ComponentItem[];
+};
+type Operation = {
+  key: string;
+  order?: number;
+  id?: string;
+  method: string;
+  path: string;
+  body: Record<string, unknown>;
+};
+let index: Index | null = null;
 let database: IDBDatabase | null = null;
-let pending: string | null = null;
-let writing = false;
-let revision = 0;
-let serverFonts = new Set<string>();
+let running = false;
+let operationOrder = 0;
 let status: SyncState = { state: 'browser-only', revision: 0 };
+const pending = new Map<string, Operation>();
 const listeners = new Set<(state: SyncState) => void>();
-const hashes = new Map<string, string>();
+const watchers = new Set<(workspace: string) => void>();
+const details = new Map<string, ComponentItem>();
+let detailBytes = 0;
+let polling: ReturnType<typeof setInterval> | undefined;
 
 function setStatus(next: SyncState) {
   status = next;
-  listeners.forEach((listener) => listener(status));
+  listeners.forEach((fn) => fn(next));
 }
 export const syncStatus = () => status;
-export function onSyncStatus(listener: (state: SyncState) => void) {
-  listeners.add(listener);
+export function onSyncStatus(fn: (state: SyncState) => void) {
+  listeners.add(fn);
   return () => {
-    listeners.delete(listener);
+    listeners.delete(fn);
   };
 }
-
+/** Resolve only after the queued Library writes receive a disk acknowledgement. */
+export function waitForLibrarySave(): Promise<void> {
+  if (!pending.size) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () =>
+        finish(
+          new Error('The capture is queued in this browser. Check Library sync before closing.'),
+        ),
+      35000,
+    );
+    const unsubscribe = onSyncStatus((next) => {
+      if (next.state === 'synced' && !pending.size) finish();
+      else if (['offline', 'conflict', 'browser-only'].includes(next.state))
+        finish(
+          new Error(
+            'The capture is kept in this browser. Open Library to retry syncing or recover a conflict.',
+          ),
+        );
+    });
+    function finish(error?: Error) {
+      clearTimeout(timer);
+      unsubscribe();
+      if (error) reject(error);
+      else resolve();
+    }
+  });
+}
+async function api<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, {
+    ...init,
+    headers: { 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(30000),
+  });
+  const data = await response.json();
+  if (!response.ok)
+    throw Object.assign(new Error(data.error || 'Library request failed.'), {
+      status: response.status,
+    });
+  return data;
+}
 function open(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('reframe', 1);
@@ -44,10 +95,11 @@ function open(): Promise<IDBDatabase> {
     request.onerror = () => reject(request.error);
   });
 }
-function transaction<T>(
+function local<T>(
   mode: IDBTransactionMode,
   run: (store: IDBObjectStore) => IDBRequest<T>,
 ): Promise<T> {
+  if (!database) return Promise.reject(new Error('Browser cache is unavailable.'));
   return new Promise((resolve, reject) => {
     const tx = database!.transaction('kv', mode),
       request = run(tx.objectStore('kv'));
@@ -55,334 +107,303 @@ function transaction<T>(
     tx.onerror = tx.onabort = () => reject(tx.error || request.error);
   });
 }
-async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(
-    url,
-    init ? { ...init, headers: { 'Content-Type': 'application/json' } } : undefined,
-  );
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok)
-    throw Object.assign(new Error(data.error || 'Library request failed.'), {
-      status: response.status,
-      data,
-    });
-  return data;
+function workspace() {
+  return JSON.stringify({ version: 1, items: index?.items || [], theme: index?.theme });
 }
-async function sha256(text: string) {
-  let hash = hashes.get(text);
-  if (!hash) {
-    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-    hashes.set(
-      text,
-      (hash = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')),
-    );
+function announce() {
+  watchers.forEach((fn) => fn(workspace()));
+}
+async function cacheIndex() {
+  if (index) await local('readwrite', (s) => s.put(index, 'library-index-v2')).catch(() => {});
+}
+export function summary(item: ComponentItem): ComponentItem {
+  if (item._summary) return item;
+  return {
+    id: item.id,
+    name: item.name,
+    html: '',
+    source: item.source,
+    kind: item.kind,
+    capturedAt: item.capturedAt,
+    evidence: item.evidence.slice(0, 1200),
+    tags: item.tags,
+    collections: item.collections,
+    libraryId: item.libraryId,
+    fidelity: item.fidelity,
+    itemRevision: item.itemRevision || 0,
+    contentHash: item.contentHash,
+    _summary: true,
+    signature: componentSignature(item, item.theme),
+    automatic: autoTags(item),
+    readiness: componentReadiness(item),
+    hasFeature: !!item.feature,
+    featureId: item.feature?.spec.id,
+    hasCode: !!item.feature?.spec.website?.pages[0]?.component,
+    actionsCount: item.feature?.spec.actions.length || 0,
+    externalService: !!item.feature?.spec.actions.some((a) => a.operation === 'external'),
+    thumbnail: undefined,
+    searchExcerpt: item.html
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .slice(0, 1000),
+  };
+}
+function cacheDetail(item: ComponentItem) {
+  const old = details.get(item.id);
+  if (old) detailBytes -= JSON.stringify(old).length;
+  details.delete(item.id);
+  details.set(item.id, item);
+  detailBytes += JSON.stringify(item).length;
+  while (details.size > 5 || detailBytes > 6_000_000) {
+    const id = details.keys().next().value!;
+    detailBytes -= JSON.stringify(details.get(id)).length;
+    details.delete(id);
   }
-  return hash;
 }
-/** Replaces embedded fonts with references; returns the compact workspace and the fonts by hash. */
-async function compact(value: string) {
-  const fonts = new Map<string, string>();
-  for (const font of new Set(value.match(FONT) || [])) fonts.set(await sha256(font), font);
-  const byFont = new Map([...fonts].map(([hash, font]) => [font, hash]));
-  for (const font of hashes.keys()) if (!byFont.has(font)) hashes.delete(font);
-  return { workspace: value.replace(FONT, (font) => 'reframe-font:' + byFont.get(font)), fonts };
-}
-// A missing font leaves its reference in place; the browser falls back instead of the workspace failing to load.
-const inflate = (value: string, fonts: Record<string, string>) =>
-  value.replace(FONT_REF, (ref, hash) => fonts[hash] || ref);
-async function localFonts(value: string) {
-  const fonts: Record<string, string> = {};
-  for (const hash of new Set([...value.matchAll(FONT_REF)].map((m) => m[1]))) {
-    const font = await transaction<string | undefined>('readonly', (store) =>
-      store.get('font:' + hash),
-    );
-    if (typeof font === 'string') fonts[hash] = font;
-  }
-  return fonts;
-}
-
-/** Saves the browser cache: compact workspace, each font once, and whether disk has caught up. */
-async function cacheLocally(workspace: string, fonts: Map<string, string>, dirty: boolean) {
-  if (!database) return;
-  await new Promise<void>((resolve, reject) => {
-    const tx = database!.transaction('kv', 'readwrite'),
-      store = tx.objectStore('kv'),
-      keep = new Map([...fonts].map(([hash, font]) => ['font:' + hash, font]));
-    store.put(workspace, KEY);
-    store.put({ revision, dirty }, SYNC);
-    // Write only new font files, and drop fonts no saved component references any more.
-    const keys = store.getAllKeys();
-    keys.onsuccess = () => {
-      const existing = new Set(
-        keys.result.filter(
-          (key): key is string => typeof key === 'string' && key.startsWith('font:'),
-        ),
-      );
-      for (const [key, font] of keep) if (!existing.has(key)) store.put(font, key);
-      for (const key of existing) if (!keep.has(key)) store.delete(key);
-    };
-    tx.oncomplete = () => resolve();
-    tx.onerror = tx.onabort = () => reject(tx.error);
-  });
-}
-
-async function upload(workspace: string, fonts: Map<string, string>) {
-  const send = (all: boolean) =>
-    api<{ revision: number; savedAt: string; fonts: string[] }>('/api/library', {
-      method: 'PUT',
-      body: JSON.stringify({
-        baseRevision: revision,
-        workspace,
-        fonts: Object.fromEntries([...fonts].filter(([hash]) => all || !serverFonts.has(hash))),
-      }),
-    });
-  // 422 means the server lacks a font this browser assumed it had; resend them all once.
-  const result = await send(false).catch((error) => {
-    if ((error as { status?: number }).status === 422) return send(true);
+export async function loadItem(item: ComponentItem): Promise<ComponentItem> {
+  if (!item._summary) return item;
+  const cached = details.get(item.id);
+  if (cached && cached.itemRevision === item.itemRevision) return cached;
+  const pendingItem = [...pending.values()]
+    .reverse()
+    .find((op) => op.id === item.id && op.body.item)?.body.item as ComponentItem | undefined;
+  if (pendingItem) return pendingItem;
+  try {
+    const full = await api<ComponentItem>('/api/library/items/' + encodeURIComponent(item.id));
+    cacheDetail(full);
+    await local('readwrite', (s) => s.put(full, 'detail:' + full.id)).catch(() => {});
+    // Disk is authoritative; retain at most five offline full-package copies.
+    const keys = await local('readonly', (s) => s.getAllKeys()).catch(() => []);
+    for (const key of keys.filter(
+      (k) => String(k).startsWith('detail:') && !details.has(String(k).slice(7)),
+    ))
+      await local('readwrite', (s) => s.delete(key)).catch(() => {});
+    return full;
+  } catch (error) {
+    const localItem = await local<ComponentItem | undefined>('readonly', (s) =>
+      s.get('detail:' + item.id),
+    ).catch(() => undefined);
+    if (localItem && localItem.itemRevision === item.itemRevision) return localItem;
     throw error;
-  });
-  revision = result.revision;
-  serverFonts = new Set(result.fonts);
-  return result;
+  }
 }
+export const materialize = (items: ComponentItem[]) => Promise.all(items.map(loadItem));
 
 export async function hydrateWorkspace() {
-  let local: string | null = null,
-    localSync = { revision: 0, dirty: false };
   try {
     database = await open();
-    const stored = await transaction<string | undefined>('readonly', (store) => store.get(KEY));
-    const sync = await transaction<{ revision: number; dirty: boolean } | undefined>(
-      'readonly',
-      (store) => store.get(SYNC),
-    );
-    if (typeof stored === 'string') {
-      local = inflate(stored, await localFonts(stored));
-      localSync = sync || { revision: 0, dirty: true };
-    } else {
-      // One-time migration from the earlier localStorage workspace; the old copy is removed only after a durable write.
-      const legacy = localStorage.getItem(KEY);
-      if (legacy !== null) {
-        const { workspace, fonts } = await compact(legacy);
-        await cacheLocally(workspace, fonts, true);
-        local = legacy;
-        localSync = { revision: 0, dirty: true };
-        localStorage.removeItem(KEY);
-      }
-    }
   } catch {
-    // IndexedDB can be unavailable (some private windows); fall back to localStorage.
     database = null;
-    try {
-      local = localStorage.getItem(KEY);
-    } catch {
-      local = null;
-    }
   }
-  let server: {
-    revision: number;
-    savedAt: string | null;
-    workspace: string | null;
-    fonts: Record<string, string>;
-  } | null = null;
+  index =
+    (await local<Index | undefined>('readonly', (s) => s.get('library-index-v2')).catch(
+      () => undefined,
+    )) || null;
+  const keys = await local('readonly', (s) => s.getAllKeys()).catch(() => []);
+  const queued: Operation[] = [];
+  for (const key of keys.filter((k) => String(k).startsWith('operation:'))) {
+    const operation = await local<Operation>('readonly', (s) => s.get(key));
+    queued.push(operation);
+  }
+  for (const operation of queued.sort((a, b) => (a.order || 0) - (b.order || 0))) {
+    pending.set(operation.key, operation);
+    operationOrder = Math.max(operationOrder, operation.order || 0);
+  }
   try {
-    server = await api('/api/library');
-  } catch {
-    server = null;
-  }
-  if (!server) {
-    cached = local;
-    revision = localSync.revision;
+    const server = await api<Index>('/api/library/index');
+    if (!server.revision && !pending.size) {
+      let legacy = await local<string | undefined>('readonly', (s) =>
+        s.get('reframe-workspace'),
+      ).catch(() => undefined);
+      if (!legacy)
+        try {
+          legacy = localStorage.getItem('reframe-workspace') || undefined;
+        } catch {
+          /* The server remains available. */
+        }
+      if (legacy) {
+        const fonts: Record<string, string> = {};
+        for (const [, hash] of legacy.matchAll(/reframe-font:([a-f0-9]{64})/g)) {
+          const font = await local<string | undefined>('readonly', (s) =>
+            s.get('font:' + hash),
+          ).catch(() => undefined);
+          if (font) fonts[hash] = font;
+        }
+        await api('/api/library', {
+          method: 'PUT',
+          body: JSON.stringify({ baseRevision: 0, workspace: legacy, fonts }),
+        });
+        index = await api<Index>('/api/library/index');
+      } else index = server;
+    } else index = server;
+    // Offline edits remain separate records and are replayed against their original item revision.
+    if (!index!.theme) index!.theme = themes[0];
+    for (const op of pending.values()) applyOptimistic(op);
+    await cacheIndex();
+    setStatus({ state: 'synced', revision: index!.revision, savedAt: index!.savedAt });
+    void flush();
+  } catch (error) {
     setStatus({
       state: 'offline',
-      revision,
-      message:
-        'The library is open from this browser. Changes save to disk when the Reframe server is reachable.',
+      revision: index?.revision || 0,
+      message: (error as Error).message,
     });
-    if (localSync.dirty) retryLater();
-    return;
   }
-  serverFonts = new Set(Object.keys(server.fonts));
-  if (
-    server.workspace === null ||
-    (local && localSync.dirty && localSync.revision === server.revision)
-  ) {
-    // Disk is empty (first run), or this browser has edits made on top of the latest disk version: send them.
-    cached = local;
-    revision = server.revision;
-    if (local) {
-      pending = local;
-      void flush();
-    } else setStatus({ state: 'synced', revision, savedAt: server.savedAt });
-    return;
+  if (!polling) {
+    polling = setInterval(() => {
+      if (pending.size) void flush();
+      else void refresh();
+    }, 4000);
+    window.addEventListener('focus', () => void refresh());
   }
-  if (local && localSync.dirty) {
-    // Unsynced browser edits conflict with a newer disk version. Disk wins; the browser copy is kept as a version.
-    try {
-      const { workspace, fonts } = await compact(local);
-      await api('/api/library/history', {
-        method: 'POST',
-        body: JSON.stringify({
-          workspace,
-          fonts: Object.fromEntries(fonts),
-          reason: 'browser copy',
-        }),
-      });
-    } catch {
-      /* The disk version still loads; the browser copy remains in IndexedDB until the next save. */
-    }
-  }
-  revision = server.revision;
-  cached = inflate(server.workspace, server.fonts);
-  try {
-    const { workspace, fonts } = await compact(cached);
-    await cacheLocally(workspace, fonts, false);
-  } catch {
-    /* The cache is optional. */
-  }
-  setStatus({ state: 'synced', revision, savedAt: server.savedAt });
 }
-
 export function readWorkspace() {
-  return cached;
+  return index ? workspace() : null;
 }
-
-let retry: ReturnType<typeof setTimeout> | undefined;
-function retryLater() {
-  if (retry) return;
-  retry = setTimeout(() => {
-    retry = undefined;
-    if (status.state === 'offline' && cached !== null && pending === null) {
-      pending = cached;
-      void flush();
-    }
-  }, 30000);
+function applyOptimistic(op: Operation) {
+  if (!index) return;
+  if (op.path === '/api/library/settings') index.theme = op.body.theme as Theme;
+  else if (op.method === 'DELETE') index.items = index.items.filter((i) => i.id !== op.id);
+  else if (op.body.item)
+    index.items = [
+      summary(op.body.item as ComponentItem),
+      ...index.items.filter((i) => i.id !== op.id),
+    ];
+  else if (op.body.metadata)
+    index.items = index.items.map((i) =>
+      i.id === op.id ? { ...i, ...(op.body.metadata as object) } : i,
+    );
 }
-
+function enqueue(op: Operation) {
+  op.order = operationOrder = Math.max(Date.now(), operationOrder + 1);
+  pending.set(op.key, op);
+  setStatus({ state: 'saving', revision: index?.revision || 0 });
+  void local('readwrite', (s) => s.put(op, 'operation:' + op.key)).then(
+    () => flush(),
+    () => flush(),
+  );
+}
 async function flush() {
-  if (writing) return;
-  writing = true;
+  if (running || !pending.size) return;
+  running = true;
+  const conflicts: string[] = [];
   try {
-    while (pending !== null) {
-      const value = pending;
-      pending = null;
-      const { workspace, fonts } = await compact(value);
-      let cachedLocally = false;
+    for (const op of [...pending.values()]) {
+      if (conflicts.includes(op.id || 'settings')) continue;
+      setStatus({ state: 'saving', revision: index?.revision || 0 });
       try {
-        await cacheLocally(workspace, fonts, true);
-        cachedLocally = !!database;
-      } catch {
-        /* Disk remains the durable copy; a failed browser cache is reported only if disk also fails. */
-      }
-      if (status.state === 'conflict') continue;
-      setStatus({ ...status, state: 'saving' });
-      try {
-        const result = await upload(workspace, fonts);
-        if (cachedLocally)
-          await transaction('readwrite', (store) =>
-            store.put({ revision, dirty: false }, SYNC),
-          ).catch(() => {});
-        setStatus({ state: 'synced', revision, savedAt: result.savedAt });
+        const result = await api<ComponentItem & { revision: number; savedAt: string }>(op.path, {
+          method: op.method,
+          body: JSON.stringify(op.body),
+        });
+        pending.delete(op.key);
+        await local('readwrite', (s) => s.delete('operation:' + op.key)).catch(() => {});
+        if (index) {
+          index.revision = result.revision;
+          index.savedAt = result.savedAt;
+          if (op.method !== 'DELETE' && op.id && result._summary) {
+            const remaining = [...pending.values()].filter((next) => next.id === op.id);
+            index.items = [
+              result,
+              ...index.items.filter((i) => i.id !== op.id && i.id !== result.id),
+            ];
+            for (const next of remaining) {
+              next.body.baseRevision = result.itemRevision;
+              applyOptimistic(next);
+              await local('readwrite', (s) => s.put(next, 'operation:' + next.key)).catch(() => {});
+            }
+          }
+        }
       } catch (error) {
-        const failure = error as { status?: number; message: string };
-        if (failure.status === 409) {
-          setStatus({ state: 'conflict', revision, message: failure.message });
-          window.dispatchEvent(
-            new CustomEvent('reframe-storage-error', {
-              detail:
-                failure.message +
-                ' Your latest change is kept in this browser and will be saved as a separate version.',
-            }),
-          );
-        } else if (failure.status) {
-          setStatus({ state: 'offline', revision, message: failure.message });
-          window.dispatchEvent(
-            new CustomEvent('reframe-storage-error', {
-              detail: 'Your library could not be saved to disk: ' + failure.message,
-            }),
-          );
+        const e = error as { status?: number; message: string };
+        if (e.status === 409) {
+          conflicts.push(op.id || 'settings');
+          setStatus({ state: 'conflict', revision: index?.revision || 0, message: e.message });
         } else {
-          setStatus({
-            state: 'offline',
-            revision,
-            message:
-              'The Reframe server is unreachable. Changes are kept in this browser and save to disk when it returns.',
-          });
-          if (!cachedLocally)
-            window.dispatchEvent(
-              new CustomEvent('reframe-storage-error', {
-                detail:
-                  'Your library could not be saved. Download a backup before making more changes.',
-              }),
-            );
-          retryLater();
+          setStatus({ state: 'offline', revision: index?.revision || 0, message: e.message });
+          break;
         }
       }
     }
+    if (!pending.size) {
+      await refresh(true);
+      setStatus({ state: 'synced', revision: index?.revision || 0, savedAt: index?.savedAt });
+    } else if (conflicts.length)
+      setStatus({
+        state: 'conflict',
+        revision: index?.revision || 0,
+        message:
+          'An item changed elsewhere. Your edits remain in this browser. Download a backup or save a conflicting item as a copy.',
+      });
+    await cacheIndex();
+    announce();
   } finally {
-    writing = false;
+    running = false;
   }
 }
-
-/** Throws synchronously only when neither browser storage nor disk can take the change. */
-export function writeWorkspace(value: string) {
-  if (!database) {
-    try {
-      localStorage.setItem(KEY, value);
-    } catch (error) {
-      if (status.state !== 'synced') throw error;
-    }
-  }
-  cached = value;
-  pending = value;
-  void flush();
-}
-
-// Changes saved elsewhere (browser-extension captures, another tab) are picked up while this tab has no unsaved
-// change of its own: a small revision check every few seconds, and at once when the tab is shown or focused again.
-const watchers = new Set<(workspace: string) => void>();
-let polling: ReturnType<typeof setInterval> | undefined;
-async function refresh() {
-  if (writing || pending !== null || status.state !== 'synced') return;
+async function refresh(force = false) {
+  if (!force && (running || pending.size)) return;
   try {
-    const { revision: latest } = await api<{ revision: number }>('/api/library/revision');
-    if (latest <= revision) return;
-    const server = await api<{
-      revision: number;
-      savedAt: string | null;
-      workspace: string | null;
-      fonts: Record<string, string>;
-    }>('/api/library');
-    if (!server.workspace || server.revision <= revision || writing || pending !== null) return;
-    revision = server.revision;
-    serverFonts = new Set(Object.keys(server.fonts));
-    cached = inflate(server.workspace, server.fonts);
-    try {
-      const { workspace, fonts } = await compact(cached);
-      await cacheLocally(workspace, fonts, false);
-    } catch {
-      /* The cache is optional. */
-    }
-    setStatus({ state: 'synced', revision, savedAt: server.savedAt });
-    watchers.forEach((watch) => watch(cached!));
+    const latest = await api<{ revision: number }>('/api/library/revision');
+    if (!force && latest.revision === index?.revision) return;
+    const next = await api<Index>('/api/library/index');
+    if (!force && (running || pending.size)) return;
+    if (!next.theme) next.theme = themes[0];
+    index = next;
+    await cacheIndex();
+    announce();
+    setStatus({ state: 'synced', revision: next.revision, savedAt: next.savedAt });
   } catch {
-    /* The next check retries. */
+    /* Pending operations and the current view are retained. */
   }
 }
-export function onLibraryChange(listener: (workspace: string) => void) {
-  watchers.add(listener);
-  if (!polling) {
-    polling = setInterval(() => void refresh(), 4000);
-    window.addEventListener('focus', () => void refresh());
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') void refresh();
+/** Compatibility entry point: diff small summaries into individual mutations, never a whole-library upload. */
+export function writeWorkspace(value: string) {
+  if (!database && status.state === 'offline')
+    throw new Error('Storage is unavailable; keep this window open and download a backup.');
+  const state = JSON.parse(value) as { items: ComponentItem[]; theme: Theme };
+  if (!index) index = { version: 2, revision: 0, theme: state.theme, items: [] };
+  const before = new Map(index.items.map((i) => [i.id, i]));
+  const operation = (item: ComponentItem, method: string, body: Record<string, unknown>) => {
+    const key = crypto.randomUUID();
+    enqueue({
+      key,
+      id: item.id,
+      method,
+      path: '/api/library/items/' + encodeURIComponent(item.id),
+      body: { ...body, baseRevision: before.get(item.id)?.itemRevision || 0, operationId: key },
+    });
+  };
+  for (const item of state.items) {
+    const old = before.get(item.id);
+    if (item === old || JSON.stringify(item) === JSON.stringify(old)) continue;
+    if (item._summary && old) {
+      const metadata: Record<string, unknown> = {};
+      for (const key of ['name', 'tags', 'collections', 'theme'] as const)
+        if (JSON.stringify(item[key]) !== JSON.stringify(old[key])) metadata[key] = item[key];
+      if (Object.keys(metadata).length) operation(item, 'PATCH', { metadata });
+    } else operation(item, 'PUT', { item });
+  }
+  const nextIds = new Set(state.items.map((i) => i.id));
+  for (const old of before.values()) if (!nextIds.has(old.id)) operation(old, 'DELETE', {});
+  if (JSON.stringify(index.theme) !== JSON.stringify(state.theme)) {
+    const key = crypto.randomUUID();
+    enqueue({
+      key,
+      method: 'PATCH',
+      path: '/api/library/settings',
+      body: { theme: state.theme, baseRevision: index.revision },
     });
   }
+  index = { ...index, items: state.items.map(summary), theme: state.theme };
+  void cacheIndex();
+}
+export function onLibraryChange(fn: (workspace: string) => void) {
+  watchers.add(fn);
   return () => {
-    watchers.delete(listener);
+    watchers.delete(fn);
   };
 }
-
 export type LibraryVersion = {
   id: string;
   reason: string;
@@ -391,19 +412,82 @@ export type LibraryVersion = {
   items: number;
 };
 export const listVersions = () => api<LibraryVersion[]>('/api/library/history');
-/** Makes a kept version current on disk (the current one is kept too), then reloads the app with it. */
 export async function restoreVersion(id: string) {
-  const result = await api<{
-    revision: number;
-    savedAt: string;
-    workspace: string;
-    fonts: Record<string, string>;
-  }>('/api/library/restore', {
+  if (pending.size) throw new Error('Save or back up pending edits before restoring a version.');
+  await api('/api/library/restore', {
     method: 'POST',
-    body: JSON.stringify({ id, baseRevision: revision }),
+    body: JSON.stringify({ id, baseRevision: index?.revision || 0 }),
   });
-  revision = result.revision;
-  const { workspace, fonts } = await compact(inflate(result.workspace, result.fonts));
-  await cacheLocally(workspace, fonts, false).catch(() => {});
+  await refresh(true);
   location.reload();
+}
+
+export function saveCaptured(item: ComponentItem, theme: Theme) {
+  const key = crypto.randomUUID();
+  enqueue({
+    key,
+    id: item.id,
+    method: 'POST',
+    path: '/api/library/captures',
+    body: { item, theme },
+  });
+  if (index) {
+    index.items = [summary(item), ...index.items.filter((i) => i.id !== item.id)];
+    void cacheIndex();
+  }
+}
+
+/** Keep local edits as new packages; the competing server revisions remain untouched. */
+export async function recoverPendingCopies() {
+  while (running) await new Promise((resolve) => setTimeout(resolve, 50));
+  const operations = [...pending.values()];
+  if (operations.some((op) => op.method === 'DELETE' || op.path === '/api/library/settings'))
+    throw new Error('Back up pending edits before resolving deletion or settings conflicts.');
+  const copies: Operation[] = [];
+  for (const id of new Set(operations.map((op) => op.id).filter(Boolean))) {
+    const edits = operations.filter((op) => op.id === id),
+      candidate = [...edits].reverse().find((op) => op.body.item)?.body.item as
+        ComponentItem | undefined;
+    let full =
+      candidate || (await api<ComponentItem>('/api/library/items/' + encodeURIComponent(id!)));
+    for (const edit of edits)
+      if (edit.body.metadata) full = { ...full, ...(edit.body.metadata as object) };
+    const copy = {
+      ...full,
+      id: crypto.randomUUID(),
+      name: full.name + ' (local copy)',
+      itemRevision: 0,
+      contentHash: undefined,
+    };
+    const key = crypto.randomUUID();
+    copies.push({
+      key,
+      id: copy.id,
+      method: 'PUT',
+      path: '/api/library/items/' + copy.id,
+      body: { item: copy, baseRevision: 0, operationId: key },
+    });
+  }
+  await local('readwrite', (store) => {
+    for (const op of operations) store.delete('operation:' + op.key);
+    for (const op of copies) store.put(op, 'operation:' + op.key);
+    return store.getAllKeys();
+  });
+  for (const op of operations) pending.delete(op.key);
+  for (const op of copies) pending.set(op.key, op);
+  index = await api<Index>('/api/library/index');
+  for (const op of copies) {
+    pending.set(op.key, op);
+    applyOptimistic(op);
+  }
+  await cacheIndex();
+  announce();
+  await flush();
+}
+export function pendingBackup() {
+  return JSON.stringify(
+    { version: 1, kind: 'reframe-pending-edits', operations: [...pending.values()] },
+    null,
+    2,
+  );
 }

@@ -4,7 +4,7 @@ import express from 'express';
 import { mountDownloads } from '../server/downloads.js';
 test('browser-compatible exports preserve bytes and use bounded, temporary attachment URLs', async () => {
   const app = express();
-  app.use(express.json({ limit: '8mb' }));
+  app.use(express.json({ limit: '24mb' }));
   mountDownloads(app);
   const server = app.listen(0, '127.0.0.1');
   await new Promise((r) => server.once('listening', r));
@@ -36,7 +36,7 @@ test('browser-compatible exports preserve bytes and use bounded, temporary attac
       { name: 'file', type: 'text/html\r\nX-Injected: yes', base64: '' },
       { name: 'file', type: 'text/plain', base64: '!!!=' },
       { name: 'file', type: 'text/plain', base64: 'Zh==' },
-      { name: 'file', type: 'text/plain', base64: 'A'.repeat(8000004) },
+      { name: 'file', type: 'text/plain', base64: 'A'.repeat(21333340) },
     ])
       assert.equal((await post(invalid)).status, 400);
     for (let i = 0; i < 7; i++)

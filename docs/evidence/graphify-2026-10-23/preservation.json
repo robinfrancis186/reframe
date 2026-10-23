@@ -1,0 +1,17 @@
+{
+  "prior_nodes": 1437,
+  "prior_links": 3521,
+  "prior_node_ids_retained": true,
+  "prior_link_evidence_retained": true,
+  "prior_attribute_versions_retained_in_ledger": true,
+  "all_exported_endpoints_resolve": true,
+  "all_hyperedge_members_resolve": true,
+  "multigraph": true,
+  "directed": true,
+  "new_nodes": 2231,
+  "new_links": 6978,
+  "self_links_retained": 59,
+  "parallel_evidence_links_preserved": 1678,
+  "old_graph_sha256": "f30b5a4aabc569309ff21ace7fdda9af1e5cf882c2aeda416ad338e8bb1a48d4",
+  "current_graph_sha256": "1f8f02df046fe2d31537057f1cc858160619214abed6326968491e6c311f4f12"
+}

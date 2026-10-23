@@ -1,0 +1,11 @@
+{
+  "artifact": "/Users/robinfrancis/Documents/ChatGPT/devinhack/out/make/Reframe-arm64-local-unsigned.dmg",
+  "bytes": 543447061,
+  "sha256": "d72069b37e5d05f7fff70bb504715dc50e54b7f715d945ccba08315dbd2bf6c1",
+  "externalSymlinks": [],
+  "forbiddenFiles": [],
+  "localAdHocSealVerified": true,
+  "developerIDSigned": false,
+  "notarized": false,
+  "mount": "(apfs, local, nodev, nosuid, read-only, journaled, noowners, nobrowse, mounted by robinfrancis)"
+}

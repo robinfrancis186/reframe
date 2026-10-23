@@ -16,3 +16,6 @@ output/
 **/__pycache__/
 
 graphify-out/
+
+.desktop-runtime/
+out/

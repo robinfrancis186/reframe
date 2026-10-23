@@ -236,7 +236,7 @@ export default function ComponentLibrary({
           }
           <div className="library-detail-actions">
             <button className="primary" onClick={() => onOpen({ ...libraryItem(selected), theme })}>
-              Use in Studio <ArrowRight size={16} />
+              Open in editor <ArrowRight size={16} />
             </button>
             <button
               onClick={() => {
@@ -244,7 +244,7 @@ export default function ComponentLibrary({
               }}
             >
               {saved === selected.id ? <Check size={16} /> : <Clipboard size={16} />}{' '}
-              {saved === selected.id ? 'Saved to clipboard' : 'Save to clipboard'}
+              {saved === selected.id ? 'Saved to Library' : 'Save to Library'}
             </button>
             <button
               disabled={exporting}

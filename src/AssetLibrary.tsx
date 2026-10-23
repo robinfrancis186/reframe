@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Copy, Download, Check, Type, Palette, Shapes, Image as ImageIcon } from 'lucide-react';
 import { collectAssets, svgDataUri } from './library/assets.js';
 import { bundledFonts } from './fonts.js';
-import { download, type ComponentItem, type Theme } from './model';
+import { api, download, type ComponentItem, type Theme } from './model';
 import './assets.css';
 
 type Tab = 'Fonts' | 'Colors' | 'Icons' | 'Images';
@@ -26,7 +26,25 @@ export default function AssetLibrary({
   const [tab, setTab] = useState<Tab>('Fonts');
   const [site, setSite] = useState('All sites');
   const [copied, setCopied] = useState('');
-  const assets = useMemo(() => collectAssets(items), [items]);
+  const [assets, setAssets] = useState(() => collectAssets(items.filter((i) => !i._summary)));
+  const [assetError, setAssetError] = useState('');
+  useEffect(() => {
+    let current = true;
+    api<ReturnType<typeof collectAssets>>('/api/library/assets').then(
+      (value) => {
+        if (current) {
+          setAssets(value);
+          setAssetError('');
+        }
+      },
+      (e) => {
+        if (current) setAssetError(e.message);
+      },
+    );
+    return () => {
+      current = false;
+    };
+  }, [items]);
   const sites = useMemo(
     () =>
       [
@@ -80,6 +98,7 @@ export default function AssetLibrary({
   return (
     <div className="asset-library">
       <style>{faceCss}</style>
+      {assetError && <p role="alert">{assetError}</p>}
       <div className="asset-toolbar">
         <div className="asset-tabs" role="tablist" aria-label="Asset types">
           {tabs.map(([name, Icon]) => (
@@ -202,7 +221,7 @@ export default function AssetLibrary({
             ) : (
               <p className="asset-empty">
                 No captured fonts{site === 'All sites' ? ' yet' : ' from ' + site}. Pick an element
-                in Studio → Browser and save it.
+                in Capture → Browse & pick and save it.
               </p>
             )}
           </section>

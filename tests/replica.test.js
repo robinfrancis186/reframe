@@ -352,6 +352,7 @@ test(
       await nested.getByRole('button', { name: 'Open navigation' }).waitFor({ state: 'visible' });
       await nested.getByRole('button', { name: 'Open navigation' }).click();
       await nested.getByRole('heading', { name: 'Navigation', exact: true }).waitFor();
+      await nested.getByRole('link', { name: 'Portfolio', exact: true }).waitFor();
       assert.equal(await nested.getByRole('link', { name: 'Portfolio', exact: true }).count(), 1);
       await manager.stop(session.id);
       assert.equal(manager.targets().length, 0);

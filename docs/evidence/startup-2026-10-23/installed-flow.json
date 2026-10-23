@@ -1,0 +1,106 @@
+{
+  "artifact": "/tmp/reframe-startup-installed/Reframe.app/Contents/MacOS/Reframe",
+  "homeReadyMs": 11819,
+  "restartHomeMs": 4774,
+  "launchedFromReadOnlyVolume": false,
+  "startupPhases": [
+    {
+      "phase": "startup-visible",
+      "elapsedMs": 827
+    },
+    {
+      "phase": "backend-ready",
+      "elapsedMs": 2434
+    },
+    {
+      "phase": "home-ready",
+      "elapsedMs": 2860
+    },
+    {
+      "phase": "startup-visible",
+      "elapsedMs": 1987
+    },
+    {
+      "phase": "backend-ready",
+      "elapsedMs": 3230
+    },
+    {
+      "phase": "home-ready",
+      "elapsedMs": 3362
+    },
+    {
+      "phase": "startup-visible",
+      "elapsedMs": 5584
+    },
+    {
+      "phase": "backend-ready",
+      "elapsedMs": 6351
+    },
+    {
+      "phase": "home-ready",
+      "elapsedMs": 6443
+    }
+  ],
+  "recoveryRetainedLibraryAndRecords": true,
+  "publicSiteCaptured": true,
+  "twoComponentsInstalled": true,
+  "timings": [
+    {
+      "endpoint": "/api/features/build",
+      "ms": 8478,
+      "reused": false,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/projects/plan",
+      "ms": 52,
+      "reused": true,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/tabs",
+      "ms": 4188,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 1803,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 217,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 90,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 1563,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/projects/plan",
+      "ms": 6327,
+      "reused": false,
+      "status": 200
+    }
+  ],
+  "elapsedMs": 59437,
+  "libraryItems": 2,
+  "security": {
+    "sandbox": true,
+    "contextIsolation": true,
+    "nodeIntegration": false
+  },
+  "errors": [],
+  "ownedProcessesClosed": 16,
+  "restartRecordsPersisted": true,
+  "bundledOCR": true,
+  "ocrMs": 1932,
+  "appBundleStoreAbsent": true,
+  "systemPathOnly": "/usr/bin:/bin:/usr/sbin:/sbin"
+}

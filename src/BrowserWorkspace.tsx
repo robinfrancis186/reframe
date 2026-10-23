@@ -92,7 +92,7 @@ export default function BrowserWorkspace({
 }: {
   active: boolean;
   onCapture: (r: { items: ComponentItem[] }) => void;
-  onSave: (item: ComponentItem) => boolean;
+  onSave: (item: ComponentItem) => boolean | Promise<boolean>;
   onImport: (items: ComponentItem[]) => boolean;
   onScreenshot: (image: string, source: string) => void;
 }) {
@@ -104,6 +104,7 @@ export default function BrowserWorkspace({
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [website, setWebsite] = useState(false);
+  const [captureStates, setCaptureStates] = useState(false);
   const [scraped, setScraped] = useState<ScrapedPage | null>(null),
     [live, setLive] = useState(true);
   const [dialogText, setDialogText] = useState('');
@@ -322,16 +323,18 @@ export default function BrowserWorkspace({
   async function capture(kind: 'adapt' | 'save' | 'all') {
     if (!id) return;
     await acquire();
-    setBusy('Capturing');
+    setBusy(captureStates ? 'Measuring responsive and interaction states' : 'Capturing');
     setError('');
     try {
       const r = await api<{ items: ComponentItem[] }>('/api/browser/action', {
         id,
         action: kind === 'all' ? 'extract' : 'capture',
+        variants: captureStates,
       });
       if (kind === 'save') {
-        if (onSave(r.items[0]))
-          setMessage('Saved to clipboard, including the original reference image.');
+        setBusy('Saving to Library');
+        if (await onSave(r.items[0]))
+          setMessage('Saved to Library, including the original reference image.');
       } else onCapture(r);
     } catch (e) {
       setError((e as Error).message);
@@ -921,13 +924,23 @@ export default function BrowserWorkspace({
                   disabled={disabled}
                   onClick={() => void capture('adapt')}
                 >
-                  Adapt in Studio
+                  Open in editor
                   <ArrowRight size={15} />
                 </button>
                 <button disabled={disabled} onClick={() => void capture('save')}>
-                  Save directly to clipboard
+                  Save directly to Library
                 </button>
-                <small>The captured reference image stays with your component.</small>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={captureStates}
+                    onChange={(e) => setCaptureStates(e.target.checked)}
+                  />
+                  Measure desktop, tablet, phone, hover and focus
+                </label>
+                <small>
+                  Uses the isolated browser only. Ambiguous or hidden variants are reported.
+                </small>
                 {message && <p className="browser-pick-note">{message}</p>}
               </>
             )}

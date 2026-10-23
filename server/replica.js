@@ -1,4 +1,5 @@
 import { load } from 'cheerio';
+import { bundleImages, safeImageData } from './portable-assets.js';
 import sanitize from 'sanitize-html';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -156,9 +157,14 @@ export function replicaHTML(html) {
     },
     parser: { lowerCaseAttributeNames: false, lowerCaseTags: false },
     allowedSchemes: ['https', 'http', 'mailto', 'tel'],
+    allowedSchemesByTag: { img: ['https', 'http', 'data'] },
     allowProtocolRelative: false,
     allowedStyles: { '*': styles },
     transformTags: {
+      img: (tag, attrs) => {
+        if (attrs.src?.startsWith('data:') && !safeImageData(attrs.src)) delete attrs.src;
+        return { tagName: tag, attribs: attrs };
+      },
       a: (tag, attrs) => ({ tagName: tag, attribs: { ...attrs, rel: 'noopener noreferrer' } }),
     },
     exclusiveFilter: (frame) => frame.tag === 'input' && frame.attribs.type === 'password',
@@ -174,7 +180,7 @@ export function replicaCSS(css) {
   return css
     .replace(/@import\s+(?:[^;{}]|\([^)]*\))*;/gi, '')
     .replace(/url\(\s*(['"]?)(.*?)\1\s*\)/gi, (all, quote, url) => {
-      if (url.startsWith('#')) return all;
+      if (url.startsWith('#') || safeImageData(url)) return all;
       if (/^data:font\/(?:woff2?|ttf);base64,[A-Za-z0-9+/=]+$/.test(url)) return all;
       try {
         const u = referenceUrl(url),
@@ -375,7 +381,9 @@ export async function prepareReplica(rawPages, { resource = referenceResource } 
     budget -= data.length;
     return 'url("' + data + '")';
   });
-  return validateReplica({ version: 1, pages, css, attachments, warnings });
+  return validateReplica(
+    await bundleImages({ version: 1, pages, css, attachments, warnings }, resource),
+  );
 }
 export function validateReplica(value) {
   if (
@@ -518,19 +526,20 @@ export async function buildReplicaFeature(html, name, replica, id) {
     'README.md':
       '# ' +
       spec.name +
-      '\n\nRendered source HTML, public CSS, inline SVG and independently authored website runtime. Install through Reframe Projects in React + Vite, then npm run reframe:dev (or build and reframe:start). Original styling is isolated in an iframe. Captured routes stay local; PDFs are bundled. Images remain online references. Contact forms validate and save local requests with durable receipts; no email is sent. No original JavaScript or private backend is recovered. Generic search, theme, disclosure and carousel behavior is authored by Reframe. Unknown actions show an explicit explanation. Review forms and routes before publishing. Local single-user storage is not a public multiuser service.\n',
+      '\n\nRendered source HTML, public CSS, inline SVG and independently authored website runtime. Install through Reframe Projects in React + Vite, then npm run reframe:dev (or build and reframe:start). Original styling is isolated in an iframe. Captured routes stay local; PDFs are bundled. Supported images are bundled when size and format allow; review the Ready to reuse report for external resources. Contact forms validate and save local requests with durable receipts; no email is sent. No original JavaScript or private backend is recovered. Generic search, theme, disclosure and carousel behavior is authored by Reframe. Unknown actions show an explicit explanation. Review forms and routes before publishing. Local single-user storage is not a public multiuser service.\n',
   };
   return {
     version: 1,
     spec,
     sourceHash: digest(cleanHtml(html)),
+    assetHash: digest(JSON.stringify(website)),
     files,
     bytes: Buffer.byteLength(JSON.stringify(files)),
     builtAt: new Date().toISOString(),
     requirements: [
       'React + Vite and Node 24+',
       'Original appearance preserved in an isolated document',
-      'Online source images; local PDF downloads and form receipts',
+      'Review external resources; bundled assets, local PDF downloads and form receipts',
       'Review unsupported controls and pages outside the captured set',
     ],
   };
@@ -546,7 +555,7 @@ export async function replicaItem(rawPages, name, options) {
     kind: rawPages.length > 1 ? 'website' : 'rendered-component',
     capturedAt: new Date().toISOString(),
     evidence:
-      'Rendered HTML, source styles, inline SVG and bundled public PDFs. Independently authored local interactions and form backend. Source images remain online; private source logic is not recovered.',
+      'Rendered HTML, source styles, inline SVG and bundled public PDFs. Independently authored local interactions and form backend. Supported images are bundled; review remaining external resources. Private source logic is not recovered.',
     feature: await buildReplicaFeature(html, name, replica),
   };
 }

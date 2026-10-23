@@ -1,10 +1,10 @@
 import { createServer as httpServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { featureHandler } from './runtime.mjs';
 
-const root = fileURLToPath(new URL('..', import.meta.url));
+const root = process.env.REFRAME_DEMO_ROOT || fileURLToPath(new URL('..', import.meta.url));
 const handlers = new Map();
 const production = process.argv.includes('--production');
 const port = Number(process.env.PORT || 5175);
@@ -21,9 +21,17 @@ const server = httpServer(async (req, res) => {
           await readFile(path.join(root, 'reframe', 'features', id, 'feature.json'), 'utf8'),
         );
         const handler = spec.website
-          ? (await import(`./features/${id}/website.mjs`)).featureHandler
+          ? (
+              await import(
+                pathToFileURL(path.join(root, 'reframe', 'features', id, 'website.mjs')).href
+              )
+            ).featureHandler
           : spec.commerce
-            ? (await import(`./features/${id}/commerce.mjs`)).featureHandler
+            ? (
+                await import(
+                  pathToFileURL(path.join(root, 'reframe', 'features', id, 'commerce.mjs')).href
+                )
+              ).featureHandler
             : featureHandler;
         handlers.set(
           id,
@@ -35,6 +43,15 @@ const server = httpServer(async (req, res) => {
               'data',
               `${id}${spec.website ? '.website' : spec.commerce ? '.commerce' : ''}.json`,
             ),
+            spec.website
+              ? {
+                  frameAncestors:
+                    "'self'" +
+                    (process.env.REFRAME_DEMO_PARENT_ORIGIN
+                      ? ' ' + process.env.REFRAME_DEMO_PARENT_ORIGIN
+                      : ''),
+                }
+              : undefined,
           ),
         );
       }
@@ -87,7 +104,16 @@ vite = production
   : await (
       await import('vite')
     ).createServer({ root, server: { middlewareMode: true, hmr: { server } }, appType: 'spa' });
-server.listen(port, '127.0.0.1', () => console.log(`Integrated app: http://localhost:${port}`));
+server.listen(port, '127.0.0.1', () => {
+  const address = server.address();
+  const activePort = typeof address === 'object' && address ? address.port : port;
+  console.log(`Integrated app: http://127.0.0.1:${activePort}`);
+  process.send?.({ port: activePort });
+});
+process.once('disconnect', () => {
+  server.close();
+  process.exit(0);
+});
 server.on('error', (e) => {
   console.error(e.message);
   process.exit(1);

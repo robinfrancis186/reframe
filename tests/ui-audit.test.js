@@ -103,7 +103,7 @@ test(
       assert.equal(await page.locator('.clip-card').count(), 24);
       await page.getByRole('button', { name: 'Show more · 176 remaining' }).click();
       assert.equal(await page.locator('.clip-card').count(), 48);
-      await page.getByRole('searchbox', { name: 'Search clipboard' }).fill('No such component');
+      await page.getByRole('searchbox', { name: 'Search Library' }).fill('No such component');
       await page.getByText('No components match these filters and “No such component”.').waitFor();
       await page.getByRole('button', { name: 'Clear filters' }).click();
       assert.equal(await page.locator('.clip-card').count(), 24);

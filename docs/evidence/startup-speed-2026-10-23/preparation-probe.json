@@ -1,0 +1,16 @@
+{
+  "source": "previous read-only DMG",
+  "nativeCopy": {
+    "appMs": 7031,
+    "runtimeMs": 2752
+  },
+  "nodeCopy": {
+    "appMs": 6673,
+    "runtimeMs": 3126
+  },
+  "archive": {
+    "packMs": 4507,
+    "extractMs": 2784
+  },
+  "note": "Sequential probes on this Mac; archive packing is build-time only, not startup. These are not cold filesystem trials."
+}

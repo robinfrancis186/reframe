@@ -500,7 +500,7 @@ export default function Agents({
                   </label>
                   <p className="agent-caption">
                     Sends this capture, source and instructions to OpenAI. Your key is held in
-                    memory, used once and cleared after the run; it is never saved to the clipboard.
+                    memory, used once and cleared after the run; it is never saved to the Library.
                   </p>
                 </>
               )}
@@ -632,7 +632,7 @@ export default function Agents({
                   >
                     {saved ? (
                       <>
-                        <Check size={16} /> Saved to clipboard
+                        <Check size={16} /> Saved to Library
                       </>
                     ) : (
                       'Save complete component'

@@ -32,6 +32,146 @@ export function replicaDocument(site, index = 0) {
 export function websiteClient() {
   const base = new URL('.', location.href),
     root = document.documentElement;
+  // Semantic controls use our local state; reference scripts and private behavior are never executed.
+  const show = (panel, open) => {
+    panel.hidden = !open;
+    if (open && getComputedStyle(panel).display === 'none')
+      panel.style.setProperty('display', 'block', 'important');
+  };
+  const tabs = (group) =>
+    [...group.querySelectorAll('[role=tab]')].filter(
+      (tab) => tab.closest('[role=tablist]') === group && !tab.hasAttribute('disabled'),
+    );
+  function selectTab(tab, focus = false) {
+    if (!tab) return false;
+    const group = tab.closest('[role=tablist]');
+    if (!group) return false;
+    for (const candidate of tabs(group)) {
+      const active = candidate === tab;
+      candidate.setAttribute('aria-selected', String(active));
+      candidate.setAttribute('tabindex', active ? '0' : '-1');
+      const panel = document.getElementById(candidate.getAttribute('aria-controls'));
+      if (panel) show(panel, active);
+    }
+    if (focus) tab.focus();
+    return true;
+  }
+  for (const group of document.querySelectorAll('[role=tablist]')) {
+    const choices = tabs(group);
+    selectTab(choices.find((tab) => tab.getAttribute('aria-selected') === 'true') || choices[0]);
+  }
+  const menus = [...document.querySelectorAll('[aria-controls][aria-haspopup]')].filter(
+    (button) =>
+      ['menu', 'listbox', 'true'].includes(button.getAttribute('aria-haspopup')) &&
+      document.getElementById(button.getAttribute('aria-controls')),
+  );
+  function menu(button, open, focus = false) {
+    const panel = document.getElementById(button.getAttribute('aria-controls'));
+    button.setAttribute('aria-expanded', String(open));
+    show(panel, open);
+    if (focus) {
+      if (open) {
+        const first = panel.querySelector('[role=menuitem],[role=option],button,a[href]');
+        if (first instanceof HTMLElement) first.focus();
+      } else button.focus();
+    }
+  }
+  menus.forEach((button) => menu(button, button.getAttribute('aria-expanded') === 'true'));
+  const slides = (carousel) =>
+    [...carousel.querySelectorAll('[aria-roledescription=slide]')].filter(
+      (slide) => slide.closest('[aria-roledescription=carousel]') === carousel,
+    );
+  function slide(carousel, offset) {
+    const choices = slides(carousel);
+    if (!choices.length) return false;
+    const current = choices.findIndex((choice) => !choice.hidden),
+      next = (Math.max(0, current) + offset + choices.length) % choices.length;
+    choices.forEach((choice, i) => {
+      show(choice, i === next);
+      choice.setAttribute('aria-hidden', String(i !== next));
+    });
+    carousel.setAttribute('aria-live', 'polite');
+    return true;
+  }
+  document
+    .querySelectorAll('[aria-roledescription=carousel]')
+    .forEach((carousel) => slide(carousel, 0));
+  document.addEventListener(
+    'click',
+    (event) => {
+      const target =
+        event.target instanceof Element
+          ? event.target.closest('[role=tab],button,[role=button]')
+          : null;
+      for (const button of menus) {
+        const panel = document.getElementById(button.getAttribute('aria-controls'));
+        if (
+          event.target instanceof Node &&
+          !panel.contains(event.target) &&
+          !button.contains(event.target)
+        )
+          menu(button, false);
+      }
+      if (!target) return;
+      let handled = target.matches('[role=tab]') && selectTab(target);
+      if (menus.includes(target)) {
+        menu(target, target.getAttribute('aria-expanded') !== 'true');
+        handled = true;
+      }
+      const carousel = target.closest('[aria-roledescription=carousel]'),
+        label = (target.getAttribute('aria-label') || target.textContent || '').toLowerCase();
+      if (carousel && /next|previous|prev/.test(label))
+        handled = slide(carousel, /next/.test(label) ? 1 : -1);
+      if (handled) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    },
+    true,
+  );
+  document.addEventListener('keydown', (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+    if (
+      target.matches('[role=tab]') &&
+      ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)
+    ) {
+      const choices = tabs(target.closest('[role=tablist]')),
+        current = choices.indexOf(target),
+        vertical = target.closest('[role=tablist]').getAttribute('aria-orientation') === 'vertical';
+      if ((vertical ? ['ArrowLeft', 'ArrowRight'] : ['ArrowUp', 'ArrowDown']).includes(event.key))
+        return;
+      const next =
+        event.key === 'Home'
+          ? 0
+          : event.key === 'End'
+            ? choices.length - 1
+            : (current + (/Right|Down/.test(event.key) ? 1 : -1) + choices.length) % choices.length;
+      selectTab(choices[next], true);
+      event.preventDefault();
+    }
+    for (const button of menus) {
+      const panel = document.getElementById(button.getAttribute('aria-controls'));
+      if (target !== button && !panel.contains(target)) continue;
+      if (event.key === 'Escape') {
+        menu(button, false, true);
+        event.preventDefault();
+      } else if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+        const choices = [...panel.querySelectorAll('[role=menuitem],[role=option],button,a[href]')];
+        if (target === button) menu(button, true);
+        const current = choices.indexOf(target),
+          next =
+            event.key === 'Home'
+              ? 0
+              : event.key === 'End'
+                ? choices.length - 1
+                : (current + (event.key === 'ArrowUp' ? -1 : 1) + choices.length) % choices.length;
+        if (choices[next] instanceof HTMLElement) choices[next].focus();
+        event.preventDefault();
+      }
+    }
+  });
+
   const storage = {
     get(key) {
       try {
@@ -108,8 +248,8 @@ export function websiteClient() {
     document.body.append(menu);
   }
   document.addEventListener('click', async (event) => {
-    const target = event.target.closest('a,button');
-    if (!target) return;
+    const target = event.target instanceof Element ? event.target.closest('a,button') : null;
+    if (!(target instanceof HTMLAnchorElement || target instanceof HTMLButtonElement)) return;
     if (target.hasAttribute('data-rf-unavailable')) {
       event.preventDefault();
       feedback(
@@ -119,7 +259,7 @@ export function websiteClient() {
       );
       return;
     }
-    if (target.tagName === 'A') {
+    if (target instanceof HTMLAnchorElement) {
       const label = target.textContent.trim().toLowerCase(),
         url = new URL(target.href, location.href);
       if (
@@ -215,6 +355,7 @@ export function websiteClient() {
         parent.dataset.rfSlide = String(next);
         cards.forEach((card, i) => {
           const offset = (i - next + cards.length) % cards.length;
+          if (!(card instanceof HTMLElement)) return;
           card.style.transform =
             'translateX(' + offset * 180 + 'px) scale(' + (offset === 0 ? 1 : 0.85) + ')';
           card.style.opacity = offset < 3 ? '1' : '0';
@@ -273,7 +414,7 @@ export function websiteClient() {
             .trim()
             .slice(0, 120),
         ),
-        image = target.querySelector('img').cloneNode(true);
+        image = /** @type {HTMLImageElement} */ (target.querySelector('img').cloneNode(true));
       image.style.cssText = 'max-width:100%;height:auto;position:static;object-fit:contain';
       el.append(image);
       const caption = document.createElement('p');
@@ -288,8 +429,10 @@ export function websiteClient() {
       true,
     );
   });
-  const filter = document.querySelector('[aria-label*="Filter"]'),
-    search = document.querySelector('input[type=search],input[placeholder*="Search"]');
+  const filter = /** @type {HTMLElement|null} */ (document.querySelector('[aria-label*="Filter"]')),
+    search = /** @type {HTMLInputElement|null} */ (
+      document.querySelector('input[type=search],input[placeholder*="Search"]')
+    );
   if (filter && search) {
     const articles = [...document.querySelectorAll('article')].filter(
       (el) => !el.parentElement.closest('article'),
@@ -320,15 +463,24 @@ export function websiteClient() {
       event.preventDefault();
       if (!form.reportValidity() || form.dataset.rfBusy) return;
       const values = {};
-      for (const field of form.querySelectorAll('input[name],textarea[name],select[name]'))
+      for (const field of /** @type {NodeListOf<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>} */ (
+        form.querySelectorAll('input[name],textarea[name],select[name]')
+      ))
         if (!field.disabled && !['file', 'password', 'submit', 'button'].includes(field.type))
-          values[field.name] = field.type === 'checkbox' ? field.checked : field.value;
+          values[field.name] =
+            field instanceof HTMLInputElement && field.type === 'checkbox'
+              ? field.checked
+              : field.value;
       const fingerprint = JSON.stringify(values);
       if (form.dataset.rfPayload !== fingerprint) {
         form.dataset.rfRequest = crypto.randomUUID();
         form.dataset.rfPayload = fingerprint;
       }
-      const buttons = [...form.querySelectorAll('button[type=submit],input[type=submit]')];
+      const buttons = [
+        .../** @type {NodeListOf<HTMLButtonElement|HTMLInputElement>} */ (
+          form.querySelectorAll('button[type=submit],input[type=submit]')
+        ),
+      ];
       form.dataset.rfBusy = 'true';
       buttons.forEach((b) => (b.disabled = true));
       feedback(form, 'Saving your request…');

@@ -2,9 +2,10 @@ import { chromium } from 'playwright';
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { referenceResource, referenceUrl } from './browser-network.js';
-import { cleanHtml, extract } from './capture.js';
+import { extract } from './capture.js';
 import { readRendered, replicaItem, buildReplicaFeature } from './replica.js';
 import { finishCapture } from './fidelity.js';
+import { captureVariants } from './capture-variants.js';
 
 async function settle(entry) {
   if (entry.dialog) return;
@@ -145,6 +146,15 @@ export async function scrapePage(page) {
   });
 }
 
+export function browserErrorMessage(error) {
+  const message = String(error?.message || 'The browser action could not finish.');
+  if (/Timeout.*exceeded|Target.*closed|Execution context was destroyed/.test(message))
+    return 'The page changed or took too long to respond. Refresh it, then pick the element again.';
+  return message
+    .split('\n')[0]
+    .replace(/^(?:page|locator|browserContext)\.[a-zA-Z]+:\s*(?:Error:\s*)?/, '');
+}
+
 export class ReferenceBrowser {
   constructor({ resource = referenceResource } = {}) {
     this.resource = resource;
@@ -176,15 +186,22 @@ export class ReferenceBrowser {
         ],
       };
       try {
-        this.browser = await chromium.launch({ ...options, channel: 'chrome' });
+        this.browser = await chromium.launch(
+          process.env.REFRAME_CHROMIUM
+            ? { ...options, executablePath: process.env.REFRAME_CHROMIUM }
+            : { ...options, channel: 'chrome' },
+        );
       } catch {
         try {
+          if (process.env.REFRAME_CHROMIUM) throw Error('Bundled Chromium could not start.');
           this.browser = await chromium.launch(options);
         } catch {
           this.denyProxy.close();
           this.starting = null;
           throw new Error(
-            'Install Google Chrome, or run npx playwright install chromium, then retry.',
+            process.env.REFRAME_CHROMIUM
+              ? 'The bundled capture browser could not start. Close unused apps and retry. If this continues from the disk image, copy Reframe to Applications and reopen it.'
+              : 'Install Google Chrome, or run npx playwright install chromium, then retry.',
           );
         }
       }
@@ -282,8 +299,9 @@ export class ReferenceBrowser {
           // deny-all proxy. Page navigations get a meta refresh (a new routed navigation, with the right URL and origin);
           // subresources are followed here, without cookies or credentials once the origin changes.
           if (response.status >= 300 && response.status < 400 && response.headers.location) {
-            let next = referenceUrl(new URL(response.headers.location, request.url()).href);
+            let next = referenceUrl(request.url());
             if (request.isNavigationRequest()) {
+              next = referenceUrl(new URL(response.headers.location, next.href).href);
               if (request.frame() === entry.page.mainFrame()) entry.redirectTo = next.href;
               response = {
                 status: 200,
@@ -435,6 +453,7 @@ export class ReferenceBrowser {
     fullPage = false,
     depth = 0,
     snapshot = true,
+    variants = false,
   }) {
     const entry = this.tabs.get(id);
     if (!entry) throw new Error('This tab closed or expired. Open a new reference tab.');
@@ -501,6 +520,7 @@ export class ReferenceBrowser {
           if (!/Timeout/.test(e.message))
             throw new Error(
               'Website could not load. It may block automated browsers or redirect to an unavailable address.',
+              { cause: e },
             );
         }
       } else if (action === 'back' || action === 'forward') {
@@ -798,6 +818,8 @@ export class ReferenceBrowser {
           throw new Error('Respond to the website dialog before capturing sections.');
         return extract(await page.content(), page.url());
       } else if (action === 'capture') {
+        if (typeof variants !== 'boolean')
+          throw new Error('Choose whether to measure responsive states.');
         if (!entry.selection) throw new Error('Pick an element first.');
         const s = entry.selection;
         let item = {
@@ -813,6 +835,14 @@ export class ReferenceBrowser {
           rebuild: (item, site) =>
             buildReplicaFeature(item.html, item.name, site, item.feature.spec.id),
         });
+        if (variants) {
+          const measured = await captureVariants(entry, { resource: this.resource });
+          item = {
+            ...item,
+            captureVariants: measured.variants,
+            captureWarnings: measured.warnings,
+          };
+        }
         return { items: [item] };
       } else if (action !== 'snapshot') throw new Error('Unknown browser action.');
       if (entry.dialog) return paused();
@@ -870,6 +900,10 @@ export class ReferenceBrowser {
         dialog: null,
       };
       return entry.lastSnapshot;
+    } catch (error) {
+      throw Object.assign(new Error(browserErrorMessage(error), { cause: error }), {
+        status: error.status,
+      });
     } finally {
       clearTimeout(watchdog);
       entry.busy = false;

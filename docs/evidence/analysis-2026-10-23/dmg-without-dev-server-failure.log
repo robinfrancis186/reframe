@@ -1,0 +1,31 @@
+Analysis timings: [
+  {
+    endpoint: '/api/features/build',
+    ms: 19976,
+    reused: false,
+    status: 200
+  },
+  {
+    endpoint: '/api/projects/plan',
+    ms: 254,
+    reused: true,
+    status: 200
+  }
+]
+
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 120000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('img', { name: /Interactive browser view of Example Domain/ }) to be visible[22m
+
+    at /Users/robinfrancis/Documents/ChatGPT/devinhack/scripts/verify-desktop.mjs:139:21 {
+  log: [
+    "  - waiting for getByRole('img', { name: /Interactive browser view of Example Domain/ }) to be visible"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v24.11.1

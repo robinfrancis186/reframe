@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createServer } from 'node:http';
@@ -90,7 +90,7 @@ test(
       );
       assert.equal(pkg.pages.length, 2);
       assert.deepEqual(pkg.assets, []);
-      assert.match(pkg.files['index.html'], /https:\/\/example.com\/pixel.png/);
+      assert.match(pkg.files['index.html'], /src="data:image\/png;base64,/);
       assert.doesNotMatch(pkg.files['index.html'], /127\.0\.0\.1|Denied asset/);
       assert.doesNotMatch(pkg.pages[0].html, /<script|originalCode|must-not-export/);
       assert.deepEqual(
@@ -122,16 +122,12 @@ test(
         '/api/reframe/' +
         pkg.item.feature.spec.id +
         '/site/index.html';
-      await page.route('https://example.com/pixel.png', (r) =>
-        r.fulfill({
-          contentType: 'image/png',
-          body: Buffer.from(
-            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j6xoAAAAASUVORK5CYII=',
-            'base64',
-          ),
-        }),
-      );
+      await page.route('https://example.com/**', (r) => r.abort());
       await page.goto(url);
+      assert.equal(
+        await page.locator('img').evaluate((img) => img.complete && img.naturalWidth > 0),
+        true,
+      );
       assert.equal(
         await page.locator('h1').evaluate((el) => getComputedStyle(el).fontSize),
         '40px',

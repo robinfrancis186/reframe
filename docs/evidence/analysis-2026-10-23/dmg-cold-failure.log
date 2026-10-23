@@ -1,0 +1,84 @@
+Analysis timings: [
+  {
+    endpoint: '/api/features/build',
+    ms: 15253,
+    reused: false,
+    status: 200
+  },
+  {
+    endpoint: '/api/projects/plan',
+    ms: 135,
+    reused: true,
+    status: 200
+  },
+  {
+    endpoint: '/api/browser/tabs',
+    ms: 63864,
+    reused: undefined,
+    status: 200
+  }
+]
+Reframe
+Home
+Capture
+Library
+1
+Projects
+Labs
+Recent components
+Desktop newsletter
+Private workspace
+Saved on this computer
+Capture
+New capture
+Browse & pick
+Editor
+Explore. Pick. Make it yours.
+
+Browse a real page, capture the part that matters, and keep its original appearance for comparison.
+
+Rebuild a whole website
+New tab
+Go
+Pick element
+Use screenshot
+Full-page screenshot
+Load whole page
+Scrape page
+Capture page sections
+Rebuild entire website
+Your next reference starts here.
+
+Enter a website above. Reframe renders it in an isolated browser, with scripts and layout intact.
+
+Open reference website
+Opening browser…
+Live view
+Pick a component
+
+Turn on Pick element, then click a heading, button, card or section in the page.
+
+Saved references
+0
+
+Bookmark useful pages to build your reference collection.
+
+Built to be reused.
+Capture · Library · Project integration
+Ask Scout
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 120000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('img', { name: /Interactive browser view of Example Domain/ }) to be visible[22m
+
+    at /Users/robinfrancis/Documents/ChatGPT/devinhack/scripts/verify-desktop.mjs:139:21 {
+  log: [
+    "  - waiting for getByRole('img', { name: /Interactive browser view of Example Domain/ }) to be visible"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v24.11.1

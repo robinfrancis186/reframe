@@ -54,12 +54,12 @@ export default function OpenAIMcp({
       }
       if (!completed)
         throw new Error(
-          'Connection ended before completion. Check the shared clipboard before retrying.',
+          'Connection ended before completion. Check the shared inbox before retrying.',
         );
     } catch (e) {
       setError(
         controller.signal.aborted
-          ? 'Run stopped. Any already saved components remain in the shared clipboard.'
+          ? 'Run stopped. Any already saved components remain in the shared inbox.'
           : (e as Error).message,
       );
     } finally {
@@ -89,7 +89,7 @@ export default function OpenAIMcp({
           value={goal}
           maxLength={12000}
           onChange={(e) => setGoal(e.target.value)}
-          placeholder="Capture https://… and build … with persistent records. Save it to the clipboard."
+          placeholder="Capture https://… and build … with persistent records. Save it to the Library."
           disabled={busy}
           required
         />

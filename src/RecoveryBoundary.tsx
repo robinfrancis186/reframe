@@ -11,7 +11,7 @@ export default class RecoveryBoundary extends Component<
     return this.state.failed ? (
       <main className="app-recovery" role="alert">
         <h1>This view could not load.</h1>
-        <p>Reload to retry. Your saved clipboard has not been cleared.</p>
+        <p>Reload to retry. Your saved Library has not been cleared.</p>
         <button type="button" onClick={() => window.location.reload()}>
           Reload Reframe
         </button>

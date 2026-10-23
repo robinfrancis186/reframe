@@ -2,7 +2,9 @@ let running = 0;
 export const decisionModel = () =>
   process.env.OPENAI_DECISION_MODEL || process.env.OPENAI_MODEL || 'gpt-4.1-mini';
 
-export async function openAIResponse(payload, { apiKey, signal, fetcher = fetch } = {}) {
+/** @param {{apiKey?:string;signal?:AbortSignal;fetcher?:typeof fetch}} options */
+export async function openAIResponse(payload, options = {}) {
+  const { apiKey, signal, fetcher = fetch } = options;
   const key = apiKey || process.env.OPENAI_API_KEY;
   if (typeof key !== 'string' || !key.trim())
     throw new Error('Add an OpenAI key for this run or configure OPENAI_API_KEY on the server.');
@@ -62,8 +64,8 @@ export async function structuredDecision({
   schema,
   instructions,
   input,
-  apiKey,
-  signal,
+  apiKey = undefined,
+  signal = undefined,
   fetcher = fetch,
   maxTokens = 3500,
 }) {

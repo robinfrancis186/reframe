@@ -4,17 +4,20 @@ import {
   listVersions,
   onSyncStatus,
   restoreVersion,
+  recoverPendingCopies,
+  pendingBackup,
   syncStatus,
   type LibraryVersion,
   type SyncState,
 } from './storage';
 import './assets.css';
+import { download } from './model';
 
 const labels: Record<SyncState['state'], string> = {
   synced: 'Saved on this computer',
   saving: 'Saving to disk…',
   offline: 'Saved in this browser only',
-  conflict: 'Changed elsewhere — reload',
+  conflict: 'Conflicting edits kept safely',
   'browser-only': 'Saved in this browser only',
 };
 const when = (iso?: string | null) =>
@@ -27,6 +30,11 @@ export default function LibrarySync() {
   const [choice, setChoice] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const desktop = (
+    window as Window & {
+      reframeDesktop?: { importLibrary: () => Promise<{ cancelled?: boolean; imported?: number }> };
+    }
+  ).reframeDesktop;
   useEffect(() => onSyncStatus(setState), []);
   async function load() {
     setError('');
@@ -77,9 +85,30 @@ export default function LibrarySync() {
         {state.savedAt && state.state === 'synced' && <small>{when(state.savedAt)}</small>}
       </summary>
       <div>
+        {desktop && (
+          <button
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              setError('');
+              try {
+                const result = await desktop.importLibrary();
+                if (!result.cancelled) location.reload();
+              } catch (e) {
+                setError((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Import an existing Reframe Library…
+          </button>
+        )}
         <p>
           {state.message ||
-            "Your saved components and their fonts are stored in this project's .reframe/library folder, so clearing browser data does not remove them. The last 10 versions are kept."}
+            (desktop
+              ? 'Your Library is stored in Reframe’s macOS application data folder, separately from this app and your source project. Clearing browser data does not remove it. The last 10 versions are kept.'
+              : "Your Library is stored in this project's .reframe/library folder. Clearing browser data does not remove it. The last 10 versions are kept.")}
         </p>
         {versions === null ? (
           !error && <p role="status">Loading versions…</p>
@@ -112,6 +141,33 @@ export default function LibrarySync() {
           </div>
         ) : (
           <p>No earlier versions yet.</p>
+        )}
+        {state.state === 'conflict' && (
+          <button
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              setError('');
+              try {
+                await recoverPendingCopies();
+              } catch (e) {
+                setError((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Keep my edits as new components
+          </button>
+        )}
+        {(state.state === 'conflict' || state.state === 'offline') && (
+          <button
+            onClick={() =>
+              download('reframe-pending-edits.json', pendingBackup(), 'application/json')
+            }
+          >
+            Back up pending edits
+          </button>
         )}
         {error && <p role="alert">{error}</p>}
       </div>

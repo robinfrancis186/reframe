@@ -2,6 +2,7 @@ import postcss from 'postcss';
 import { load } from 'cheerio';
 import { createHash } from 'node:crypto';
 import { validateReplica } from './replica.js';
+import { cleanComponent } from './clean-export.js';
 
 // Exports a picked website component as plain source: a React component (JSX) or static HTML, one stylesheet scoped
 // under a single wrapper class so it cannot leak into the destination app, and embedded fonts as separate files.
@@ -218,13 +219,14 @@ export function scopeCss(css, scope, rem = 16) {
 }
 
 /** Converts sanitized capture markup to JSX, turning snapshot indexes into scoped class names. */
-export function toJsx(html, scope, indent = '          ') {
+export function toJsx(html, scope, indent = '          ', bindings = {}) {
   const $ = load(html, null, false);
   const attributes = (el) => {
     const out = [],
-      classes = [];
+      classes = [],
+      bound = bindings[el.attribs?.['data-rf-rendered']] || {};
     for (const [name, value] of Object.entries(el.attribs || {})) {
-      if (INTERNAL.test(name)) continue;
+      if (INTERNAL.test(name) || Object.hasOwn(bound, ATTRIBUTES[name] || name)) continue;
       if (name === 'data-rf-rendered') {
         classes.push(`${scope}-${value}`);
         continue;
@@ -258,6 +260,8 @@ export function toJsx(html, scope, indent = '          ') {
           : `${prop}=${JSON.stringify(value)}`,
       );
     }
+    for (const [prop, expression] of Object.entries(bound))
+      if (expression !== undefined) out.push(`${prop}={${expression}}`);
     if (el.name === 'select') {
       const chosen = $(el).find('option[selected]').first().attr('value');
       if (chosen !== undefined) out.push('defaultValue=' + JSON.stringify(chosen));
@@ -298,6 +302,7 @@ export function toJsx(html, scope, indent = '          ') {
 function toHtml(html, scope) {
   const $ = load(html, null, false);
   $('*').each((_, el) => {
+    if (el.type !== 'tag') return;
     for (const name of Object.keys(el.attribs)) if (INTERNAL.test(name)) $(el).removeAttr(name);
     const index = $(el).attr('data-rf-rendered');
     if (index !== undefined) {
@@ -312,7 +317,11 @@ export function canExportCode(item) {
 }
 
 /** Builds the export files for one saved component. Fonts are returned base64-encoded; everything else is text. */
-export function exportComponentCode(item) {
+export function exportComponentCode(item, { mode = 'faithful', names = {} } = {}) {
+  if (!['faithful', 'clean'].includes(mode))
+    throw new Error('Choose Faithful or Clean & responsive export.');
+  if (mode === 'clean')
+    return cleanComponent(item, exportComponentCode(item), toJsx, names, styleObject);
   if (!canExportCode(item))
     throw new Error('Code export is available for components picked in the reference browser.');
   const site = validateReplica(item.feature.spec.website),
@@ -334,11 +343,11 @@ export function exportComponentCode(item) {
       .filter(Boolean),
   ].join(' ');
   const header = `Captured from ${page.url} with Reframe. Markup and styles only: no original scripts are included.`;
-  const component = `// ${header}\n// Styles are scoped under .${scope}; images stay online at their source URLs.\nimport "./${name}.css";\n\nexport default function ${name}() {\n  return (\n    <div className=${JSON.stringify(scope)}>\n      <div className=${JSON.stringify(htmlClass)}>\n        <div className=${JSON.stringify(scope + '-body')}${page.rootStyle ? ' style=' + styleObject(page.rootStyle) : ''}>\n${toJsx(page.html, scope)}\n        </div>\n      </div>\n    </div>\n  );\n}\n`;
+  const component = `// ${header}\n// Styles are scoped under .${scope}; bundled image data stays portable; check remaining external resources before reuse.\nimport "./${name}.css";\n\nexport default function ${name}() {\n  return (\n    <div className=${JSON.stringify(scope)}>\n      <div className=${JSON.stringify(htmlClass)}>\n        <div className=${JSON.stringify(scope + '-body')}${page.rootStyle ? ' style=' + styleObject(page.rootStyle) : ''}>\n${toJsx(page.html, scope)}\n        </div>\n      </div>\n    </div>\n  );\n}\n`;
   const markup = `<div class="${scope}"><div class="${htmlClass.replace(/"/g, '')}"><div class="${scope}-body"${page.rootStyle ? ` style="${page.rootStyle.replace(/"/g, '&quot;')}"` : ''}>${toHtml(page.html, scope)}</div></div></div>`;
   const preview = `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n<title>${item.name.replace(/[<&]/g, '')}</title>\n<!-- ${header.replace(/--/g, '')} -->\n<link rel="stylesheet" href="./${name}.css">\n<style>body{margin:0;padding:16px;background:${page.backdrop || '#ffffff'}}</style>\n</head>\n<body>\n${markup}\n</body>\n</html>\n`;
   const fontList = Object.keys(fonts);
-  const readme = `# ${name}\n\n${header}\n\n## Files\n\n- \`${name}.tsx\` — React component (works in any React 18+ app; rename to .jsx for JavaScript projects).\n- \`${name}.css\` — styles scoped under \`.${scope}\`, imported by the component.\n- \`${name}.html\` — the same markup as static HTML.\n${fontList.length ? `- \`fonts/\` — ${fontList.length} font file${fontList.length === 1 ? '' : 's'} embedded at capture time, referenced by the stylesheet. These belong to their foundries: check the licence before shipping, or switch to a bundled open font.\n` : ''}\n## Notes\n\n- Interactions (menus, carousels, form submission) are not recreated; connect your own handlers. Forms have submission disabled.\n- Links point to the original site; images load from it. Download images you are permitted to reuse and update their URLs.\n- \`rem\` sizes were converted to pixels using the original page's root font size, so they do not depend on your app's.\n`;
+  const readme = `# ${name}\n\n${header}\n\n## Files\n\n- \`${name}.tsx\` — React component (works in any React 18+ app; rename to .jsx for JavaScript projects).\n- \`${name}.css\` — styles scoped under \`.${scope}\`, imported by the component.\n- \`${name}.html\` — the same markup as static HTML.\n${fontList.length ? `- \`fonts/\` — ${fontList.length} font file${fontList.length === 1 ? '' : 's'} embedded at capture time, referenced by the stylesheet. These belong to their foundries: check the licence before shipping, or switch to a bundled open font.\n` : ''}\n## Notes\n\n- Interactions (menus, carousels, form submission) are not recreated; connect your own handlers. Forms have submission disabled.\n- External links retain their destinations. Bundled images are embedded; any remaining external assets are listed in the Ready to reuse report.\n- \`rem\` sizes were converted to pixels using the original page's root font size, so they do not depend on your app's.\n`;
   return {
     name,
     scope,

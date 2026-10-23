@@ -1,0 +1,12 @@
+{
+  "dmg": "/Users/robinfrancis/Documents/ChatGPT/devinhack/out/make/Reframe-arm64-local-unsigned.dmg",
+  "bytes": 510275333,
+  "sha256": "ed8f825dddbc47b02704290c3e15939bc2ed484b0e160d5f00aa5de825cca488",
+  "format": "ULFO",
+  "adHocSignatureVerified": true,
+  "developerIDSigned": false,
+  "notarized": false,
+  "forbidden": [],
+  "externalLinks": [],
+  "bundledStartupSourcesMatch": true
+}

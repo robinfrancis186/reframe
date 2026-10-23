@@ -13,7 +13,7 @@ export const helpActions = {
 export const agentGuides = {
   scout: {
     action: 'browse',
-    text: 'I can help you capture a reference. Browse a public website and pick an element, or use New capture for HTML, a screenshot, video or camera. Native device capture is in Studio → Devices.',
+    text: 'I can help you capture a reference. Browse a public website and pick an element, or use New capture for HTML, a screenshot, video or camera. Native device capture is in Labs → Device capture.',
   },
   atlas: {
     action: 'recommend',
@@ -21,7 +21,7 @@ export const agentGuides = {
   },
   forge: {
     action: 'build',
-    text: 'I can help you define working behavior. Open a captured component in Canvas, choose Build working feature, then review fields, validation and actions. Supported contracts generate UI and a backend together; unknown private logic needs your input.',
+    text: 'I can help you define working behavior. Open a captured component in Editor, choose Build working feature, then review fields, validation and actions. Supported contracts generate UI and a backend together; unknown private logic needs your input.',
   },
   hue: {
     action: 'brand',
@@ -33,7 +33,7 @@ export const agentGuides = {
   },
   relay: {
     action: 'library',
-    text: 'I can help you reuse a complete component. Save it to your clipboard, choose a destination screen and container in Projects, check fit, review the source and apply. Keep a clipboard backup before moving to another browser. Connections lets you create scoped, revocable MCP access for compatible local assistants. Share components explicitly, review their inbox results, then import and install through Projects. Remote assistants need a supported secure local bridge; localhost alone is not a cloud connection.',
+    text: 'I can help you reuse a complete component. Save it to your Library, choose a destination screen and container in Projects, check fit, review the source and apply. Keep a Library backup before moving to another browser. Connections lets you create scoped, revocable MCP access for compatible local assistants. Share components explicitly, review their inbox results, then import and install through Projects. Remote assistants need a supported secure local bridge; localhost alone is not a cloud connection.',
   },
 };
 export const contextualAgent = (page) =>

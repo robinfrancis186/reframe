@@ -52,7 +52,6 @@ export function LibraryFilters({
         </select>
       </label>
     );
-  const active = Object.values(filter).some(Boolean);
   return (
     <div className="library-filters">
       {select('type', 'Type', counts.types)}
@@ -69,12 +68,6 @@ export function LibraryFilters({
           ))}
         </select>
       </label>
-      {active && (
-        <button className="text-button" onClick={() => onFilter(noFilter)}>
-          <X size={14} />
-          Clear filters
-        </button>
-      )}
     </div>
   );
 }

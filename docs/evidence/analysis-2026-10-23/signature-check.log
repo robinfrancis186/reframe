@@ -1,0 +1,22 @@
+--prepared:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Electron Framework.framework/Versions/Current/.
+--prepared:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Electron Framework.framework/Versions/Current/Helpers/app_shim_loader
+--validated:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Electron Framework.framework/Versions/Current/Helpers/app_shim_loader
+--prepared:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Electron Framework.framework/Versions/Current/Helpers/chrome_crashpad_handler
+--validated:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Electron Framework.framework/Versions/Current/Helpers/chrome_crashpad_handler
+--validated:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Electron Framework.framework/Versions/Current/.
+--prepared:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/ReactiveObjC.framework/Versions/Current/.
+--validated:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/ReactiveObjC.framework/Versions/Current/.
+--prepared:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Squirrel.framework/Versions/Current/.
+--validated:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Squirrel.framework/Versions/Current/.
+--prepared:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Mantle.framework/Versions/Current/.
+--validated:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Mantle.framework/Versions/Current/.
+--prepared:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Reframe Helper.app
+--validated:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Reframe Helper.app
+--prepared:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Reframe Helper (Plugin).app
+--validated:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Reframe Helper (Plugin).app
+--prepared:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Reframe Helper (Renderer).app
+--validated:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Reframe Helper (Renderer).app
+--prepared:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Reframe Helper (GPU).app
+--validated:/private/tmp/reframe-release-check/Reframe.app/Contents/Frameworks/Reframe Helper (GPU).app
+/tmp/reframe-release-check/Reframe.app: valid on disk
+/tmp/reframe-release-check/Reframe.app: satisfies its Designated Requirement

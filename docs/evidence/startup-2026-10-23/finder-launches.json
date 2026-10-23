@@ -1,0 +1,58 @@
+{
+  "folder": "/tmp/reframe-finder-startup-EFHXj1",
+  "launchMethod": "Launch Services (open), no debugging flags",
+  "elapsedMs": 32652,
+  "phases": [
+    {
+      "phase": "startup-visible",
+      "elapsedMs": 3679
+    },
+    {
+      "phase": "runtime-cache-prepared",
+      "elapsedMs": 18832
+    },
+    {
+      "phase": "backend-ready",
+      "elapsedMs": 24549
+    },
+    {
+      "phase": "home-ready",
+      "elapsedMs": 29354
+    }
+  ],
+  "restartElapsedMs": 9251,
+  "allPhases": [
+    {
+      "phase": "startup-visible",
+      "elapsedMs": 3679
+    },
+    {
+      "phase": "runtime-cache-prepared",
+      "elapsedMs": 18832
+    },
+    {
+      "phase": "backend-ready",
+      "elapsedMs": 24549
+    },
+    {
+      "phase": "home-ready",
+      "elapsedMs": 29354
+    },
+    {
+      "phase": "startup-visible",
+      "elapsedMs": 3320
+    },
+    {
+      "phase": "runtime-cache-reused",
+      "elapsedMs": 3611
+    },
+    {
+      "phase": "backend-ready",
+      "elapsedMs": 5168
+    },
+    {
+      "phase": "home-ready",
+      "elapsedMs": 5602
+    }
+  ]
+}

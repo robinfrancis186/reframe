@@ -87,10 +87,7 @@ export default function WorkingPreview({ item, theme }: { item: ComponentItem; t
         </div>
         {session && <span className="preview-running">Running · disposable data</span>}
       </div>
-      <p>
-        Run the generated React interface and its own backend in a separate local process. Your
-        installed apps and their records are untouched.
-      </p>
+      <p>Try the component with disposable test records. Your installed apps stay unchanged.</p>
       {!session && (
         <button className="primary" disabled={busy} onClick={() => void start()}>
           <Play size={16} />
@@ -163,19 +160,22 @@ export default function WorkingPreview({ item, theme }: { item: ComponentItem; t
               <p key={text}>{text}</p>
             ))}
           </details>
-          <button onClick={() => setTesting((v) => !v)}>
-            {testing ? 'Hide automated checks' : 'Test this preview with Playwright'}
-          </button>
-          {testStatus && <span role="status"> Test {testStatus}</span>}
-          {testing && (
-            <Suspense fallback={<p role="status">Loading browser tests…</p>}>
-              <BrowserTesting
-                key={session.id}
-                initialTarget={session.id}
-                onStatus={setTestStatus}
-              />
-            </Suspense>
-          )}
+          <details>
+            <summary>Automated browser checks</summary>
+            <button onClick={() => setTesting((v) => !v)}>
+              {testing ? 'Hide automated checks' : 'Test this preview with Playwright'}
+            </button>
+            {testStatus && <span role="status"> Test {testStatus}</span>}
+            {testing && (
+              <Suspense fallback={<p role="status">Loading browser tests…</p>}>
+                <BrowserTesting
+                  key={session.id}
+                  initialTarget={session.id}
+                  onStatus={setTestStatus}
+                />
+              </Suspense>
+            )}
+          </details>
         </>
       )}
     </section>

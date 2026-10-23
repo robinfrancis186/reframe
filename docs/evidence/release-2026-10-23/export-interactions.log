@@ -1,0 +1,13 @@
+(node:40401) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Measured export variants: [{"width":1280,"state":"default","faithful":89.5,"score":89.5,"regression":0,"warning":false},{"width":1280,"state":"hover","faithful":89.5,"score":89.5,"regression":0,"warning":false},{"width":1280,"state":"focus","faithful":90.9,"score":90.9,"regression":0,"warning":false},{"width":768,"state":"default","faithful":89.3,"score":89.3,"regression":0,"warning":false},{"width":768,"state":"hover","faithful":89.3,"score":89.3,"regression":0,"warning":false},{"width":768,"state":"focus","faithful":90.1,"score":90.1,"regression":0,"warning":false},{"width":390,"state":"default","faithful":86.1,"score":86.2,"regression":-0.1,"warning":false},{"width":390,"state":"hover","faithful":86.1,"score":86.2,"regression":-0.1,"warning":false},{"width":390,"state":"focus","faithful":87,"score":87,"regression":0,"warning":false}]
+✔ responsive capture verifies the same tree, exports real React interactions and does not invent breakpoints (44068.2715ms)
+✔ AI assist accepts only bounded naming proposals; no returned code can be applied (2.041584ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 45349.414416

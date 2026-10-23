@@ -1,0 +1,253 @@
+
+> reframe-workbench@0.1.0 verify
+> npm run format:check && npm run lint && npm run check && npm run check:server && npm test && npm run build && npm --prefix examples/integrated-app run build && npm --prefix examples/connected-app run build
+
+
+> reframe-workbench@0.1.0 format:check
+> prettier --check "{src,server,tests,extension,desktop,scripts}/**/*.{js,jsx,mjs,cjs,ts,tsx,css,json}" "*.{js,json}"
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> reframe-workbench@0.1.0 lint
+> eslint src server tests desktop extension scripts forge.config.js
+
+
+> reframe-workbench@0.1.0 check
+> tsc --noEmit
+
+
+> reframe-workbench@0.1.0 check:server
+> tsc -p tsconfig.server.json
+
+
+> reframe-workbench@0.1.0 test
+> node --test --test-concurrency=2 tests/*.test.js
+
+✔ live agents react to real request lifecycle and respect reduced motion (7592.026208ms)
+✔ specialist identities and 26 guidance packs cover common stacks without pretending to compile them (25.045417ms)
+✔ decision validation rejects invented/duplicate IDs, malformed output and invented external contracts (8.1685ms)
+✔ OpenAI uses strict Responses output, sends only selected guidance, and never puts the key into prompts (6.332792ms)
+✔ agent pipeline → canonical clipboard package → real validated persistent API behavior (7309.2395ms)
+✔ ambiguous intent and low-confidence AI plans pause generation instead of inventing working logic (4.982917ms)
+✔ invalid input and missing Gradio setup fail before source execution or process startup (1.588167ms)
+✔ Gradio export carries the canonical contract and brand while refusing account/key flows (1.485584ms)
+✔ Scout performs requested capture inside the streamed workflow and failing stages report errors (5407.196542ms)
+✔ bundled fonts ship their files and OFL licence, and produce valid theme stacks (7.139833ms)
+✔ captured assets are collected once with the components and sites that use them (10.386208ms)
+✔ color and font-face parsing handle shorthand, transparency and missing sources (0.131125ms)
+✔ real HTTP auth isolates records, rejects bad passwords/origins, persists hashed accounts and revokes sessions (4508.070833ms)
+✔ per-user API keys are encrypted, replaceable and removable; server forwards declared mappings and deduplicates calls (706.270083ms)
+✔ an uncertain external POST remains blocked across fresh request IDs rather than repeating a remote write (330.550708ms)
+✔ authentication capture compiles secure controls and cannot store or forward passwords as ordinary data (2105.033208ms)
+✔ external contracts reject private endpoints, URL credentials, query secrets and invalid mappings (0.520291ms)
+✔ compiled native Swift client signs in, saves a scoped API key, calls the API and loses access after signout (2126.832208ms)
+✔ branding resolves aliases, modern colors, font and radius; separates light and dark (2.144208ms)
+✔ command palette exports self-contained navigation state rather than example command handlers (96.163ms)
+✔ branding scans only bounded local public theme inputs and reports metadata evidence (28.678625ms)
+✔ every original exports only its own runnable logic, with collision-safe imports and valid JSX/TSX (1706.418ms)
+✔ original library integration retains behavior, avoids handler stubs, applies branding, and undoes safely (2580.344625ms)
+✔ all exported originals typecheck together in a strict React TypeScript destination (5213.17425ms)
+✔ browser testing accepts only fixed demos and bounded declarative actions (1.088292ms)
+✔ real Chromium performs UI assertions, blocks unapproved writes and redirects, and closes on cancellation (16699.821042ms)
+✔ agent follow-ups use bounded redacted history without enabling arbitrary actions (7.288708ms)
+✔ pinned broker preserves framework headers, methods and isolated cookies without accepting proxy headers (3.988417ms)
+✔ reference URLs and resources reject credentials, unsafe schemes and private destinations (33.020834ms)
+✔ website alerts, confirmations and prompts pause for a visible response, including during initial load (3658.821959ms)
+✔ browser queues assets, loads lazy sections, scrapes, screenshots and acts with origin-scoped submission permission (9315.181584ms)
+✔ isolated reference browser renders JS, picks, captures provenance, navigates, resizes and bounds tabs (6635.039084ms)
+✔ asset redirects resolve once per response URL, and strip credentials across origins (2823.9905ms)
+✔ browser errors keep useful selection guidance without automation stacks (3.224167ms)
+✔ HTML submit, reset and button inputs retain actions instead of becoming data fields (2.364375ms)
+✔ capture removes execution, navigation traps and CSS while preserving accessible content (0.603541ms)
+✔ extraction identifies top-level sections without duplicating nested components (9.0345ms)
+✔ dynamic-only and oversized imports fail explicitly (0.516791ms)
+✔ private, loopback, mapped, reserved and multicast addresses are blocked (1.253916ms)
+✔ URL schemes, credentials, ports and local destinations are rejected (2.540333ms)
+✔ quality report flags integration work without claiming behavior is recovered (0.650792ms)
+✔ component picking isolates a single product without adjacent cards or executing source (2.6345ms)
+Measured export variants: [{"width":1280,"state":"default","faithful":89.5,"score":89.5,"regression":0,"warning":false},{"width":1280,"state":"hover","faithful":89.5,"score":89.5,"regression":0,"warning":false},{"width":1280,"state":"focus","faithful":90.9,"score":90.9,"regression":0,"warning":false},{"width":768,"state":"default","faithful":89.3,"score":89.3,"regression":0,"warning":false},{"width":768,"state":"hover","faithful":89.3,"score":89.3,"regression":0,"warning":false},{"width":768,"state":"focus","faithful":90.1,"score":90.1,"regression":0,"warning":false},{"width":390,"state":"default","faithful":86.1,"score":86.2,"regression":-0.1,"warning":false},{"width":390,"state":"hover","faithful":86.1,"score":86.2,"regression":-0.1,"warning":false},{"width":390,"state":"focus","faithful":87,"score":87,"regression":0,"warning":false}]
+✔ responsive capture verifies the same tree, exports real React interactions and does not invent breakpoints (33123.918333ms)
+✔ AI assist accepts only bounded naming proposals; no returned code can be applied (1.693833ms)
+✔ captured CSS is scoped to one wrapper, with page roots, snapshot indexes, rem and fonts rewritten (5.423375ms)
+✔ markup becomes valid JSX that compiles and renders the same structure in React (159.1035ms)
+✔ exported code from a real capture keeps its appearance and needs no Reframe runtime (5948.074625ms)
+✔ product packages canonically export frontend, priced cart backend and source without trusting imported code (8697.517167ms)
+✔ catalog and persisted schema validation reject duplicate options, forged prices and destructive implicit migrations (15.544875ms)
+✔ portable shop HTTP persists totals and orders, rejects tampering, races, foreign requests and unavailable stock (58.486916ms)
+✔ readiness distinguishes source, local UI and declared backend without claiming runtime verification (0.965709ms)
+✔ destination and per-project brief survive reload while excluding packages, credentials and stale plans (1.150333ms)
+✔ connections store only credential hashes, preserve permissions and sanitize shared metadata (52.999125ms)
+✔ official MCP clients complete HTTP and stdio capture/build/shared-inbox flow with scope and revocation checks (1826.223458ms)
+✔ real Graphify AST extraction detects symbols and relationships without executing supplied JavaScript (587.677ms)
+✔ owned demo launches installed frontend and backend, persists records, restarts and cleans up without project scripts or credentials (15905.413042ms)
+✔ desktop starter creates a writable React destination and preserves later user edits (67.584791ms)
+✔ desktop reuses its preferred loopback port and falls back when another process owns it (7.101166ms)
+✔ runtime framework links remain local after copying and removing the source cache (10.472333ms)
+✔ document review protects Markdown code, links, citations and LaTeX commands, math and comments (6.449584ms)
+✔ DOCX review preserves formatting, citation fields, relationships and original archive data (93.5485ms)
+✔ browser-compatible exports preserve bytes and use bounded, temporary attachment URLs (181.781584ms)
+✔ engine availability is read from installed files and Ponytail checks real imports (124.21475ms)
+✔ independent comment polish changes only parsed comments and protects tooling, strings and expressions (9.248ms)
+✔ real REA covers generated frontend, backend and schema without executing supplied source (7699.636709ms)
+✔ the extension's capture code is generated from the reference browser's, and is up to date (4.173792ms)
+✔ pairing tokens are shown once, stored as a hash, and required with the extension origin (5.032833ms)
+✔ the real extension picks an element on a page, captures it and saves it to the library (9847.744459ms)
+✔ finishing captures cannot resurrect revoked tokens or replace a new pairing; counters serialize (11.098333ms)
+✔ arbitrary captures expose ambiguous intent; authored rules compile frontend/backend and recompile untrusted backups (110.78525ms)
+✔ generated API validates, persists, searches, updates, deletes, toggles and counts with concurrency and retry protection (182.55125ms)
+✔ full-stack integration reviews every file, preserves scripts, survives restart and undoes without deleting runtime data (18482.336542ms)
+✔ multi-file integration rejects stale configuration and symlinks, and refuses undo over later edits (11365.587333ms)
+✔ failed multi-file writes roll back and a prepared crash journal can be recovered after restart (5061.259458ms)
+✔ captures are repaired, scored against an isolated reference, and broken copies score lower (7092.256625ms)
+✔ snapshot rules, capture context and grades are parsed and validated strictly (2.164792ms)
+✔ fit is weighted, evidence-based, and improves with an available action handler and CSS token (47.870625ms)
+✔ native score identifies manual media adaptation and framework blockers (1.472916ms)
+✔ frames support legacy image requests and reject invalid, oversized and unbounded inputs (11.096292ms)
+✔ copy polish preserves code, attributes and structure and requires no model (2.524333ms)
+✔ fit detects interactive Next server components and recognizes associated labels (3.952417ms)
+✔ local decisions explain blockers, adaptation, missing behavior and review readiness (2.5965ms)
+✔ react: insert a wired component, preserve original source, and undo after a server restart (6681.247917ms)
+✔ react-native: insert a wired component, preserve original source, and undo after a server restart (4605.804791ms)
+✔ swiftui: insert a wired component, preserve original source, and undo after a server restart (22.089417ms)
+✔ compose: insert a wired component, preserve original source, and undo after a server restart (21.658167ms)
+✔ concurrent edits, invalid handlers, traversal and symlinks cannot overwrite source (2855.823958ms)
+✔ native container detection ignores comments and strings; web scopes exclude sibling handlers (1.474333ms)
+✔ native hierarchy extraction selects the correct subtree and rejects malformed or hostile input (10.516708ms)
+✔ generated source escapes untrusted content and does not include executable HTML (3.1735ms)
+✔ password fields stay secure in every destination framework (0.528084ms)
+✔ Android adapter invokes bounded capture commands and removes its temporary device dump (744.391ms)
+✔ minimal generation omits unused callbacks and state across frameworks (2.618792ms)
+✔ action discovery excludes components, hooks, event callbacks and incompatible signatures (1.479042ms)
+✔ public family coverage is explicit and every clipboard identity regenerates three independent source files (596.580958ms)
+✔ native branding resolves Android colors, light/dark schemes, names, radius and Swift color assets (6.41175ms)
+✔ swiftui: clipboard → destination branding → working source insertion → safe undo (57.705667ms)
+✔ compose: clipboard → destination branding → working source insertion → safe undo (42.459125ms)
+✔ unresolved native colors inherit destination runtime tokens; hostile brand text remains a literal (0.478333ms)
+✔ every SwiftUI export typechecks with the installed macOS SDK, including inherited themes and embedded brand images (3340.738083ms)
+✔ every preset has a bounded review and exports only matching style groups (1.206916ms)
+✔ exported presets retain interaction, recovery, form safety and narrow layout in a real destination (10577.454666ms)
+✔ library store saves revisions to disk, rejects stale writes and keeps each font once (49.676916ms)
+✔ kept browser copies and restores never lose the current library (9.326334ms)
+✔ library HTTP API accepts large libraries and reports conflicts as JSON (385.774125ms)
+✔ recapturing refreshes source while keeping the user name, labels, theme and identity (5.636417ms)
+✔ offline metadata operations survive reload, independent edits merge, and conflicting edits can become copies (2466.245583ms)
+✔ v2 migration preserves legacy workspace, fonts and histories; repeats safely after interruption (18.38575ms)
+✔ metadata updates leave source bytes untouched and independent edits coexist; same-item conflicts stay recoverable (11.517167ms)
+✔ replaying the same saved operation is idempotent and rejects invalid metadata (3.625709ms)
+✔ android capture → declared logic → native source and backend installation → safe undo (7315.026666ms)
+✔ ios capture → declared logic → native source and backend installation → safe undo (8666.342625ms)
+✔ compiled Swift client exercises the real API, validation, idempotent retry, persistence and counters (1472.837ms)
+✔ fieldless native collections keep an accessible record selector and compile as SwiftUI (1248.608792ms)
+✔ local OCR reconstructs real screenshot pixels and ordered video frames without an API key (3377.537834ms)
+✔ new user captures, defines behavior, reopens, exports, installs and launches a working demo (24985.576958ms)
+✔ workspace appearance is independent, persistent and safe when storage is unavailable (0.45925ms)
+✔ OpenAI MCP adapter preserves captured control IDs and bundles, refuses save before build (0.663ms)
+✔ OpenAI MCP host rejects empty goals before connecting (0.205708ms)
+✔ OpenAI reads purpose and UI signals, preserves eligible identities, and feeds real fit → review → apply → undo (6792.513ms)
+✔ AI cannot invent components, strip service requirements, duplicate choices or turn failure into local results (6.714584ms)
+✔ OpenAI transport bounds concurrent requests and provider response sizes (5.146333ms)
+✔ specialists provide real local guidance and constrained OpenAI replies, without executing navigation (2.1455ms)
+✔ five coherent sections retain every feature page and Connections and every helper destination (0.226292ms)
+✔ element type comes from the root element, its contents and its size (2.647291ms)
+✔ automatic tags include site, fonts and main colors, and are cached per saved object (3.84825ms)
+✔ user tags and collections are normalized, deduplicated and bounded (2.659292ms)
+✔ search matches every word across names, sites, types, fonts, colors, tags and collections; facets and sorting (36.93425ms)
+✔ data bindings are inferred from compatible visible arrays and honor lexical scope (10.410083ms)
+✔ bound library installation uses existing live state and callback; apply/undo preserves app source (7200.09325ms)
+✔ source evidence and user goals change ranking, with reasons and six diverse patterns (27.54625ms)
+✔ screen signals ignore style, scripts, event code and comments; recognize actual web and native controls (3.46975ms)
+✔ canonical catalog identities and installed feature IDs suppress duplicates; saved Originals win deduplication (1.439958ms)
+✔ platform blockers and service requirements are reflected before a component can be selected (20.462166ms)
+✔ connected-project suggestions are bounded, read-only, scoped and feed the real review/apply/undo path (6970.604167ms)
+✔ rendered capture retains SVG and source CSS but removes scripts, event handlers, field secrets and unsafe styles (21.029583ms)
+✔ canonical replica package revalidates imports and uses the real REA, Ponytail policy and independent copy review (9677.207667ms)
+✔ local website backend validates, serializes, deduplicates, persists receipts, serves PDFs and never sends live messages (203.902542ms)
+✔ picking the text inside Download CV retains the enclosing link, exact box styling, SVG and functional local download (10453.809125ms)
+✔ website data can be reviewed and undone above 1 MB without relaxing source-file limits (321.508667ms)
+✔ replicas work inside the nested disposable preview with real forms, downloads and reload receipts (4919.508125ms)
+✔ the portable website launcher runs independently and persists forms inside folders with spaces (192.458834ms)
+✔ picked components keep only the font faces they render and inline them with the page as referrer (7.144458ms)
+✔ product flow persists a priced cart and atomically reserves inventory, with durable idempotency (355.315583ms)
+✔ quantity, unknown products, price tampering, empty carts, stale writes and concurrent submissions are rejected (39.900417ms)
+✔ remove, sold-out stock and corrupt persisted data never silently reset a purchase state (72.829667ms)
+✔ real HTTP API rejects foreign origins, bad hosts, malformed JSON and oversized bodies (114.443375ms)
+✔ clipboard stress cases, pagination and named keyboard-accessible capture (16991.014667ms)
+✔ website compiler preserves local routes while stripping executable content and CSS escapes (21.619959ms)
+✔ whole website capture reconstructs responsive pages, local navigation, persistence and cancellation (26489.436916ms)
+✔ workbench HTTP keeps data uncached, blocks foreign requests and never echoes malformed credential payloads (1589.309709ms)
+✔ disposable generated UI runs real backend, preserves reload state and cleans up without using imported code (8950.273917ms)
+✔ preview source mismatch and cancellation fail cleanly; credential writes are refused (837.412083ms)
+✔ generated record, account and commerce controls cannot submit an enclosing host form (47.306584ms)
+ℹ tests 154
+ℹ suites 0
+ℹ pass 154
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 209308.014458
+
+> reframe-workbench@0.1.0 build
+> vite build
+
+vite v6.4.5 building for production...
+transforming...
+✓ 1651 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                             0.62 kB │ gzip:   0.39 kB
+dist/assets/Projects-DSYmOvU4.css           3.58 kB │ gzip:   1.02 kB
+dist/assets/Connections-M-vc6bzE.css        3.74 kB │ gzip:   1.00 kB
+dist/assets/Agents-CYh3Hrz5.css             8.28 kB │ gzip:   2.19 kB
+dist/assets/index-cpMXMOoz.css             92.63 kB │ gzip:  17.92 kB
+dist/assets/play-CKPGv1OV.js                0.30 kB │ gzip:   0.25 kB
+dist/assets/smartphone-DxV3t_Qg.js          0.37 kB │ gzip:   0.29 kB
+dist/assets/mouse-pointer-2-BLa2iYvB.js     0.42 kB │ gzip:   0.31 kB
+dist/assets/upload-BusrRk3h.js              0.43 kB │ gzip:   0.32 kB
+dist/assets/monitor-DVnpvDSq.js             0.43 kB │ gzip:   0.31 kB
+dist/assets/image-BpSfd9vK.js               0.44 kB │ gzip:   0.32 kB
+dist/assets/shield-check-vJlreQJo.js        0.49 kB │ gzip:   0.35 kB
+dist/assets/WorkingPreview-Cs4cKzVX.js      5.06 kB │ gzip:   2.31 kB
+dist/assets/BrowserTesting-RpGYxld4.js      7.25 kB │ gzip:   3.01 kB
+dist/assets/WebsiteBuilder-DCeVrx3A.js      7.86 kB │ gzip:   3.30 kB
+dist/assets/AssetLibrary-Bw29AxVv.js        8.61 kB │ gzip:   3.17 kB
+dist/assets/NativeCapture-Ct_fzADa.js       8.98 kB │ gzip:   3.50 kB
+dist/assets/FeatureBuilder-DMU5_H3e.js     11.00 kB │ gzip:   4.14 kB
+dist/assets/EngineTools-QPbC1-Ty.js        11.65 kB │ gzip:   3.80 kB
+dist/assets/CaptureEditor-CU0OjcP1.js      11.67 kB │ gzip:   4.22 kB
+dist/assets/ComponentLibrary-C9mBLUTJ.js   11.69 kB │ gzip:   4.68 kB
+dist/assets/CaptureDialog-CgewQl8n.js      11.89 kB │ gzip:   4.78 kB
+dist/assets/Connections-BVaaxwx-.js        12.33 kB │ gzip:   4.48 kB
+dist/assets/Agents-B69Zej78.js             14.65 kB │ gzip:   5.40 kB
+dist/assets/BrowserWorkspace-Bb3yAQ-1.js   23.17 kB │ gzip:   7.65 kB
+dist/assets/Projects-BkavU1dP.js           32.16 kB │ gzip:  10.30 kB
+dist/assets/OriginalPreview-QOvi3_ww.js    42.25 kB │ gzip:  12.49 kB
+dist/assets/index-CnvIu82o.js             387.73 kB │ gzip: 120.74 kB
+✓ built in 1.69s
+
+> build
+> vite build
+
+vite v6.4.5 building for production...
+transforming...
+✓ 43 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.37 kB │ gzip:  0.27 kB
+dist/assets/index-CLmDSOW8.css    1.62 kB │ gzip:  0.72 kB
+dist/assets/index-BHOqpoQn.js   305.08 kB │ gzip: 83.42 kB
+✓ built in 709ms
+
+> reframe-connected-app@1.0.0 build
+> vite build
+
+vite v6.4.5 building for production...
+transforming...
+✓ 29 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.37 kB │ gzip:  0.28 kB
+dist/assets/index-9KdOKJ2z.css    6.63 kB │ gzip:  2.14 kB
+dist/assets/index-BxSIw-EE.js   232.89 kB │ gzip: 72.70 kB
+✓ built in 643ms

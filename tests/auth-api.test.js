@@ -81,7 +81,7 @@ const action = (id, version = 0, value = 'Hello') => ({
 });
 
 test('real HTTP auth isolates records, rejects bad passwords/origins, persists hashed accounts and revokes sessions', () =>
-  fixture(async ({ client, folder, bundle, base }) => {
+  fixture(async ({ client, folder, base }) => {
     const alice = client(),
       bob = client();
     assert.equal((await alice()).status, 401);

@@ -1,0 +1,17 @@
+✔ packaged OCR uses the bundled helper without a compiler or app-bundle writes (374.251166ms)
+✔ desktop starter creates a writable React destination and preserves later user edits (47.669458ms)
+✔ desktop reuses its preferred loopback port and falls back when another process owns it (6.559ms)
+✔ runtime framework links remain local after copying and removing the source cache (35.434875ms)
+✔ android capture → declared logic → native source and backend installation → safe undo (6640.7545ms)
+✔ ios capture → declared logic → native source and backend installation → safe undo (9661.353958ms)
+✔ compiled Swift client exercises the real API, validation, idempotent retry, persistence and counters (1787.225667ms)
+✔ fieldless native collections keep an accessible record selector and compile as SwiftUI (1582.694084ms)
+✔ local OCR reconstructs real screenshot pixels and ordered video frames without an API key (3942.258167ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24098.884042

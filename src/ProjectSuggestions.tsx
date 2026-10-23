@@ -3,6 +3,7 @@ import { ArrowRight, Check, Sparkles } from 'lucide-react';
 import { libraryEntry, libraryItem } from './library/catalog';
 import type { ComponentItem } from './model';
 import './suggestions.css';
+import { loadItem } from './storage';
 import { readProjectBrief, writeProjectBrief } from './project-context.js';
 
 interface Suggestion {
@@ -97,17 +98,19 @@ export default function ProjectSuggestions({
     return () => controller.abort();
   }, []);
   // Summaries keep generated source, records, images and credentials out of this request.
-  const clipboard = items
-    .slice(0, 200)
-    .map((item) => ({
-      id: item.id,
-      name: item.name,
-      html: item.html.slice(0, 6000),
-      libraryId: item.libraryId,
-      backend: !!item.feature,
-      featureId: item.feature?.spec.id,
-      service: !!item.feature?.spec.actions.some((action) => action.operation === 'external'),
-    }));
+  const clipboard = items.slice(0, 200).map((item) => ({
+    id: item.id,
+    name: item.name,
+    html: item._summary
+      ? item.searchExcerpt || [item.automatic?.type, ...(item.tags || [])].join(' ')
+      : item.html.slice(0, 6000),
+    libraryId: item.libraryId,
+    backend: !!(item.feature || item.hasFeature),
+    featureId: item.feature?.spec.id || item.featureId,
+    service:
+      item.externalService ||
+      !!item.feature?.spec.actions.some((action) => action.operation === 'external'),
+  }));
   const body = JSON.stringify({
     id: projectId,
     file,
@@ -175,7 +178,7 @@ export default function ProjectSuggestions({
           </span>
           <h2 id="suggestions-heading">The right pieces for this project.</h2>
           <p className="muted">
-            Suggestions from Originals and your clipboard, based on the destination source and your
+            Suggestions from Originals and your Library, based on the destination source and your
             goal.
           </p>
         </div>
@@ -359,7 +362,7 @@ export default function ProjectSuggestions({
                     >
                       <div className="suggestion-meta">
                         <span>
-                          {suggestion.origin === 'clipboard' ? 'Your clipboard' : 'Originals'} ·{' '}
+                          {suggestion.origin === 'clipboard' ? 'Your Library' : 'Originals'} ·{' '}
                           {suggestion.category}
                         </span>
                         <span className="suggestion-score">
@@ -387,8 +390,13 @@ export default function ProjectSuggestions({
                       <button
                         aria-pressed={selected}
                         disabled={disabled || !candidate}
-                        onClick={() => {
-                          if (candidate) onPick(candidate);
+                        onClick={async () => {
+                          if (candidate)
+                            try {
+                              onPick(await loadItem(candidate));
+                            } catch (e) {
+                              setError((e as Error).message);
+                            }
                         }}
                       >
                         {selected ? <Check size={15} /> : <ArrowRight size={15} />}{' '}
@@ -401,7 +409,7 @@ export default function ProjectSuggestions({
                           if (candidate) onSave(candidate);
                         }}
                       >
-                        {saved ? 'Saved in clipboard' : `Save ${suggestion.name} to clipboard`}
+                        {saved ? 'Saved in Library' : `Save ${suggestion.name} to Library`}
                       </button>
                     </article>
                   );
@@ -422,10 +430,8 @@ export default function ProjectSuggestions({
                 </p>
                 <p>
                   Sampled: {report.inspected.map((screen) => screen.path).join(', ')}. Compared{' '}
-                  {report.considered} library and clipboard candidates.{' '}
-                  {items.length > 200
-                    ? 'Only the first 200 clipboard entries were considered.'
-                    : ''}
+                  {report.considered} Originals and saved components.{' '}
+                  {items.length > 200 ? 'Only the first 200 saved components were considered.' : ''}
                 </p>
               </details>
             </>

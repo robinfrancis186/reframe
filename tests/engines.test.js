@@ -123,3 +123,46 @@ test('real REA covers generated frontend, backend and schema without executing s
     sourceDigest({ 'a.js': 'a', 'b.js': 'b' }),
   );
 });
+
+test('analysis reuses exact evidence, coalesces concurrent callers and isolates mutable results', async () => {
+  const sources = { 'cache.js': 'export const cacheProbe = 1;', 'data.json': '{"value":1}' };
+  const expected = sourceDigest(sources);
+  const first = analyzeFiles(sources);
+  const concurrent = analyzeFiles({ ...sources });
+  sources['cache.js'] = 'export const cacheProbe = 2;';
+  const [a, b] = await Promise.all([first, concurrent]);
+  assert.equal(a.sourceDigest, expected);
+  assert.equal(b.sourceDigest, expected);
+  // Either asynchronous package-version read can finish first; exactly one owns the work.
+  assert.deepEqual([a.reused, b.reused].sort(), [false, true]);
+  assert.equal(a.report.evidence_id, b.report.evidence_id);
+  const evidence = a.report.evidence_id;
+  a.report.evidence_id = 'caller-mutated';
+  b.report.normalized_result.graph.nodes.length = 0;
+  const cached = await analyzeFiles({
+    'data.json': '{"value":1}',
+    'cache.js': 'export const cacheProbe = 1;',
+  });
+  assert.equal(cached.reused, true);
+  assert.equal(cached.report.evidence_id, evidence);
+  assert.ok(cached.report.normalized_result.graph.nodes.length > 0);
+  const changed = await analyzeFiles(sources);
+  assert.equal(changed.reused, false);
+  assert.notEqual(changed.sourceDigest, expected);
+  const renamed = await analyzeFiles({
+    'renamed.js': sources['cache.js'],
+    'data.json': '{"value":1}',
+  });
+  assert.equal(renamed.reused, false);
+  const changedData = await analyzeFiles({ ...sources, 'data.json': '{"value":2}' });
+  assert.equal(changedData.reused, false);
+  await assert.rejects(analyzeFiles({ '../cache.js': 'export const cacheProbe = 1;' }));
+});
+
+test('analysis cache evicts old evidence after eight entries', async () => {
+  const source = (n) => ({ 'eviction.js': `export const evictionProbe = ${n};` });
+  await analyzeFiles(source(0));
+  for (let n = 1; n <= 8; n++) await analyzeFiles(source(n));
+  assert.equal((await analyzeFiles(source(8))).reused, true);
+  assert.equal((await analyzeFiles(source(0))).reused, false);
+});

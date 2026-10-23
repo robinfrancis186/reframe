@@ -1,0 +1,114 @@
+{
+  "artifact": "/tmp/reframe-speed-installed/Reframe.app/Contents/MacOS/Reframe",
+  "homeReadyMs": 16550,
+  "restartHomeMs": 4573,
+  "launchedFromReadOnlyVolume": false,
+  "startupPhases": [
+    {
+      "phase": "startup-visible",
+      "elapsedMs": 1050
+    },
+    {
+      "phase": "runtime-cache-prepared",
+      "elapsedMs": 6127
+    },
+    {
+      "phase": "backend-ready",
+      "elapsedMs": 8091
+    },
+    {
+      "phase": "home-ready",
+      "elapsedMs": 8912
+    },
+    {
+      "phase": "startup-visible",
+      "elapsedMs": 1932
+    },
+    {
+      "phase": "runtime-cache-reused",
+      "elapsedMs": 2268
+    },
+    {
+      "phase": "backend-ready",
+      "elapsedMs": 3231
+    },
+    {
+      "phase": "home-ready",
+      "elapsedMs": 3431
+    },
+    {
+      "phase": "startup-visible",
+      "elapsedMs": 5644
+    },
+    {
+      "phase": "backend-ready",
+      "elapsedMs": 6262
+    },
+    {
+      "phase": "home-ready",
+      "elapsedMs": 6351
+    }
+  ],
+  "recoveryRetainedLibraryAndRecords": true,
+  "publicSiteCaptured": true,
+  "twoComponentsInstalled": true,
+  "timings": [
+    {
+      "endpoint": "/api/features/build",
+      "ms": 4988,
+      "reused": false,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/projects/plan",
+      "ms": 51,
+      "reused": true,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/tabs",
+      "ms": 3458,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 737,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 92,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 86,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 858,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/projects/plan",
+      "ms": 7050,
+      "reused": false,
+      "status": 200
+    }
+  ],
+  "elapsedMs": 56875,
+  "libraryItems": 2,
+  "security": {
+    "sandbox": true,
+    "contextIsolation": true,
+    "nodeIntegration": false
+  },
+  "errors": [],
+  "ownedProcessesClosed": 16,
+  "restartRecordsPersisted": true,
+  "bundledOCR": true,
+  "ocrMs": 705,
+  "appBundleStoreAbsent": true,
+  "systemPathOnly": "/usr/bin:/bin:/usr/sbin:/sbin"
+}

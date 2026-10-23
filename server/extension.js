@@ -21,6 +21,12 @@ export class ExtensionPairing {
   constructor(store) {
     this.file = path.join(store, 'extension.json');
     this.store = store;
+    this.queue = Promise.resolve();
+  }
+  serial(task) {
+    const run = this.queue.then(task, task);
+    this.queue = run.catch(() => {});
+    return run;
   }
   async read() {
     try {
@@ -51,20 +57,24 @@ export class ExtensionPairing {
       : { paired: false };
   }
   /** Creates a new token (replacing any earlier one) and returns it once. */
-  async pair() {
-    const token = 'rfx_' + randomBytes(24).toString('base64url');
-    await this.write({
-      hash: digest(token).toString('hex'),
-      createdAt: new Date().toISOString(),
-      captures: 0,
+  pair() {
+    return this.serial(async () => {
+      const token = 'rfx_' + randomBytes(24).toString('base64url');
+      await this.write({
+        hash: digest(token).toString('hex'),
+        createdAt: new Date().toISOString(),
+        captures: 0,
+      });
+      return { token, ...(await this.status()) };
     });
-    return { token, ...(await this.status()) };
   }
-  async revoke() {
-    await unlink(this.file).catch((e) => {
-      if (e.code !== 'ENOENT') throw e;
+  revoke() {
+    return this.serial(async () => {
+      await unlink(this.file).catch((e) => {
+        if (e.code !== 'ENOENT') throw e;
+      });
+      return this.status();
     });
-    return this.status();
   }
   async verify(header) {
     const state = await this.read(),
@@ -76,11 +86,15 @@ export class ExtensionPairing {
       );
     return state;
   }
-  async used(state) {
-    await this.write({
-      ...state,
-      lastUsed: new Date().toISOString(),
-      captures: (state.captures || 0) + 1,
+  used(state) {
+    return this.serial(async () => {
+      const current = await this.read();
+      if (!current || current.hash !== state.hash) return;
+      await this.write({
+        ...current,
+        lastUsed: new Date().toISOString(),
+        captures: (current.captures || 0) + 1,
+      });
     });
   }
 }
@@ -146,12 +160,13 @@ export function mountExtension(
     handle(async (req) => {
       const state = await pairing.verify(req.headers.authorization),
         page = validCapture(req.body);
+      /** @type {import('../src/model.ts').ComponentItem} */
       let item = {
         ...(await replicaItem([page], req.body.name.trim().slice(0, 200), { resource })),
         ...(req.body.referenceImage ? { referenceImage: req.body.referenceImage } : {}),
         capturedAt: new Date().toISOString(),
         evidence:
-          'Picked in your own browser with the Reframe extension. Rendered HTML, source styles and inline SVG; independently authored local interactions. Source images remain online; private source logic is not recovered.',
+          'Picked in your own browser with the Reframe extension. Rendered HTML, source styles and inline SVG; independently authored local interactions. Supported images are bundled; review remaining external resources. Private source logic is not recovered.',
       };
       item = await finishCapture(item, {
         browser,

@@ -463,3 +463,245 @@
   margin: 16px 0;
   font-size: 12px;
 }
+
+/* Keep editing centered on the preview; secondary controls stay available on demand. */
+.ui-workspace .focused-editor {
+  grid-template-columns: minmax(0, 1fr) 260px;
+  align-items: start;
+}
+.ui-workspace .focused-editor .editor-sources {
+  grid-column: 1 / -1;
+  padding: 14px 18px;
+}
+.editor-sources > summary,
+.editor-options > summary,
+.card-options > summary {
+  cursor: pointer;
+  min-height: 36px;
+  align-content: center;
+  font-weight: 500;
+}
+.editor-sources .element-list {
+  display: flex;
+  overflow-x: auto;
+  margin-top: 12px;
+}
+.editor-sources .element {
+  min-width: 200px;
+}
+.editor-sources .section-heading,
+.editor-sources .source-note {
+  display: none;
+}
+.ui-workspace .focused-editor .inspector {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  grid-column: auto;
+}
+.focused-editor .editor-options {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  width: 100%;
+}
+.focused-editor .editor-options > .theme-controls {
+  margin-top: 12px;
+}
+.focused-editor .export-assist {
+  margin-top: 18px;
+}
+.library-tools {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.library-tools button {
+  min-height: 40px;
+}
+.card-options {
+  margin: 8px 0 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 4px;
+}
+.card-options > button {
+  width: 100%;
+  margin-top: 8px;
+  min-height: 40px;
+}
+.card-options .clip-source {
+  font-size: 11px;
+}
+.ui-workspace .full-library .clip-card .clip-title {
+  margin-top: 10px;
+}
+.other-starters {
+  position: relative;
+}
+.other-starters summary {
+  cursor: pointer;
+  padding: 12px;
+}
+.other-starters[open] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (max-width: 1000px) {
+  .ui-workspace .focused-editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ui-workspace .focused-editor .inspector {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .focused-editor .inspector > h2,
+  .focused-editor .inspector > .quality,
+  .focused-editor .inspector > p {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 600px) {
+  .ui-workspace .focused-editor .inspector {
+    display: flex;
+  }
+  .focused-editor .preview-toolbar {
+    flex-wrap: wrap;
+  }
+  .focused-editor .view-tabs {
+    flex-wrap: wrap;
+  }
+  .component-journey .journey-steps button {
+    min-height: 56px;
+    padding: 10px;
+  }
+  .component-journey .journey-steps small {
+    display: none;
+  }
+}
+
+.installed-demo {
+  width: 100%;
+  height: 480px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: white;
+  margin-top: 18px;
+}
+.install-receipt > p[role='status'] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.library-guidance {
+  color: var(--muted);
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+.library-status-row {
+  display: flex;
+  align-items: start;
+  gap: 8px 18px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.library-status-row > details {
+  margin: 0;
+}
+.ui-workspace .full-library > .section-heading {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.ui-workspace .full-library > .section-heading h2 {
+  margin: 0;
+  font-size: 17px;
+}
+.ui-workspace .full-library > .section-heading > .muted {
+  width: auto;
+  font-size: 12px;
+}
+.ui-workspace .full-library > .section-heading > button {
+  margin-left: auto;
+}
+
+.ui-workspace .full-library .library-tools > button {
+  width: auto;
+  flex: initial;
+}
+
+/* Keep the current decision visible; technical detail stays available on demand. */
+.feature-builder .behavior-settings,
+.feature-builder .generated-source,
+.placement-settings,
+.installation-source {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-block: 16px;
+}
+.behavior-summary {
+  border-left: 3px solid var(--border);
+  padding: 4px 16px;
+  margin-block: 16px;
+  overflow-wrap: anywhere;
+}
+.behavior-summary ul {
+  padding-left: 20px;
+}
+.feature-result:focus {
+  outline: none;
+}
+.feature-result:focus-visible {
+  outline: 2px solid var(--muted);
+  outline-offset: 6px;
+}
+.installation-setup[hidden] {
+  display: none;
+}
+.installation-setup .integration-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+}
+.installation-setup .integration-library {
+  grid-column: 1 / -1;
+}
+.installation-setup .integration-library:not([open]) {
+  max-height: none;
+}
+.install-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.install-summary dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.install-summary dd {
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+}
+.install-warnings {
+  padding: 12px;
+  background: var(--surface);
+  border-radius: 10px;
+}
+.placement-settings > summary {
+  margin-bottom: 12px;
+}
+.placement-settings label {
+  margin-block: 12px;
+}
+@media (max-width: 800px) {
+  .installation-setup .integration-grid,
+  .install-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

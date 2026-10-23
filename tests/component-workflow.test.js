@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   componentReadiness,
+  installationName,
   matchesComponent,
   sameComponent,
   preferredCapture,
@@ -103,4 +104,13 @@ test('destination and per-project brief survive reload while excluding packages,
   };
   assert.equal(readDestination(unavailable).id, '');
   assert.throws(() => writeDestination({ id: 'p', file: 'x', point: 'y' }, unavailable), /full/);
+});
+
+test('installation defaults differ between packages and survive Library renames', () => {
+  const a = { ...reference, feature: { spec: { id: 'rf_0123456789ab' } } };
+  const b = { ...reference, feature: { spec: { id: 'rf_0123456789ac' } } };
+  assert.notEqual(installationName(a), installationName(b));
+  assert.equal(installationName(a), installationName({ ...a, id: 'copy', name: 'Renamed' }));
+  for (const item of [a, b, reference, { id: '<hostile>/'.repeat(50) }])
+    assert.match(installationName(item), /^Reframe[A-Za-z0-9]{1,60}$/);
 });

@@ -1,0 +1,74 @@
+{
+  "artifact": "/tmp/reframe-startup-baseline/Reframe.app/Contents/MacOS/Reframe",
+  "publicSiteCaptured": true,
+  "twoComponentsInstalled": true,
+  "timings": [
+    {
+      "endpoint": "/api/features/build",
+      "ms": 8727,
+      "reused": false,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/projects/plan",
+      "ms": 103,
+      "reused": true,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/tabs",
+      "ms": 33609,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 12386,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 2006,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 45,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 196,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 8325,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 100,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/projects/plan",
+      "ms": 25052,
+      "reused": false,
+      "status": 200
+    }
+  ],
+  "elapsedMs": 180515,
+  "libraryItems": 2,
+  "security": {
+    "sandbox": true,
+    "contextIsolation": true,
+    "nodeIntegration": false
+  },
+  "errors": [],
+  "ownedProcessesClosed": 16,
+  "restartRecordsPersisted": true,
+  "bundledOCR": true,
+  "ocrMs": 1795,
+  "appBundleStoreAbsent": true,
+  "systemPathOnly": "/usr/bin:/bin:/usr/sbin:/sbin"
+}

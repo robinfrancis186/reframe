@@ -147,13 +147,11 @@ test(
         .getByLabel('Choose files')
         .setInputFiles({ name: 'small.txt', mimeType: 'text/plain', buffer: Buffer.from('test') });
       assert.equal(await view.locator('li').count(), 1);
-      await view
-        .getByLabel('Choose files')
-        .setInputFiles({
-          name: 'large.txt',
-          mimeType: 'text/plain',
-          buffer: Buffer.alloc(10000001),
-        });
+      await view.getByLabel('Choose files').setInputFiles({
+        name: 'large.txt',
+        mimeType: 'text/plain',
+        buffer: Buffer.alloc(10000001),
+      });
       assert.equal(await view.locator('li').count(), 0);
       assert.match(await view.getByRole('alert').innerText(), /10 MB/);
       view = await open('be-table');
@@ -202,10 +200,7 @@ test(
       assert.deepEqual(errors, []);
       await page.goto(url + '?view=9');
       await page.getByRole('button', { name: 'Reload Reframe' }).waitFor();
-      assert.match(
-        await page.getByRole('alert').innerText(),
-        /saved clipboard has not been cleared/,
-      );
+      assert.match(await page.getByRole('alert').innerText(), /saved Library has not been cleared/);
     } finally {
       await browser?.close();
       if (server) await new Promise((resolve) => server.close(resolve));

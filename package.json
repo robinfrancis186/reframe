@@ -9,12 +9,20 @@
     "start": "NODE_ENV=production node --env-file-if-exists=.env server/index.js",
     "test": "node --test --test-concurrency=2 tests/*.test.js",
     "check": "tsc --noEmit",
-    "verify": "npm run check && npm test && npm run build && npm --prefix examples/integrated-app run build && npm --prefix examples/connected-app run build",
+    "verify": "npm run format:check && npm run lint && npm run check && npm run check:server && npm test && npm run build && npm --prefix examples/integrated-app run build && npm --prefix examples/connected-app run build",
     "gradio:setup": "uv venv --allow-existing .reframe/gradio-venv && uv pip install --python .reframe/gradio-venv/bin/python -r server/gradio-requirements.txt",
     "demo": "node examples/connected-app/server/index.js",
     "fidelity": "node tests/fidelity-suite.mjs",
     "extension:build": "node extension/build.mjs",
-    "graphify:setup": "uv tool install --upgrade graphifyy==0.9.93"
+    "graphify:setup": "uv tool install --upgrade graphifyy==0.9.93",
+    "desktop:prepare": "node desktop/prepare.mjs",
+    "desktop:dev": "npm run build && npm run desktop:prepare && electron .",
+    "desktop:package": "npm run build && npm run desktop:prepare && electron-forge package --arch=arm64 && node desktop/make-dmg.mjs",
+    "check:server": "tsc -p tsconfig.server.json",
+    "lint": "eslint src server tests desktop extension scripts forge.config.js",
+    "format": "prettier --write \"{src,server,tests,extension,desktop,scripts}/**/*.{js,jsx,mjs,cjs,ts,tsx,css,json}\" \"*.{js,json}\"",
+    "format:check": "prettier --check \"{src,server,tests,extension,desktop,scripts}/**/*.{js,jsx,mjs,cjs,ts,tsx,css,json}\" \"*.{js,json}\"",
+    "benchmark": "node scripts/benchmark-library.mjs"
   },
   "dependencies": {
     "@babel/parser": "^8.0.4",
@@ -29,14 +37,28 @@
     "rea-agents": "6.7.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "sanitize-html": "^2.17.0"
+    "sanitize-html": "^2.17.0",
+    "vite": "^6.4.1",
+    "prettier": "^3.9.10"
   },
   "devDependencies": {
+    "@electron-forge/cli": "^8.0.1",
+    "@electron-forge/maker-zip": "^8.0.1",
+    "@eslint/js": "^10.0.1",
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "electron": "^45.0.0",
+    "eslint": "^10.13.0",
+    "globals": "^17.13.0",
     "node": "24.11.1",
     "typescript": "^5.9.3",
-    "vite": "^6.4.1"
+    "typescript-eslint": "^8.72.0"
+  },
+  "main": "desktop/main.cjs",
+  "description": "Capture UI from the web, keep it in your Library, and reuse it in your apps.",
+  "author": "Robin Francis",
+  "config": {
+    "forge": "./forge.config.js"
   }
 }

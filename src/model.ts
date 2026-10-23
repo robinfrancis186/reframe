@@ -60,6 +60,7 @@ export interface FeatureSpec {
   }[];
 }
 export interface FeaturePackage {
+  assetHash?: string;
   version: number;
   spec: FeatureSpec;
   sourceHash: string;
@@ -73,6 +74,9 @@ export interface EngineReview {
   checkedAt: string;
   sourceDigest: string;
   analysis: {
+    reused?: boolean;
+    analyzedAt?: string;
+    elapsedMs?: number;
     status: string;
     engine: string;
     files: string[];
@@ -100,7 +104,29 @@ export interface EngineReview {
     limitation: string;
   };
 }
+export interface CaptureVariant {
+  width: number;
+  state: 'default' | 'hover' | 'focus';
+  website: NonNullable<FeatureSpec['website']>;
+  referenceImage: string;
+  identity: string;
+}
 export interface ComponentItem {
+  captureVariants?: CaptureVariant[];
+  captureWarnings?: string[];
+  _summary?: boolean;
+  signature?: string;
+  itemRevision?: number;
+  contentHash?: string;
+  thumbnail?: string | null;
+  automatic?: { site: string; type: string; fonts: string[]; colors: string[] };
+  readiness?: { kind: string; label: string; detail: string; preview: string };
+  hasFeature?: boolean;
+  hasCode?: boolean;
+  featureId?: string;
+  actionsCount?: number;
+  externalService?: boolean;
+  searchExcerpt?: string;
   id: string;
   name: string;
   html: string;
@@ -238,6 +264,18 @@ export function isItem(value: unknown): value is ComponentItem {
       (key) => typeof i[key as keyof ComponentItem] === 'string',
     ) &&
     i.html.length < 2_000_000 &&
+    (!i.captureVariants ||
+      (Array.isArray(i.captureVariants) &&
+        i.captureVariants.length <= 9 &&
+        JSON.stringify(i.captureVariants).length <= 8_000_000 &&
+        i.captureVariants.every(
+          (v) =>
+            [390, 768, 1280].includes(v.width) &&
+            ['default', 'hover', 'focus'].includes(v.state) &&
+            typeof v.referenceImage === 'string' &&
+            v.referenceImage.length <= 2_000_000 &&
+            /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(v.referenceImage),
+        ))) &&
     (!i.feature || isFeature(i.feature)) &&
     (i.libraryId === undefined ||
       (typeof i.libraryId === 'string' && !!libraryEntry(i.libraryId) && !i.feature)) &&
@@ -309,10 +347,10 @@ export async function api<T>(url: string, body?: unknown): Promise<T> {
   return result;
 }
 export function download(name: string, content: string | ArrayBuffer, type = 'text/plain') {
-  void (async () => {
+  return (async () => {
     const bytes = new Uint8Array(await new Blob([content], { type }).arrayBuffer());
-    if (bytes.length > 6000000)
-      throw new Error('Export exceeds 6 MB. Export individual components instead.');
+    if (bytes.length > 16000000)
+      throw new Error('Export exceeds 16 MB. Export individual components instead.');
     let binary = '';
     for (let i = 0; i < bytes.length; i += 32768)
       binary += String.fromCharCode(...bytes.subarray(i, i + 32768));

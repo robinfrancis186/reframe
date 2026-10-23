@@ -9,7 +9,6 @@ import { libraryItem, catalog } from './library/catalog';
 import {
   Box,
   Home as HomeIcon,
-  Plug,
   Sun,
   Moon,
   ImagePlus,
@@ -19,28 +18,20 @@ import {
   Wand2,
   Globe,
   LayoutGrid,
-  Clipboard as ClipboardIcon,
   Folder,
   Plus,
   Link,
   ArrowRight,
-  Monitor,
-  Smartphone,
-  Code2,
-  Copy,
   Download,
-  MousePointer2,
   Check,
   Loader2,
   Undo2,
-  ChevronRight,
-  ShieldCheck,
 } from 'lucide-react';
-import BrowserWorkspace from './BrowserWorkspace';
+const BrowserWorkspace = lazy(() => import('./BrowserWorkspace'));
 import Home from './Home';
 import Preview from './Preview';
 import Clipboard from './Clipboard';
-import CaptureDialog from './CaptureDialog';
+const CaptureDialog = lazy(() => import('./CaptureDialog'));
 import ThemeEditor from './ThemeEditor';
 const NativeCapture = lazy(() => import('./NativeCapture'));
 const EngineTools = lazy(() => import('./EngineTools'));
@@ -48,54 +39,28 @@ const Projects = lazy(() => import('./Projects'));
 const FeatureBuilder = lazy(() => import('./FeatureBuilder'));
 const WorkingPreview = lazy(() => import('./WorkingPreview'));
 import ComponentJourney from './ComponentJourney';
-import { componentReadiness, sameComponent, preferredCapture } from './component-workflow.js';
+import { sameComponent, preferredCapture } from './component-workflow.js';
 import './journey.css';
-import { onLibraryChange, readWorkspace, writeWorkspace } from './storage';
+import { loadItem, summary, saveCaptured, waitForLibrarySave } from './storage';
+import { useLibrary } from './useLibrary';
 import ExtensionPairing from './ExtensionPairing';
 import LibrarySync from './LibrarySync';
-import FidelityCheck, { canCheckFidelity, FidelityBadge } from './FidelityCheck';
-import { canExportCode, downloadCode, exportedCode, type ExportedCode } from './code-export';
+
 const Agents = lazy(() => import('./Agents'));
 const AssetLibrary = lazy(() => import('./AssetLibrary'));
-import {
-  api,
-  download,
-  isItem,
-  isTheme,
-  slug,
-  starters,
-  themes,
-  type ComponentItem,
-  type Fidelity,
-  type Theme,
-} from './model';
-import { documentHtml, reactCode } from './export';
-interface Workspace {
-  items: ComponentItem[];
-  theme: Theme;
-  error?: string;
-}
-function loadWorkspace(): Workspace {
-  try {
-    const raw = readWorkspace();
-    if (!raw) return { items: [], theme: themes[0] };
-    const state = JSON.parse(raw);
-    if (!Array.isArray(state.items) || !state.items.every(isItem) || !isTheme(state.theme))
-      throw new Error();
-    return state;
-  } catch {
-    return {
-      items: [],
-      theme: themes[0],
-      error:
-        'Saved workspace could not be read. It has not been overwritten. Export a backup or clear the saved data manually before saving again.',
-    };
-  }
-}
+import { api, download, type ComponentItem, type Fidelity, type Theme } from './model';
+import { useCaptureWorkflow } from './useCaptureWorkflow';
+const CaptureEditor = lazy(() => import('./CaptureEditor'));
 export default function App() {
   const [appearance, updateAppearance] = useState(loadAppearance);
-  const [initial] = useState(loadWorkspace);
-  const [library, setLibrary] = useState<ComponentItem[]>(initial.items);
+  const {
+    initial,
+    library,
+    setLibrary,
+    deleted,
+    setDeleted,
+    persist: saveLibrary,
+  } = useLibrary(notify, (text) => setError(text));
   const [theme, setTheme] = useState<Theme>(initial.theme);
   const [page, setPage] = useState('Home');
   const group = sectionFor(page);
@@ -104,12 +69,26 @@ export default function App() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [page]);
-  const [elements, setElements] = useState(starters);
-  const [active, setActive] = useState(starters[0]);
   const [url, setUrl] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState(initial.error || '');
+  const workflow = useCaptureWorkflow(theme, setError);
+  const {
+    setElements,
+    active,
+    setActive,
+    setView,
+    setFormat,
+    setPicking,
+    building,
+    setBuilding,
+    featureBuilder,
+    workingPreview,
+    setDragging,
+    editor,
+    code,
+  } = workflow;
   useEffect(() => {
     const failed = (event: Event) => setError((event as CustomEvent<string>).detail);
     window.addEventListener('reframe-download-error', failed);
@@ -121,111 +100,7 @@ export default function App() {
   }, []);
   const [capture, setCapture] = useState<string | null>(null);
   const [browserImage, setBrowserImage] = useState<{ image: string; source: string } | null>(null);
-  const [mobile, setMobile] = useState(false);
-  const [view, setView] = useState('preview');
-  const [format, setFormat] = useState('html');
-  const [picking, setPicking] = useState(false);
-  const [building, setBuilding] = useState(false);
-  const featureBuilder = useRef<HTMLDivElement>(null),
-    workingPreview = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (building) {
-      featureBuilder.current?.focus({ preventScroll: true });
-      featureBuilder.current?.scrollIntoView({
-        block: 'start',
-        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
-      });
-    }
-  }, [building]);
-  const [dragging, setDragging] = useState(false);
-  const [editor, setEditor] = useState('');
-  const [quality, setQuality] = useState<{
-    bytes: number;
-    elements: number;
-    issues: string[];
-  } | null>(null);
-  const [deleted, setDeleted] = useState<ComponentItem | null>(null);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [originalSource, setOriginalSource] = useState({ key: '', code: '' });
-  const sourceKey = JSON.stringify([active.libraryId, theme, format]);
-  useEffect(() => {
-    if (!active.libraryId) return;
-    const controller = new AbortController();
-    fetch('/api/library/source', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: active.libraryId,
-        name: 'ReframeOriginal',
-        theme,
-        framework: format === 'swiftui' || format === 'compose' ? format : 'react',
-      }),
-      signal: controller.signal,
-    })
-      .then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error);
-        return data;
-      })
-      .then((data) => {
-        if (!controller.signal.aborted)
-          setOriginalSource({ key: sourceKey, code: data.imports.join('\n') + '\n' + data.code });
-      })
-      .catch((e) => {
-        if (!controller.signal.aborted) setError(e.message);
-      });
-    return () => controller.abort();
-  }, [sourceKey]);
-  // Website captures export as real source (React component, scoped CSS, static HTML), generated on the server.
-  const exportable = canExportCode(active);
-  const [exported, setExported] = useState<{
-    key: string;
-    code?: ExportedCode;
-    error?: string;
-  } | null>(null);
-  const exportKey = `${active.id}:${active.feature?.builtAt}`;
-  useEffect(() => {
-    if (!exportable || view !== 'code' || exported?.key === exportKey) return;
-    let current = true;
-    exportedCode(active).then(
-      (code) => {
-        if (current) setExported({ key: exportKey, code });
-      },
-      (e) => {
-        if (current) setExported({ key: exportKey, error: (e as Error).message });
-      },
-    );
-    return () => {
-      current = false;
-    };
-  }, [exportKey, exportable, view]);
-  const exportedFiles = exported?.key === exportKey ? exported.code : undefined;
-  const code = active.libraryId
-    ? originalSource.key === sourceKey
-      ? originalSource.code
-      : ''
-    : exportable
-      ? exportedFiles
-        ? exportedFiles.files[
-            `${exportedFiles.name}.${format === 'react' ? 'tsx' : format === 'css' ? 'css' : 'html'}`
-          ] || ''
-        : ''
-      : format === 'react'
-        ? reactCode(active, theme)
-        : documentHtml(active, theme);
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch('/api/quality', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ html: active.html }),
-      signal: controller.signal,
-    })
-      .then((r) => r.json())
-      .then(setQuality)
-      .catch(() => {});
-    return () => controller.abort();
-  }, [active.html]);
   useEffect(
     () => () => {
       if (noticeTimer.current) clearTimeout(noticeTimer.current);
@@ -238,36 +113,18 @@ export default function App() {
     noticeTimer.current = setTimeout(() => setMessage(''), 4500);
   }
   function persist(items: ComponentItem[], nextTheme = theme) {
-    if (initial.error) {
-      setError(initial.error);
-      return false;
-    }
-    try {
-      writeWorkspace(
-        JSON.stringify({ version: 1, items, theme: nextTheme }, function (key, value) {
-          if (key === 'files' && this.spec?.website)
-            return {
-              ...value,
-              'feature.json': JSON.stringify({
-                ...this.spec,
-                website: 'Recompiled from spec.website when installed.',
-              }),
-            };
-          return value;
-        }),
-      );
-      return true;
-    } catch {
-      setError(
-        'Your browser storage is full or unavailable. Download a backup before making more changes.',
-      );
-      return false;
-    }
+    return saveLibrary(items, nextTheme);
   }
   function changeTheme(t: Theme) {
     if (persist(library, t)) setTheme(t);
   }
-  function open(item: ComponentItem) {
+  async function open(item: ComponentItem) {
+    try {
+      item = await loadItem(item);
+    } catch (e) {
+      setError((e as Error).message);
+      return;
+    }
     setActive(item);
     if (item.libraryId) {
       setFormat('react');
@@ -293,8 +150,8 @@ export default function App() {
     setError('');
     notify(`${r.items.length} element${r.items.length === 1 ? '' : 's'} captured.`);
   }
-  function integrate(item: ComponentItem) {
-    open(item);
+  async function integrate(item: ComponentItem) {
+    await open(item);
     setPage('Projects');
   }
   async function inspect(e: React.FormEvent) {
@@ -310,29 +167,6 @@ export default function App() {
       setBusy(false);
     }
   }
-  // Captures saved by the browser extension (or another tab) appear without a reload.
-  const libraryCount = useRef(library.length);
-  libraryCount.current = library.length;
-  useEffect(
-    () =>
-      onLibraryChange((raw) => {
-        try {
-          const state = JSON.parse(raw);
-          if (!Array.isArray(state.items) || !state.items.every(isItem)) return;
-          const added = state.items.length - libraryCount.current;
-          setLibrary(state.items);
-          if (added > 0)
-            notify(
-              added === 1
-                ? `Added "${state.items[0].name}" from your browser.`
-                : `Added ${added} components from your browser.`,
-            );
-        } catch {
-          /* A malformed update is ignored; the saved library is unchanged. */
-        }
-      }),
-    [],
-  );
   /** Renames or re-tags a saved component in place. */
   function organise(
     id: string,
@@ -340,7 +174,7 @@ export default function App() {
   ) {
     const next = library.map((i) => (i.id === id ? { ...i, ...patch } : i));
     if (!persist(next)) return false;
-    setLibrary(next);
+    setLibrary(next.map(summary));
     if (active.id === id) setActive((current) => ({ ...current, ...patch }));
     return true;
   }
@@ -349,7 +183,7 @@ export default function App() {
     setActive(item);
     setElements((current) => current.map((element) => (element.id === item.id ? item : element)));
     if (library.some((i) => i.id === item.id)) {
-      const next = library.map((i) => (i.id === item.id ? { ...i, fidelity } : i));
+      const next = library.map((i) => (i.id === item.id ? item : i));
       if (persist(next)) setLibrary(next);
     }
   }
@@ -365,32 +199,43 @@ export default function App() {
       ? library.map((i) => (i.id === item.id ? item : i))
       : [item, ...library];
     if (persist(next)) {
-      setLibrary(next);
+      setLibrary(next.map(summary));
       setActive(item);
       setElements((current) =>
         current.some((source) => source.id === item.id) ? current : [item],
       );
-      notify('Saved to your clipboard.');
+      notify('Saving to your Library…');
+      void waitForLibrarySave().then(
+        () => notify('Saved on this computer.'),
+        (error) => setError((error as Error).message),
+      );
       return true;
     }
     return false;
   }
-  function saveBrowserItem(item: ComponentItem) {
-    const existing = library.find((i) => i.html === item.html && i.source === item.source);
-    const saved = { ...item, id: existing?.id || item.id, theme: { ...theme } };
-    const next = existing
-      ? library.map((i) => (i.id === existing.id ? saved : i))
-      : [saved, ...library];
-    if (!persist(next)) return false;
-    setLibrary(next);
-    notify('Saved reference and component to clipboard.');
-    return true;
+  async function saveBrowserItem(item: ComponentItem) {
+    saveCaptured(item, theme);
+    notify('Saving capture to your Library…');
+    try {
+      await waitForLibrarySave();
+      notify('Capture saved on this computer.');
+      return true;
+    } catch (error) {
+      setError((error as Error).message);
+      return false;
+    }
   }
-  function remove(id: string) {
-    const item = library.find((i) => i.id === id)!;
+  async function remove(id: string) {
+    let item: ComponentItem;
+    try {
+      item = await loadItem(library.find((i) => i.id === id)!);
+    } catch (e) {
+      setError((e as Error).message);
+      return;
+    }
     const next = library.filter((i) => i.id !== id);
     if (persist(next)) {
-      setLibrary(next);
+      setLibrary(next.map(summary));
       setDeleted(item);
       notify('Component removed. You can undo this.');
     }
@@ -399,7 +244,7 @@ export default function App() {
     if (!deleted) return;
     const next = [deleted, ...library];
     if (persist(next)) {
-      setLibrary(next);
+      setLibrary(next.map(summary));
       setDeleted(null);
       notify('Component restored.');
     }
@@ -407,7 +252,7 @@ export default function App() {
   function importItems(items: ComponentItem[]) {
     const next = [...items, ...library];
     if (persist(next)) {
-      setLibrary(next);
+      setLibrary(next.map(summary));
       notify(`${items.length} components imported.`);
       setPage('Clipboard');
       return true;
@@ -428,7 +273,7 @@ export default function App() {
       };
       setElements((old) => [item, ...old]);
       setActive(item);
-      notify('Element picked. Rename it and save to your clipboard.');
+      notify('Element picked. Rename it and save to your Library.');
     } catch (e) {
       setError((e as Error).message);
     }
@@ -498,6 +343,7 @@ export default function App() {
             return (
               <button
                 key={section.name}
+                aria-label={section.name}
                 aria-current={selected ? 'page' : undefined}
                 className={selected ? 'active' : ''}
                 onClick={() => setPage(section.pages[0][0])}
@@ -522,13 +368,7 @@ export default function App() {
             ))}
           </div>
         )}
-        <button
-          className={`sidebar-connection ${page === 'Connections' ? 'active' : ''}`}
-          onClick={() => setPage('Connections')}
-        >
-          <Plug size={18} />
-          Connections
-        </button>
+
         <div className="workspace-label">
           <Folder size={18} />
           <span>
@@ -585,17 +425,21 @@ export default function App() {
             onOpen={open}
           />
         )}
-        <BrowserWorkspace
-          active={page === 'Browser'}
-          onCapture={captured}
-          onSave={saveBrowserItem}
-          onImport={importItems}
-          onScreenshot={(image, source) => {
-            setBrowserImage({ image, source });
-            setCapture('image');
-          }}
-        />
-        {page === 'Workbench' && (
+        {page === 'Browser' && (
+          <Suspense fallback={<p role="status">Loading capture browser…</p>}>
+            <BrowserWorkspace
+              active={true}
+              onCapture={captured}
+              onSave={saveBrowserItem}
+              onImport={importItems}
+              onScreenshot={(image, source) => {
+                setBrowserImage({ image, source });
+                setCapture('image');
+              }}
+            />
+          </Suspense>
+        )}
+        {page === 'Workbench' && active.id.startsWith('starter-') && (
           <>
             <div className="intro">
               <h2>Bring a good idea into your product.</h2>
@@ -667,366 +511,24 @@ export default function App() {
               onSave={() => save()}
               onIntegrate={() => integrate(active)}
             />
-            <div className="workbench">
-              <section className="panel elements">
-                <div className="section-heading">
-                  <h2>Source elements</h2>
-                  <span className="muted">{elements.length}</span>
-                </div>
-                <div className="element-list">
-                  {elements.map((item) => (
-                    <div
-                      className={'element ' + (item.id === active.id ? 'selected' : '')}
-                      key={item.id}
-                    >
-                      <div className="element-thumb">
-                        <Preview item={item} theme={theme} mini />
-                      </div>
-                      <span>
-                        <strong>{item.name}</strong>
-                        <small>
-                          {item.source.startsWith('http')
-                            ? new URL(item.source).hostname
-                            : item.source.startsWith('Reframe')
-                              ? item.libraryId
-                                ? 'Reframe Original'
-                                : 'Starter example'
-                              : item.source}
-                        </small>
-                      </span>
-                      <ChevronRight size={15} />
-                      <button
-                        className="element-open"
-                        aria-label={`Select ${item.name}`}
-                        onClick={() => open(item)}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="source-note">
-                  <ShieldCheck size={16} />
-                  <p>
-                    {elements[0]?.source.startsWith('Reframe')
-                      ? 'Original examples to try the workbench. Inspect a URL or import your own.'
-                      : 'Structure captured. Review behavior and asset rights before reuse.'}
-                  </p>
-                </div>
-              </section>
-              <section
-                className="panel preview-panel"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDragging(false);
-                  const id = e.dataTransfer.getData('application/x-reframe');
-                  const item = library.find((i) => i.id === id);
-                  if (item) open(item);
-                }}
-              >
-                {dragging && (
-                  <div className="drop-overlay">
-                    <Box size={28} />
-                    <strong>Drop to adapt</strong>
-                    <span>Open this component in your workbench</span>
-                  </div>
-                )}
-                <div className="preview-toolbar">
-                  <div className="view-tabs">
-                    {active.referenceImage && (
-                      <button
-                        className={view === 'reference' ? 'active' : ''}
-                        onClick={() => setView('reference')}
-                      >
-                        Original reference
-                      </button>
-                    )}
-                    <button
-                      className={view === 'preview' ? 'active' : ''}
-                      onClick={() => setView('preview')}
-                    >
-                      {active.libraryId ? 'Interactive preview' : 'Visual reference'}
-                    </button>
-                    <button
-                      className={view === 'code' ? 'active' : ''}
-                      onClick={() => setView('code')}
-                    >
-                      Code
-                    </button>
-                  </div>
-                  <div className="device-toggle">
-                    <button
-                      title="Desktop preview"
-                      aria-label="Desktop preview"
-                      aria-pressed={!mobile}
-                      className={!mobile ? 'selected' : ''}
-                      onClick={() => setMobile(false)}
-                    >
-                      <Monitor size={15} />
-                      <span>Desktop</span>
-                    </button>
-                    <button
-                      title="Mobile preview"
-                      aria-label="Mobile preview"
-                      aria-pressed={mobile}
-                      className={mobile ? 'selected' : ''}
-                      onClick={() => setMobile(true)}
-                    >
-                      <Smartphone size={15} />
-                      <span>Mobile</span>
-                    </button>
-                  </div>
-                </div>
-                {view === 'preview' && (
-                  <p className="preview-explanation">{componentReadiness(active).preview}</p>
-                )}
-                {view === 'reference' && active.referenceImage ? (
-                  <div className="reference-comparison">
-                    {canCheckFidelity(active) ? (
-                      <FidelityCheck item={active} onScored={scored} />
-                    ) : (
-                      <>
-                        <img
-                          src={active.referenceImage}
-                          alt={`Original appearance of ${active.name}`}
-                        />
-                        <p>
-                          Original captured appearance · use Preview to see the adapted component.
-                        </p>
-                      </>
-                    )}
-                    <a
-                      href={/^https?:\/\//.test(active.source) ? active.source : undefined}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {active.source}
-                    </a>
-                  </div>
-                ) : view === 'preview' ? (
-                  <div className={'canvas ' + (mobile ? 'mobile-canvas' : '')}>
-                    <Preview
-                      item={active}
-                      theme={theme}
-                      onPick={picking ? (html) => void pick(html) : undefined}
-                    />
-                  </div>
-                ) : view === 'edit' ? (
-                  <div className="code-editor">
-                    <label>
-                      Component HTML
-                      <textarea
-                        value={editor}
-                        onChange={(e) => setEditor(e.target.value)}
-                        spellCheck={false}
-                      />
-                    </label>
-                    <button className="primary" disabled={busy} onClick={() => void applyEdit()}>
-                      Apply changes
-                    </button>
-                  </div>
-                ) : (
-                  <div className="code-view">
-                    <div>
-                      <select
-                        aria-label="Code format"
-                        value={active.libraryId && format === 'html' ? 'react' : format}
-                        onChange={(e) => setFormat(e.target.value)}
-                      >
-                        {!active.libraryId && (
-                          <option value="html">{exportable ? 'HTML' : 'HTML + CSS'}</option>
-                        )}
-                        <option value="react">
-                          {exportable ? 'React component' : 'React JSX'}
-                        </option>
-                        {exportable && <option value="css">Scoped CSS</option>}
-                        {active.libraryId && (
-                          <>
-                            <option value="swiftui">iOS · SwiftUI</option>
-                            <option value="compose">Android · Compose</option>
-                          </>
-                        )}
-                      </select>
-                      <button disabled={!code} onClick={() => void copy()}>
-                        <Copy size={14} />
-                        Copy code
-                      </button>
-                    </div>
-                    {exportable && (
-                      <p className="code-export-status" role="status">
-                        {exported?.key === exportKey ? (
-                          exported.error ? (
-                            exported.error
-                          ) : (
-                            <>
-                              Real source, styles scoped under <code>.{exportedFiles!.scope}</code>
-                              {exportedFiles!.fidelity && (
-                                <>
-                                  {' '}
-                                  · exported code{' '}
-                                  <FidelityBadge fidelity={exportedFiles!.fidelity} />
-                                </>
-                              )}
-                            </>
-                          )
-                        ) : (
-                          'Generating source and checking it against the original…'
-                        )}
-                      </p>
-                    )}
-                    <pre tabIndex={0}>{code}</pre>
-                  </div>
-                )}
-                <div className="canvas-footer">
-                  <button
-                    disabled={!!active.libraryId}
-                    className={picking ? 'text-button picking' : 'text-button'}
-                    onClick={() => {
-                      setView('preview');
-                      setPicking(!picking);
-                    }}
-                  >
-                    <MousePointer2 size={14} />
-                    {picking ? 'Click an element to pick' : 'Pick an element'}
-                  </button>
-                  <button
-                    className="text-button"
-                    disabled={!!active.libraryId}
-                    onClick={() => {
-                      setEditor(active.html);
-                      setView('edit');
-                    }}
-                  >
-                    <Code2 size={14} />
-                    Edit HTML
-                  </button>
-                </div>
-              </section>
-              <aside className="panel inspector">
-                <h2>Make it yours</h2>
-                <label>
-                  Component name
-                  <input
-                    maxLength={100}
-                    value={active.name}
-                    onChange={(e) => setActive({ ...active, name: e.target.value })}
-                  />
-                </label>
-                <ThemeEditor theme={theme} onChange={changeTheme} />
-                <div className="inspector-actions">
-                  <button className="primary" disabled={!active.name.trim()} onClick={() => save()}>
-                    <ClipboardIcon size={16} />
-                    Save to clipboard
-                  </button>
-                  {exportable ? (
-                    <button
-                      onClick={() => {
-                        downloadCode(active).catch((e) => setError((e as Error).message));
-                      }}
-                    >
-                      <Code2 size={16} />
-                      Download code (React, CSS, HTML)
-                    </button>
-                  ) : (
-                    <button
-                      disabled={!code}
-                      onClick={() =>
-                        download(
-                          `${slug(active.name)}.${format === 'swiftui' ? 'swift' : format === 'compose' ? 'kt' : format === 'react' ? 'jsx' : 'html'}`,
-                          code,
-                          format === 'react'
-                            ? 'text/javascript'
-                            : format === 'html'
-                              ? 'text/html'
-                              : 'text/plain',
-                        )
-                      }
-                    >
-                      <Code2 size={16} />
-                      Export {active.feature ? 'visual ' : ''}
-                      {format === 'swiftui'
-                        ? 'SwiftUI'
-                        : format === 'compose'
-                          ? 'Compose'
-                          : format === 'react'
-                            ? 'React'
-                            : 'HTML'}
-                    </button>
-                  )}
-                  {active.feature && (
-                    <button
-                      onClick={() =>
-                        download(
-                          `${active.feature!.spec.id}-feature.json`,
-                          JSON.stringify({ version: 1, items: [{ ...active, theme }] }, null, 2),
-                          'application/json',
-                        )
-                      }
-                    >
-                      Export UI + backend package
-                    </button>
-                  )}
-                </div>
-                <button
-                  disabled={!!active.libraryId || !!active.feature?.spec.website}
-                  onClick={() => setBuilding(!building)}
-                >
-                  <Wand2 size={16} />
-                  {active.feature?.spec.website
-                    ? 'Rendered website runtime included'
-                    : active.feature
-                      ? 'Edit working feature'
-                      : 'Build working feature'}
-                </button>
-                {active.feature?.spec.website && (
-                  <p className="muted">
-                    Original styling is preserved. Palette and radius controls do not recolor this
-                    package. Edit the installed source to customize its design.
-                  </p>
-                )}
-                {active.libraryId && (
-                  <p className="muted">
-                    Local interactions are included. Export React, SwiftUI or Compose, or integrate
-                    through Projects to keep them. Edit the exported source to customize behavior.
-                  </p>
-                )}
-                {active.feature && (
-                  <p className="muted">
-                    Full-stack package · {(active.feature.bytes / 1024).toFixed(1)} KB ·{' '}
-                    {active.feature.spec.actions.length} defined actions
-                  </p>
-                )}
-                <button className="fit-link" onClick={() => setPage('Projects')}>
-                  <Folder size={16} />
-                  Check project fit
-                  <ArrowRight size={15} />
-                </button>
-                <details className="quality">
-                  <summary>
-                    Code & evidence{' '}
-                    <span>
-                      {active.libraryId
-                        ? `${(new TextEncoder().encode(code).length / 1024).toFixed(1)} KB`
-                        : quality
-                          ? `${(quality.bytes / 1024).toFixed(1)} KB`
-                          : ''}
-                    </span>
-                  </summary>
-                  <p>{active.evidence}</p>
-                  <p>
-                    {active.libraryId
-                      ? 'Selected React component and shared styles · no new dependencies'
-                      : `${quality?.elements} elements · no component dependencies`}
-                  </p>
-                  <ul>
-                    {quality?.issues.map((i) => (
-                      <li key={i}>{i}</li>
-                    ))}
-                  </ul>
-                  <p className="source-url">{active.source}</p>
-                </details>
-              </aside>
-            </div>
-            {active.feature && (
+            <Suspense fallback={<p role="status">Loading capture editor…</p>}>
+              <CaptureEditor
+                model={workflow}
+                theme={theme}
+                busy={busy}
+                library={library}
+                open={open}
+                pick={pick}
+                applyEdit={applyEdit}
+                copy={copy}
+                changeTheme={changeTheme}
+                save={save}
+                scored={scored}
+                setPage={setPage}
+                setError={setError}
+              />
+            </Suspense>
+            {active.feature && !building && (
               <div ref={workingPreview} tabIndex={-1} aria-label="Test component behavior">
                 <Suspense fallback={<p role="status">Loading working preview…</p>}>
                   <WorkingPreview
@@ -1045,8 +547,15 @@ export default function App() {
                     item={active}
                     theme={theme}
                     onBuilt={(feature) => {
-                      if (save({ ...active, feature }))
-                        notify('Frontend, backend and behavior saved to clipboard.');
+                      if (save({ ...active, feature })) {
+                        setBuilding(false);
+                        requestAnimationFrame(() => {
+                          const next = document.querySelector<HTMLElement>('.component-journey');
+                          next?.focus({ preventScroll: true });
+                          next?.scrollIntoView({ block: 'start' });
+                        });
+                        notify('Saving frontend, backend and behavior to Library…');
+                      }
                     }}
                   />
                 </div>
@@ -1068,13 +577,13 @@ export default function App() {
         )}
         {page === 'Clipboard' && (
           <>
-            <div className="intro">
-              <h2>Collect once. Create again.</h2>
-              <p>Drag a saved component onto the workbench, or open it to adapt.</p>
+            <p className="library-guidance">Open to refine. Fit &amp; install to reuse.</p>
+            <div className="library-status-row">
+              <LibrarySync />
+              <ExtensionPairing />
             </div>
-            <LibrarySync />
-            <ExtensionPairing />
             <Clipboard
+              onCapture={() => setPage('Browser')}
               items={library}
               onOpen={open}
               onDelete={remove}
@@ -1097,7 +606,7 @@ export default function App() {
               theme={theme}
               onApply={(html, feature) => {
                 setActive({ ...active, html, feature });
-                notify('Copy updated. Save to clipboard to keep it.');
+                notify('Copy updated. Save to Library to keep it.');
               }}
             />
           </Suspense>
@@ -1214,7 +723,7 @@ export default function App() {
         )}
         <footer className="app-footer">
           <span>Built to be reused.</span>
-          <span>Local clipboard · Native capture · Project integration</span>
+          <span>Capture · Library · Project integration</span>
         </footer>
       </main>
       <AgentHelper
@@ -1225,32 +734,34 @@ export default function App() {
         onAction={agentAction}
       />
       {capture && (
-        <CaptureDialog
-          initialTab={capture}
-          initialImage={browserImage?.image}
-          initialDescription={
-            browserImage ? `Reconstruct the visible component from ${browserImage.source}.` : ''
-          }
-          onClose={() => {
-            setCapture(null);
-            setBrowserImage(null);
-          }}
-          onCapture={(r) =>
-            captured(
-              browserImage
-                ? {
-                    ...r,
-                    items: r.items.map((i) => ({
-                      ...i,
-                      source: browserImage.source,
-                      referenceImage: browserImage.image,
-                    })),
-                  }
-                : r,
-            )
-          }
-          onImport={importItems}
-        />
+        <Suspense fallback={<p role="status">Loading capture…</p>}>
+          <CaptureDialog
+            initialTab={capture}
+            initialImage={browserImage?.image}
+            initialDescription={
+              browserImage ? `Reconstruct the visible component from ${browserImage.source}.` : ''
+            }
+            onClose={() => {
+              setCapture(null);
+              setBrowserImage(null);
+            }}
+            onCapture={(r) =>
+              captured(
+                browserImage
+                  ? {
+                      ...r,
+                      items: r.items.map((i) => ({
+                        ...i,
+                        source: browserImage.source,
+                        referenceImage: browserImage.image,
+                      })),
+                    }
+                  : r,
+              )
+            }
+            onImport={importItems}
+          />
+        </Suspense>
       )}
       {message && (
         <div className="toast" role="status">

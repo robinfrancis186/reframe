@@ -164,7 +164,7 @@ export default function Connections({
             <li>Create a named connection with the permissions it needs.</li>
             <li>Add the generated MCP configuration to your local assistant.</li>
             <li>
-              Ask it to find, capture or build a component, then save to Reframe’s shared clipboard.
+              Ask it to find, capture or build a component, then save to Reframe’s shared inbox.
             </li>
             <li>Review the result here, import it, and use Projects to install it.</li>
           </ol>
@@ -280,10 +280,10 @@ export default function Connections({
       <section className="panel">
         <div className="connection-heading">
           <div>
-            <h2>Shared clipboard</h2>
+            <h2>Shared inbox</h2>
             <p className="muted">
-              Separate from your private browser clipboard. Imported items keep their complete
-              behavior package.
+              Separate from your private Library. Imported items keep their complete behavior
+              package.
             </p>
           </div>
           <button
@@ -300,7 +300,7 @@ export default function Connections({
             Share selected component
           </button>
         </div>
-        <p className="muted">Selected in Studio: {active.name}</p>
+        <p className="muted">Selected in the editor: {active.name}</p>
         {!state?.inbox.length ? (
           <p className="connection-empty">
             Nothing shared yet. Save a result from your assistant, or share the selected component.
@@ -331,11 +331,11 @@ export default function Connections({
                     onClick={() => {
                       if (onSave({ ...entry.item, id: 'shared-' + crypto.randomUUID() }))
                         setMessage(
-                          'Imported as a new clipboard item. Open Projects to check its fit and source.',
+                          'Imported as a new Library item. Open Projects to check its fit and source.',
                         );
                     }}
                   >
-                    Import to clipboard
+                    Import to Library
                   </button>
                   <button
                     disabled={busy}
@@ -343,9 +343,7 @@ export default function Connections({
                     onClick={() =>
                       void task(async () => {
                         await api('/api/connections/remove', { id: entry.id });
-                        setMessage(
-                          'Removed from the shared inbox. Private clipboard copies remain.',
-                        );
+                        setMessage('Removed from the shared inbox. Private Library copies remain.');
                       })
                     }
                   >

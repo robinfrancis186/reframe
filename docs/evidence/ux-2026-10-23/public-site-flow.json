@@ -1,0 +1,24 @@
+{
+  "marks": {
+    "durableCapture": 5630,
+    "installedAndRendered": 14860
+  },
+  "errors": [],
+  "name": "This domain is for use in documentation examples without needing permission. Thi",
+  "fidelity": {
+    "score": 100,
+    "grade": "Close match",
+    "fitted": true,
+    "reference": {
+      "width": 416,
+      "height": 76
+    },
+    "rendered": {
+      "width": 416,
+      "height": 76
+    },
+    "differing": 0,
+    "checkedAt": "2026-10-23T10:46:13.403Z"
+  },
+  "url": "http://127.0.0.1:54022/"
+}

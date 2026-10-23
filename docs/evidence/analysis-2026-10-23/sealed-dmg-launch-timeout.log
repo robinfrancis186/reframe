@@ -1,0 +1,35 @@
+Analysis timings: []
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+electron.launch: Timeout 60000ms exceeded.
+Call log:
+[2m  - <launching> /tmp/reframe-release-check/Reframe.app/Contents/MacOS/Reframe --inspect=0 --remote-debugging-port=0 --user-data-dir=/var/folders/cl/krw8r1cs1wvbqgd9thdtlntc0000gn/T/reframe-ux-electron-profile-XzzKYd[22m
+[2m  - <launched> pid=89391[22m
+[2m  - [pid=89391][err] Debugger listening on ws://127.0.0.1:60666/ed06ccf3-da88-4c45-95b3-d67c1a0dde33[22m
+[2m  - [pid=89391][err] For help, see: https://nodejs.org/learn/getting-started/debugging[22m
+[2m  - <ws connecting> ws://127.0.0.1:60666/ed06ccf3-da88-4c45-95b3-d67c1a0dde33[22m
+[2m  - [pid=89391][err] Debugger attached.[22m
+[2m  - <ws connected> ws://127.0.0.1:60666/ed06ccf3-da88-4c45-95b3-d67c1a0dde33[22m
+[2m  - [pid=89391][err][22m
+[2m  - [pid=89391][err] DevTools listening on ws://127.0.0.1:60670/devtools/browser/85dc1a5a-d52e-4519-9adf-f9a6ddc642af[22m
+[2m  - <ws connecting> ws://127.0.0.1:60670/devtools/browser/85dc1a5a-d52e-4519-9adf-f9a6ddc642af[22m
+
+    at async file:///Users/robinfrancis/Documents/ChatGPT/devinhack/scripts/verify-desktop.mjs:45:9 {
+  log: [
+    '  - <launching> /tmp/reframe-release-check/Reframe.app/Contents/MacOS/Reframe --inspect=0 --remote-debugging-port=0 --user-data-dir=/var/folders/cl/krw8r1cs1wvbqgd9thdtlntc0000gn/T/reframe-ux-electron-profile-XzzKYd',
+    '  - <launched> pid=89391',
+    '  - [pid=89391][err] Debugger listening on ws://127.0.0.1:60666/ed06ccf3-da88-4c45-95b3-d67c1a0dde33',
+    '  - [pid=89391][err] For help, see: https://nodejs.org/learn/getting-started/debugging',
+    '  - <ws connecting> ws://127.0.0.1:60666/ed06ccf3-da88-4c45-95b3-d67c1a0dde33',
+    '  - [pid=89391][err] Debugger attached.',
+    '  - <ws connected> ws://127.0.0.1:60666/ed06ccf3-da88-4c45-95b3-d67c1a0dde33',
+    '  - [pid=89391][err]',
+    '  - [pid=89391][err] DevTools listening on ws://127.0.0.1:60670/devtools/browser/85dc1a5a-d52e-4519-9adf-f9a6ddc642af',
+    '  - <ws connecting> ws://127.0.0.1:60670/devtools/browser/85dc1a5a-d52e-4519-9adf-f9a6ddc642af'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v24.11.1

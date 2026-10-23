@@ -145,7 +145,7 @@ export default function ExtensionPairing() {
         <p>
           The Reframe Picker extension saves components from any tab you have open, including
           signed-in pages and sites that block automated browsers. Captures are sanitized, repaired
-          and scored like picks in Studio, then appear here.
+          and scored like picks in Capture, then appear here.
         </p>
         {bridge ? (
           <div className="organise-actions">

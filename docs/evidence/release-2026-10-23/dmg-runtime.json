@@ -1,0 +1,81 @@
+{
+  "stagingUnavailable": true,
+  "origin": "http://127.0.0.1:5176",
+  "security": {
+    "nodeIntegration": false,
+    "sandbox": true,
+    "contextIsolation": true
+  },
+  "rendererNodeType": "undefined",
+  "errors": [],
+  "ownedProcesses": [
+    {
+      "pid": 52583,
+      "parent": 52581,
+      "command": "/tmp/reframe-dmg-inspect/Reframe.app/Contents/MacOS/Reframe --inspect=0 --remote-debugging-port=0 --user-data-dir=/tmp/reframe-dmg-flow-profile"
+    },
+    {
+      "pid": 52584,
+      "parent": 52583,
+      "command": "/private/tmp/reframe-dmg-inspect/Reframe.app/Contents/Frameworks/Reframe Helper.app/Contents/MacOS/Reframe Helper --type=gpu-process --gpu-recent-crash-count=0 --user-data-dir=/private/tmp/reframe-dmg-flow-profile --gpu-preferences=WAAAAAAAAAAgAQAEAAAAAAAAAAAAAGAAQAAAAAAAAAADAAAAAAAAADgAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAKAAAAAAAAAAoAAAAAAAAAAgAAAAAAAAADAAAAAEAAAAAAAAAAAAAAAgAAAAAAAAACAAAAAAAAAA= --shared-files --field-trial-handle=1718379636,r,12882778128331151742,3344084864575041285,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma,ThrottleResizeIpc --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,12065157040805688414,8854419483660248980,4 --trace-process-track-uuid=3190708988185955192 --seatbelt-client=36"
+    },
+    {
+      "pid": 52585,
+      "parent": 52583,
+      "command": "/private/tmp/reframe-dmg-inspect/Reframe.app/Contents/Frameworks/Reframe Helper.app/Contents/MacOS/Reframe Helper --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-GB --service-sandbox-type=network --user-data-dir=/private/tmp/reframe-dmg-flow-profile --shared-files --field-trial-handle=1718379636,r,12882778128331151742,3344084864575041285,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma,ThrottleResizeIpc --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,12065157040805688414,8854419483660248980,4 --trace-process-track-uuid=3190708989122997041 --seatbelt-client=42"
+    },
+    {
+      "pid": 52586,
+      "parent": 52583,
+      "command": "/private/tmp/reframe-dmg-inspect/Reframe.app/Contents/Frameworks/Reframe Helper (Renderer).app/Contents/MacOS/Reframe Helper (Renderer) --type=renderer --user-data-dir=/private/tmp/reframe-dmg-flow-profile --app-path=/private/tmp/reframe-dmg-inspect/Reframe.app/Contents/Resources/app --enable-sandbox --allow-file-access-from-files --remote-debugging-port=0 --lang=en-GB --num-raster-threads=4 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --enable-main-frame-before-activation --renderer-client-id=4 --launch-time-ticks=964064482756 --shared-files --field-trial-handle=1718379636,r,12882778128331151742,3344084864575041285,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma,ThrottleResizeIpc --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,12065157040805688414,8854419483660248980,4 --trace-process-track-uuid=3190708990060038890 --seatbelt-client=63"
+    },
+    {
+      "pid": 52587,
+      "parent": 52583,
+      "command": "/private/tmp/reframe-dmg-inspect/Reframe.app/Contents/Resources/reframe-runtime/node /private/tmp/reframe-dmg-inspect/Reframe.app/Contents/Resources/app/server/index.js"
+    },
+    {
+      "pid": 52589,
+      "parent": 52587,
+      "command": "/private/tmp/reframe-dmg-inspect/Reframe.app/Contents/Resources/reframe-runtime/chromium/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,AvoidCorsURLLoaderRestartOnRedirect,Translate,AutoDeElevate,OptimizationHints,NetworkTimeServiceQuerying,AimEnabled,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --proxy-server=http://127.0.0.1:52461 --proxy-bypass-list=<-loopback> --proxy-bypass-list=<-loopback> --force-webrtc-ip-handling-policy=disable_non_proxied_udp --disable-quic --user-data-dir=/tmp/playwright_chromiumdev_profile-Ya5mDF --remote-debugging-pipe --no-startup-window"
+    },
+    {
+      "pid": 52598,
+      "parent": 52589,
+      "command": "/private/tmp/reframe-dmg-inspect/Reframe.app/Contents/Resources/reframe-runtime/chromium/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/156.0.8078.4/Helpers/Google Chrome for Testing Helper (GPU).app/Contents/MacOS/Google Chrome for Testing Helper (GPU) --type=gpu-process --gpu-recent-crash-count=0 --disable-breakpad --headless --enable-unsafe-swiftshader --noerrdialogs --user-data-dir=/tmp/playwright_chromiumdev_profile-Ya5mDF --start-stack-profiler --gpu-preferences=WAAAAAAAAAAgAAAEAAAAAAAAAAAAAGAAQAAAAAAAAAADAAAAAAAAADgAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAKAAAAAAAAAAoAAAAAAAAAAgAAAAAAAAADAAAAAEAAAAAAAAAAAAAAAgAAAAAAAAACAAAAAAAAAA= --shared-files --field-trial-handle=1718379636,r,14026246430948900330,6312428395013023055,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AimEnabled,AutoDeElevate,AvoidCorsURLLoaderRestartOnRedirect,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1935764596,r,4627156160436026511,13531152042573661441,4 --trace-process-track-uuid=3190708988185955192 --seatbelt-client=27"
+    },
+    {
+      "pid": 52599,
+      "parent": 52589,
+      "command": "/private/tmp/reframe-dmg-inspect/Reframe.app/Contents/Resources/reframe-runtime/chromium/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/156.0.8078.4/Helpers/Google Chrome for Testing Helper.app/Contents/MacOS/Google Chrome for Testing Helper --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-GB --service-sandbox-type=network --mute-audio --disable-quic --noerrdialogs --user-data-dir=/tmp/playwright_chromiumdev_profile-Ya5mDF --start-stack-profiler --shared-files --field-trial-handle=1718379636,r,14026246430948900330,6312428395013023055,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AimEnabled,AutoDeElevate,AvoidCorsURLLoaderRestartOnRedirect,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1935764596,r,4627156160436026511,13531152042573661441,4 --trace-process-track-uuid=3190708989122997041 --seatbelt-client=30"
+    },
+    {
+      "pid": 52600,
+      "parent": 52589,
+      "command": "/private/tmp/reframe-dmg-inspect/Reframe.app/Contents/Resources/reframe-runtime/chromium/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/156.0.8078.4/Helpers/Google Chrome for Testing Helper.app/Contents/MacOS/Google Chrome for Testing Helper --type=utility --utility-sub-type=storage.mojom.StorageService --lang=en-GB --service-sandbox-type=service --mute-audio --disable-quic --noerrdialogs --user-data-dir=/tmp/playwright_chromiumdev_profile-Ya5mDF --shared-files --field-trial-handle=1718379636,r,14026246430948900330,6312428395013023055,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AimEnabled,AutoDeElevate,AvoidCorsURLLoaderRestartOnRedirect,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1935764596,r,4627156160436026511,13531152042573661441,4 --trace-process-track-uuid=3190708990060038890 --seatbelt-client=32"
+    },
+    {
+      "pid": 52604,
+      "parent": 52589,
+      "command": "/private/tmp/reframe-dmg-inspect/Reframe.app/Contents/Resources/reframe-runtime/chromium/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/156.0.8078.4/Helpers/Google Chrome for Testing Helper (Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Renderer) --type=renderer --top-chrome-webui --noerrdialogs --user-data-dir=/tmp/playwright_chromiumdev_profile-Ya5mDF --start-stack-profiler --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --lang=en-GB --num-raster-threads=4 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --enable-main-frame-before-activation --renderer-client-id=6 --launch-time-ticks=964085078823 --shared-files --field-trial-handle=1718379636,r,14026246430948900330,6312428395013023055,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AimEnabled,AutoDeElevate,AvoidCorsURLLoaderRestartOnRedirect,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1935764596,r,4627156160436026511,13531152042573661441,4 --trace-process-track-uuid=3190708991934122588 --seatbelt-client=84"
+    },
+    {
+      "pid": 52606,
+      "parent": 52589,
+      "command": "/private/tmp/reframe-dmg-inspect/Reframe.app/Contents/Resources/reframe-runtime/chromium/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/156.0.8078.4/Helpers/Google Chrome for Testing Helper (Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Renderer) --type=renderer --noerrdialogs --user-data-dir=/tmp/playwright_chromiumdev_profile-Ya5mDF --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --lang=en-GB --num-raster-threads=4 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --enable-main-frame-before-activation --renderer-client-id=7 --launch-time-ticks=964085797863 --shared-files --field-trial-handle=1718379636,r,14026246430948900330,6312428395013023055,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AimEnabled,AutoDeElevate,AvoidCorsURLLoaderRestartOnRedirect,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1935764596,r,4627156160436026511,13531152042573661441,4 --trace-process-track-uuid=3190708992871164437 --seatbelt-client=84"
+    }
+  ],
+  "persistedAfterQuit": {
+    "revision": 5,
+    "items": 6,
+    "newest": "This domain is for use in documentation examples without needing permission. Thi",
+    "source": "https://example.com/",
+    "fidelity": 100
+  },
+  "remainingMountedAppProcesses": [],
+  "indexBeforeFinalCommit": {
+    "libraryItems": 6,
+    "newest": "The Free Encyclopedia",
+    "fidelity": 100
+  }
+}

@@ -62,7 +62,7 @@ export function fontFaces(css) {
         weight: (body.match(/font-weight\s*:\s*([^;}]+)/i)?.[1] || '400').trim(),
         style: /font-style\s*:\s*(?:italic|oblique)/i.test(body) ? 'italic' : 'normal',
         src,
-        embedded: src.startsWith('data:font/'),
+        embedded: src.startsWith('data:font/') || src.startsWith('reframe-font:'),
       };
     })
     .filter(Boolean);
