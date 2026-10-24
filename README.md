@@ -27,7 +27,7 @@ OpenAI is optional. Add `OPENAI_API_KEY` to your local `.env` for AI features, o
 5. Open **Export & code options** for downloads. Export **Faithful** React/CSS/HTML, or choose **Clean & responsive** in the editor's Code view. Clean mode uses semantic names and supported React interactions, with measured visual differences.
 6. Choose **Fit & install → Use demo app**, choose **Review installation**, check the behavior and file summary, allow the listed changes, then **Install component**. Source comparisons remain available on demand. **Launch demo app** builds the actual destination and opens its UI and backend inside the receipt. No terminal is needed; demo records persist across restarts. You can also connect your own project folder and run it with its normal commands. Guarded undo remains available.
 
-Source images can remain online. Captured fonts and artwork belong to their owners; use the bundled open fonts when appropriate. Faithful appearance, reconstructed interactions and backend integration have separate validation.
+Supported public raster images, fonts and PDFs can be bundled with website packages. **Ready to reuse** lists remaining external dependencies and offers a source-blocked check. Older captures can use **Bundle supported assets** before saving. Unsupported or oversized assets may remain online. Captured fonts and artwork belong to their owners; use the bundled open fonts when appropriate. Faithful appearance, reconstructed interactions and backend integration have separate validation.
 
 ## Pick in Chrome
 
@@ -68,3 +68,7 @@ node scripts/verify-desktop.mjs
 Verification checks formatting, linting, client/server types, automated workflows and all three web builds. Benchmarks cover 150, 500 and 1,000 realistic captures; the report distinguishes JavaScript heap from browser-process memory.
 
 See the [current release assessment](docs/RELEASE_ASSESSMENT_2026-10-23.md), [technical reference](docs/REFERENCE.md), [previous product audit](docs/PRODUCT_AUDIT_2026-10-22.md) and [verification history](docs/VERIFICATION.md). Public multiuser hosting and physical Android/iOS runtime validation are separate from this local macOS release.
+
+## Architecture and improvement roadmap
+
+Browse the [reconciled Graphify map and evidence](docs/architecture/graphify/README.md) and the [prioritized improvement report](docs/GRAPHIFY_IMPROVEMENTS_2026-10-23.md). Local credentials, saved user Libraries, build artifacts and working Graphify caches are excluded from this repository.

@@ -1,0 +1,41 @@
+[graphify] MultiDiGraph edge-collapse diagnostic
+input: <in-memory>
+input_stage: provided JSON (normal graph.json is post-build)
+effective_directed: <direct-call>
+nodes: 2231
+unverified_code_nodes: 0
+raw_edges: 6978
+valid_candidate_edges: 6978
+missing_endpoint_edges: 0
+dangling_endpoint_edges: 0
+external_reference_edges: 0
+self_loop_edges: 59
+exact_duplicate_edges: 0
+directed_unique_endpoint_pairs: 5300
+directed_same_endpoint_collapsed_edges: 1678
+undirected_unique_endpoint_pairs: 5293
+undirected_same_endpoint_collapsed_edges: 1685
+same_endpoint_group_count: 1495
+relation_variant_groups: 230
+source_file_variant_groups: 0
+source_location_variant_groups: 1378
+context_variant_groups: 154
+post_build_graph_type: DiGraph
+post_build_edges: 5297
+producer_suppression_sites: 12
+producer_suppression_examples:
+  - L1813 seen_ids arity=unknown
+  - L2377 seen_ids arity=unknown
+  - L2379 seen_doc_refs arity=unknown
+  - L3046 seen_ids arity=unknown
+  - L3193 seen_ids arity=unknown
+  - L4203 seen_keys arity=unknown
+  - L4389 seen_keys arity=unknown
+  - L7641 seen_ids arity=unknown
+examples:
+  - examples_integrated_app_src_app -> ref_react edges=5 relations=['imports_from'] locations=['L11', 'L19', 'L23', 'L25', 'L9'] contexts=['import']
+  - server_mcp_stdio -> ref_modelcontextprotocol_sdk edges=5 relations=['imports_from'] locations=['L1', 'L2', 'L3', 'L4', 'L5'] contexts=['import']
+  - src_app_app -> src_app_app_notify edges=4 relations=['calls', 'contains', 'indirect_call'] locations=['L110', 'L149', 'L557', 'L63'] contexts=['', 'argument', 'call']
+  - server_features_website_websiteclient -> server_features_website_websiteclient_render edges=4 relations=['calls', 'contains', 'indirect_call'] locations=['L29', 'L327', 'L341', 'L342'] contexts=['', 'argument', 'call']
+  - src_browsertesting_browsertesting_run -> src_browsertesting_browsertesting_run_event edges=4 relations=['calls', 'contains', 'indirect_call'] locations=['L109', 'L112', 'L24', 'L88'] contexts=['', 'argument', 'call']
+note: normal graph.json is post-build; raw producer loss must be measured earlier.

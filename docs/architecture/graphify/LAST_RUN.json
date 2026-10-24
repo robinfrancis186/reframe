@@ -1,0 +1,14 @@
+{
+  "status": "updated_and_reconciled",
+  "date": "2026-10-23T16:39:10.936078+00:00",
+  "nodes": 2231,
+  "evidence_links": 6978,
+  "previous_nodes_retained": 1437,
+  "historical_nodes": 215,
+  "reference_stubs": 9,
+  "missing_endpoints": 0,
+  "links_lost_on_export": 0,
+  "current_analysis_nodes": 1985,
+  "current_analysis_connections": 4255,
+  "token_usage": null
+}
