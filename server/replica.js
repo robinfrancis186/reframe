@@ -1,6 +1,6 @@
 import postcss from 'postcss';
 import { load } from 'cheerio';
-import { bundleImages, safeImageData } from './portable-assets.js';
+import { bundleImages, safeImageData, safeSvgData } from './portable-assets.js';
 import sanitize from 'sanitize-html';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -19,6 +19,24 @@ const q = (text) =>
   );
 const styleAttribute = (value) =>
   load(replicaHTML('<div style="' + q(value) + '"></div>'), null, false)('div').attr('style') || '';
+// SVG presentation attributes shared by shapes, groups and symbols (icons often depend on fill-rule or transform).
+const paint = [
+  'fill',
+  'fill-rule',
+  'fill-opacity',
+  'clip-rule',
+  'clip-path',
+  'stroke',
+  'stroke-width',
+  'stroke-linecap',
+  'stroke-linejoin',
+  'stroke-miterlimit',
+  'stroke-dasharray',
+  'stroke-dashoffset',
+  'stroke-opacity',
+  'opacity',
+  'transform',
+];
 const tags = [
   'main',
   'header',
@@ -95,6 +113,8 @@ export function pageContext(page) {
   if (Number.isInteger(page.viewport) && page.viewport >= 200 && page.viewport <= 4000)
     context.viewport = page.viewport;
   if (Number.isFinite(page.rem) && page.rem >= 4 && page.rem <= 64) context.rem = page.rem;
+  if (Number.isFinite(page.container) && page.container >= 1 && page.container <= 4000)
+    context.container = page.container;
   return context;
 }
 export function replicaHTML(html) {
@@ -110,7 +130,8 @@ export function replicaHTML(html) {
   return sanitize(html, {
     allowedTags: [...sanitize.defaults.allowedTags, ...tags],
     allowedAttributes: {
-      '*': ['id', 'class', 'style', 'title', 'role', 'aria-*', 'data-rf-*', 'hidden', 'tabindex'],
+      // Site data-* attributes are inert without scripts and are often what its selectors target ([data-state=open]).
+      '*': ['id', 'class', 'style', 'title', 'role', 'aria-*', 'data-*', 'hidden', 'tabindex'],
       a: ['href', 'download', 'target', 'rel'],
       img: ['src', 'alt', 'width', 'height', 'loading', 'decoding'],
       input: [
@@ -132,28 +153,20 @@ export function replicaHTML(html) {
       button: ['type', 'disabled'],
       label: ['for'],
       details: ['open'],
-      svg: [
-        'xmlns',
-        'width',
-        'height',
-        'viewBox',
-        'fill',
-        'stroke',
-        'stroke-width',
-        'stroke-linecap',
-        'stroke-linejoin',
-      ],
-      path: ['d', 'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin'],
-      circle: ['cx', 'cy', 'r', 'fill'],
-      rect: ['x', 'y', 'width', 'height', 'rx', 'ry', 'fill'],
-      line: ['x1', 'y1', 'x2', 'y2'],
-      polyline: ['points'],
-      polygon: ['points'],
-      ellipse: ['cx', 'cy', 'rx', 'ry'],
-      g: ['fill', 'stroke', 'clip-path'],
-      use: ['href'],
-      linearGradient: ['x1', 'x2', 'y1', 'y2'],
-      radialGradient: ['cx', 'cy', 'r'],
+      svg: ['xmlns', 'width', 'height', 'viewBox', 'preserveAspectRatio', ...paint],
+      symbol: ['viewBox', 'preserveAspectRatio', ...paint],
+      path: ['d', ...paint],
+      circle: ['cx', 'cy', 'r', ...paint],
+      rect: ['x', 'y', 'width', 'height', 'rx', 'ry', ...paint],
+      line: ['x1', 'y1', 'x2', 'y2', ...paint],
+      polyline: ['points', ...paint],
+      polygon: ['points', ...paint],
+      ellipse: ['cx', 'cy', 'rx', 'ry', ...paint],
+      g: paint,
+      use: ['href', 'x', 'y', 'width', 'height', ...paint],
+      clipPath: ['clipPathUnits', ...paint],
+      linearGradient: ['x1', 'x2', 'y1', 'y2', 'gradientUnits', 'gradientTransform'],
+      radialGradient: ['cx', 'cy', 'r', 'fx', 'fy', 'gradientUnits', 'gradientTransform'],
       stop: ['offset', 'stop-color', 'stop-opacity'],
     },
     parser: { lowerCaseAttributeNames: false, lowerCaseTags: false },
@@ -163,7 +176,8 @@ export function replicaHTML(html) {
     allowedStyles: { '*': styles },
     transformTags: {
       img: (tag, attrs) => {
-        if (attrs.src?.startsWith('data:') && !safeImageData(attrs.src)) delete attrs.src;
+        if (attrs.src?.startsWith('data:') && !safeImageData(attrs.src) && !safeSvgData(attrs.src))
+          delete attrs.src;
         return { tagName: tag, attribs: attrs };
       },
       a: (tag, attrs) => ({ tagName: tag, attribs: { ...attrs, rel: 'noopener noreferrer' } }),
@@ -181,7 +195,7 @@ export function replicaCSS(css) {
   return css
     .replace(/@import\s+(?:[^;{}]|\([^)]*\))*;/gi, '')
     .replace(/url\(\s*(['"]?)(.*?)\1\s*\)/gi, (all, quote, url) => {
-      if (url.startsWith('#') || safeImageData(url)) return all;
+      if (url.startsWith('#') || safeImageData(url) || safeSvgData(url)) return all;
       if (/^data:font\/(?:woff2?|ttf);base64,[A-Za-z0-9+/=]+$/.test(url)) return all;
       try {
         const u = referenceUrl(url),
@@ -294,7 +308,12 @@ async function recoverStylesheets(raw, $, resource) {
           }
         });
       });
-      parts.push(sheet.toString());
+      const media = String(raw.sheetMedia?.[url] || '');
+      parts.push(
+        media && media !== 'all' && /^[\w\s(),:.-]+$/.test(media)
+          ? `@media ${media}{\n${sheet.toString()}\n}`
+          : sheet.toString(),
+      );
     } catch {
       unavailable.push(url);
     }
@@ -302,12 +321,70 @@ async function recoverStylesheets(raw, $, resource) {
   return { css: parts.length ? '\n' + parts.join('\n') : '', unavailable };
 }
 
+/**
+ * Large design systems declare thousands of custom properties on :root and theme selectors, which all match the
+ * captured <html>. Only variables the capture uses (directly, or through other used variables) are kept, in the
+ * stylesheet and in the inherited root style.
+ */
+export function pruneVariables(css, rootStyle = '', html = '') {
+  let sheet;
+  try {
+    sheet = postcss.parse(css);
+  } catch {
+    return { css, rootStyle };
+  }
+  const refs = (text) => [...String(text).matchAll(/var\(\s*(--[\w-]+)/g)].map((m) => m[1]);
+  const values = new Map(),
+    used = new Set(refs(html)),
+    queue = [...used];
+  const use = (text) => {
+    for (const name of refs(text))
+      if (!used.has(name)) {
+        used.add(name);
+        queue.push(name);
+      }
+  };
+  const define = (name, value) => {
+    if (!values.has(name)) values.set(name, []);
+    values.get(name).push(value);
+  };
+  sheet.walkDecls((decl) => {
+    if (decl.prop.startsWith('--')) define(decl.prop, decl.value);
+    else use(decl.value);
+  });
+  const root = rootStyle.split(/;(?=\s*-{0,2}[a-zA-Z][\w-]*\s*:)/).filter((d) => d.trim());
+  for (const d of root) {
+    const [prop, ...rest] = d.split(':');
+    if (prop.trim().startsWith('--')) define(prop.trim(), rest.join(':'));
+    else use(rest.join(':'));
+  }
+  while (queue.length) for (const value of values.get(queue.pop()) || []) use(value);
+  sheet.walkDecls((decl) => {
+    if (decl.prop.startsWith('--') && !used.has(decl.prop)) decl.remove();
+  });
+  sheet.walkRules((rule) => {
+    if (!rule.nodes.length) rule.remove();
+  });
+  sheet.walkAtRules((rule) => {
+    if (rule.nodes && !rule.nodes.length) rule.remove();
+  });
+  return {
+    css: sheet.toString(),
+    rootStyle: root
+      .filter((d) => {
+        const prop = d.split(':')[0].trim();
+        return !prop.startsWith('--') || used.has(prop);
+      })
+      .join(';'),
+  };
+}
+
 export async function prepareReplica(rawPages, { resource = referenceResource } = {}) {
   const attachments = [],
     warnings = [],
     pages = [];
   let css = '';
-  for (const raw of rawPages) {
+  for (let raw of rawPages) {
     const url = referenceUrl(raw.url).href,
       $ = load(raw.html, null, false);
     $('script,style,link,meta,base,iframe,object,embed,template,noscript,canvas').remove();
@@ -365,6 +442,15 @@ export async function prepareReplica(rawPages, { resource = referenceResource } 
         }
       }
     }
+    if (String(raw.css || '').length > 500000 && String(raw.css).length <= 6_000_000)
+      raw = {
+        ...raw,
+        ...pruneVariables(
+          raw.css,
+          typeof raw.rootStyle === 'string' ? raw.rootStyle : '',
+          String(raw.html || ''),
+        ),
+      };
     if (String(raw.css || '').length > 500000)
       throw new Error(
         'This selection carries more than 500 KB of styles. Pick a smaller region, or capture its sections separately.',

@@ -24,9 +24,12 @@ export function canScore(item) {
   );
 }
 
+// Copies are checked in a container as wide as the one the original had (see `container` in capture-page.js).
+const space = (page) =>
+  Number.isFinite(page.container) ? `body{width:${page.container}px;max-width:100%}` : '';
 function documentFor(site) {
   const page = site.pages[0];
-  return `<!doctype html><html lang="en" class="${page.htmlClass.replace(/"/g, '')}"><head><meta charset="utf-8"><style>${site.css.replace(/<\/style/gi, '')}html,body{margin:0;padding:0;background:${page.backdrop || '#ffffff'}}body{${(page.rootStyle || '').replace(/[<>]/g, '')}}</style></head><body>${page.html}</body></html>`;
+  return `<!doctype html><html lang="en" class="${page.htmlClass.replace(/"/g, '')}"><head><meta charset="utf-8"><style>${site.css.replace(/<\/style/gi, '')}html,body{margin:0;padding:0;background:${page.backdrop || '#ffffff'}}body{${(page.rootStyle || '').replace(/[<>]/g, '')}}${space(page)}</style></head><body>${page.html}</body></html>`;
 }
 
 // Runs inside a blank page: decodes both images, aligns them and scores 8×8 blocks.
@@ -275,9 +278,17 @@ async function findRepairs(tab, rules) {
             ),
             ...declarations,
           ];
+          // Width and height are snapshotted as computed values (auto, %, calc), not the laid-out pixels.
           const computed = getComputedStyle(el),
+            map = el.computedStyleMap?.(),
+            value = (property) =>
+              map && (property === 'width' || property === 'height')
+                ? String(map.get(property))
+                : computed.getPropertyValue(property).trim(),
             wrong = expected.filter(
-              ([property, value]) => !same(computed.getPropertyValue(property).trim(), value),
+              ([property, expected]) =>
+                !same(value(property), expected) &&
+                !same(computed.getPropertyValue(property).trim(), expected),
             );
           if (!wrong.length) continue;
           const block = wrong.map(([property, value]) => property + ':' + value).join(';');
@@ -421,14 +432,14 @@ export async function scoreFidelity(item, options = {}) {
 /** Scores exported code (scoped stylesheet and markup) against the reference, the same way as a saved capture. */
 /** @param {import('./contracts.js').RenderingOptions} options */
 export async function scoreExport(item, { css, markup, scope, fonts, rootSelector }, options = {}) {
-  const { browser, resource = referenceResource, state = 'default' } = options;
+  const { browser, resource = referenceResource, state = 'default', diff = false } = options;
   if (!canScore(item)) return null;
   const site = validateReplica(item.feature.spec.website),
     page = site.pages[0];
   const inline = css.replace(/url\("\.\/(fonts\/[\w.]+)"\)/g, (all, file) =>
     fonts[file] ? `url("data:font/${file.split('.').pop()};base64,${fonts[file]}")` : all,
   );
-  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>${inline.replace(/<\/style/gi, '')}html,body{margin:0;padding:0;background:${page.backdrop || '#ffffff'}}</style></head><body>${markup}</body></html>`;
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>${inline.replace(/<\/style/gi, '')}html,body{margin:0;padding:0;background:${page.backdrop || '#ffffff'}}${space(page)}</style></head><body>${markup}</body></html>`;
   const shot = await withDocument(html, page, { browser, resource }, async (tab) => {
     const root = tab.locator(rootSelector || `.${scope}-0`);
     if (state === 'hover') await root.hover();
@@ -446,11 +457,16 @@ export async function scoreExport(item, { css, markup, scope, fonts, rootSelecto
     }
     return shoot(tab, site, rootSelector || `.${scope}-0`);
   });
-  const { score, grade, fitted, reference, rendered, differing, checkedAt } = await measure(
-    browser,
-    item.referenceImage,
-    shot,
-    false,
-  );
-  return { score, grade, fitted, reference, rendered, differing, checkedAt };
+  const result = await measure(browser, item.referenceImage, shot, diff),
+    { score, grade, fitted, reference, rendered, differing, checkedAt } = result;
+  return {
+    score,
+    grade,
+    fitted,
+    reference,
+    rendered,
+    differing,
+    checkedAt,
+    ...(diff ? { diff: result.diff, renderedImage: result.renderedImage } : {}),
+  };
 }

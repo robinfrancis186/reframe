@@ -471,7 +471,11 @@ export class ReferenceBrowser {
       url: page.url(),
       dialog: entry.dialogInfo,
     });
-    const watchdog = setTimeout(() => void this.closeTab(id), 75000);
+    // Measuring every width and state renders and photographs the component nine times, so it gets longer.
+    const watchdog = setTimeout(
+      () => void this.closeTab(id),
+      action === 'capture' && variants === true ? 240000 : 75000,
+    );
     watchdog.unref();
     try {
       if (entry.dialog && action === 'snapshot') return paused();
@@ -688,13 +692,29 @@ export class ReferenceBrowser {
               document.head.append(style);
             });
             try {
+              // The whole element, also where it extends past the viewport (a tall footer or section).
+              const { clip, fullPage } = await page.evaluate(() => {
+                const r = document.querySelector('[data-rf-picked]').getBoundingClientRect(),
+                  fullPage =
+                    r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth;
+                return {
+                  fullPage,
+                  clip: {
+                    x: Math.max(0, r.x + (fullPage ? scrollX : 0)),
+                    y: Math.max(0, r.y + (fullPage ? scrollY : 0)),
+                    width: r.width,
+                    height: Math.min(r.height, 6000),
+                  },
+                };
+              });
               entry.selection.referenceImage =
                 'data:image/jpeg;base64,' +
                 (
                   await page.screenshot({
                     type: 'jpeg',
                     quality: 65,
-                    clip: entry.selection.bounds,
+                    clip: clip.width >= 1 && clip.height >= 1 ? clip : entry.selection.bounds,
+                    fullPage,
                     timeout: 5000,
                     animations: 'disabled',
                   })

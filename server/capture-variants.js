@@ -134,10 +134,30 @@ export async function captureVariants(entry, { resource }) {
         });
         let referenceImage;
         try {
+          // Same fractional crop as the main reference (an element screenshot rounds to whole pixels).
+          const { clip, fullPage } = await selected.evaluate((el) => {
+            const r = el.getBoundingClientRect(),
+              fullPage = r.bottom > innerHeight || r.right > innerWidth || r.top < 0;
+            return {
+              fullPage,
+              clip: {
+                x: r.x + (fullPage ? scrollX : 0),
+                y: r.y + (fullPage ? scrollY : 0),
+                width: r.width,
+                height: r.height,
+              },
+            };
+          });
           referenceImage =
             'data:image/jpeg;base64,' +
             (
-              await selected.screenshot({ type: 'jpeg', quality: 65, animations: 'disabled' })
+              await page.screenshot({
+                type: 'jpeg',
+                quality: 65,
+                animations: 'disabled',
+                fullPage,
+                clip,
+              })
             ).toString('base64');
         } finally {
           await page.evaluate(() => {

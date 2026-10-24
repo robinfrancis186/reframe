@@ -65,6 +65,7 @@ function candidates(rule) {
     (d) =>
       d.type === 'decl' &&
       !d.prop.startsWith('-') && // custom properties and vendor-prefixed properties are kept here
+      !/^(?:transition|animation)/.test(d.prop) && // motion is switched off in the test render, so not judged
       counts.get(d.prop) === 1, // repeated properties are fallbacks for other browsers
   );
 }
@@ -312,7 +313,8 @@ export async function minimizeCss(
     .replace(/url\("\.\/(fonts\/[\w.]+)"\)/g, (all, file) =>
       fonts[file] ? `url("data:font/${file.split('.').pop()};base64,${fonts[file]}")` : all,
     );
-  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><style id="rf-min">${inlined.replace(/<\/style/gi, '')}</style><style>html,body{margin:0;padding:0;background:${page.backdrop || '#ffffff'}}</style></head><body>${markup}</body></html>`;
+  // Transitions and animations are off: a removed declaration must show its effect at once, not mid-transition.
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><style id="rf-min">${inlined.replace(/<\/style/gi, '')}</style><style>html,body{margin:0;padding:0;background:${page.backdrop || '#ffffff'}}*,*::before,*::after{transition:none!important;animation:none!important}</style></head><body>${markup}</body></html>`;
 
   const removed = [];
   let tests = 0,

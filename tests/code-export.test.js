@@ -140,3 +140,15 @@ test(
     }
   },
 );
+
+test('rules that reach the page <html> by its classes keep only what children inherit', () => {
+  const { css } = scopeCss(
+    '.govuk-template{background:#f4f8fb;color:#0b0c0c}.govuk-template .card{color:red}',
+    'rfx',
+    16,
+    'govuk-template js-enabled',
+  );
+  assert.match(css, /\.rfx \.rfx-html\.govuk-template\s*\{\s*color:\s*#0b0c0c\s*\}/);
+  assert.doesNotMatch(css, /f4f8fb/, "the page's background does not paint the component");
+  assert.match(css, /\.rfx \.govuk-template \.card/, 'descendant rules are unchanged');
+});

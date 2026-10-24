@@ -167,9 +167,24 @@ function styleObject(style) {
 }
 
 /** Rewrites captured CSS so every rule applies only inside the wrapper, and moves embedded fonts to files. */
-export function scopeCss(css, scope, rem = 16) {
+export function scopeCss(css, scope, rem = 16, htmlClass = '') {
   const fonts = {},
-    root = postcss.parse(css);
+    root = postcss.parse(css),
+    htmlClasses = new Set(htmlClass.split(/\s+/).filter(Boolean));
+  // A rule that reaches the page's <html> by its classes (`.govuk-template`) styles the html wrapper, so it is
+  // treated as a page-root rule too.
+  const onHtml = (local) => {
+    const last = local.split(/[\s>+~]+/).pop() || '';
+    const classes = [...last.matchAll(/\.((?:\\.|[\w-])+)/g)].map((m) =>
+      m[1].replace(/\\(.)/g, '$1'),
+    );
+    return htmlClasses.size > 0 &&
+      classes.length > 0 &&
+      /^(?:\.(?:\\.|[\w-])+)+$/.test(last) &&
+      classes.every((c) => htmlClasses.has(c))
+      ? local.slice(0, local.length - last.length) + `.${scope}-html` + last
+      : local;
+  };
   const page = new RegExp(`\\.${scope}-(?:html|body)(?:[.#[:][^\\s>+~]*)?$`);
   root.walkRules((rule) => {
     if (rule.parent?.type === 'atrule' && /keyframes$/i.test(rule.parent.name)) return;
@@ -177,10 +192,10 @@ export function scopeCss(css, scope, rem = 16) {
       const local = selector
         .trim()
         .replace(/\[data-rf-rendered="(\d+)"\]/g, (_, n) => `.${scope}-${n}`)
-        .replace(/\[data-rf-shell\]/g, `.${scope}-shell`)
+        .replace(/\[data-rf-shell(-table)?\]/g, (_, table) => `.${scope}-shell${table || ''}`)
         .replace(/(^|[\s>+~(,])(?::root|html)(?=$|[\s>+~.#[:)])/g, `$1.${scope}-html`)
         .replace(/(^|[\s>+~(,])body(?=$|[\s>+~.#[:)])/g, `$1.${scope}-body`);
-      return `.${scope} ${local}`;
+      return `.${scope} ${onHtml(local)}`;
     });
     // Rules for the page's html/body now style the wrapper: keep what children inherit (type, color, variables), not
     // the page's own background, spacing or height.
@@ -219,17 +234,32 @@ export function scopeCss(css, scope, rem = 16) {
   return { css: root.toString(), fonts };
 }
 
+// The saved capture disables links to pages it does not include; exported code links to the original page again.
+function restoreLinks($) {
+  $('a[data-rf-unavailable]').each((_, el) => {
+    const a = $(el);
+    if (!a.attr('href') && /^https?:\/\//.test(a.attr('data-rf-unavailable') || ''))
+      a.attr('href', a.attr('data-rf-unavailable'));
+    if (a.attr('title') === 'This page is outside the captured set.') a.removeAttr('title');
+  });
+  return $;
+}
+
 /** Converts sanitized capture markup to JSX, turning snapshot indexes into scoped class names. */
 export function toJsx(html, scope, indent = '          ', bindings = {}) {
-  const $ = load(html, null, false);
+  const $ = restoreLinks(load(html, null, false));
   const attributes = (el) => {
     const out = [],
       classes = [],
       bound = bindings[el.attribs?.['data-rf-rendered']] || {};
     for (const [name, value] of Object.entries(el.attribs || {})) {
       if (INTERNAL.test(name) || Object.hasOwn(bound, ATTRIBUTES[name] || name)) continue;
-      if (name === 'data-rf-rendered' || name === 'data-rf-shell') {
-        classes.push(`${scope}-${name === 'data-rf-shell' ? 'shell' : value}`);
+      if (name === 'data-rf-rendered') {
+        classes.push(`${scope}-${value}`);
+        continue;
+      }
+      if (name === 'data-rf-shell' || name === 'data-rf-shell-table') {
+        classes.push(`${scope}-${name.slice(8)}`);
         continue;
       }
       if (name === 'class') {
@@ -301,7 +331,7 @@ export function toJsx(html, scope, indent = '          ', bindings = {}) {
 
 /** Static HTML for the same markup, with snapshot indexes as scoped classes. */
 function toHtml(html, scope) {
-  const $ = load(html, null, false);
+  const $ = restoreLinks(load(html, null, false));
   $('*').each((_, el) => {
     if (el.type !== 'tag') return;
     for (const name of Object.keys(el.attribs)) if (INTERNAL.test(name)) $(el).removeAttr(name);
@@ -309,8 +339,11 @@ function toHtml(html, scope) {
     if (index !== undefined) {
       $(el).removeAttr('data-rf-rendered').addClass(`${scope}-${index}`);
     }
-    if ($(el).attr('data-rf-shell') !== undefined)
-      $(el).removeAttr('data-rf-shell').addClass(`${scope}-shell`);
+    for (const name of ['data-rf-shell', 'data-rf-shell-table'])
+      if ($(el).attr(name) !== undefined)
+        $(el)
+          .removeAttr(name)
+          .addClass(`${scope}-${name.slice(8)}`);
   });
   return $.html();
 }
@@ -331,7 +364,7 @@ export function exportComponentCode(item, { mode = 'faithful', names = {} } = {}
     page = site.pages[0],
     scope = scopeFor(item),
     name = componentName(item.name);
-  const scoped = scopeCss(site.css, scope, page.rem || 16),
+  const scoped = scopeCss(site.css, scope, page.rem || 16, page.htmlClass || ''),
     fonts = scoped.fonts;
   // The picked element sat at a page position (often fixed, absolute or sticky). As a component it joins the normal
   // flow of wherever it is placed; relative positioning keeps it the anchor for its own positioned children. !important

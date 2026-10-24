@@ -122,7 +122,17 @@ test('untrusted image data is validated and private redirected resources use pub
     safeImageData('data:image/png;base64,' + Buffer.from('<script>x</script>').toString('base64')),
     false,
   );
-  assert.doesNotMatch(replicaHTML('<img src="data:image/svg+xml;base64,PHN2Zz4=">'), /src=/);
+  // Self-contained SVG images are kept; scripted or externally referencing ones are not.
+  assert.match(replicaHTML('<img src="data:image/svg+xml;base64,PHN2Zz4=">'), /src=/);
+  for (const svg of [
+    '<svg onload="alert(1)"></svg>',
+    '<svg><script>alert(1)</script></svg>',
+    '<svg><image href="https://tracker.example/p.png"/></svg>',
+  ])
+    assert.doesNotMatch(
+      replicaHTML(`<img src="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}">`),
+      /src=/,
+    );
   assert.equal(
     replicaCSS('a{background:url(data:image/png;base64,PHN2Zz4=)}'),
     'a{background:none}',

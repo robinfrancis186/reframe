@@ -62,6 +62,8 @@ export async function reviewedExport(item, options = {}) {
     scope: code.scope,
     files: code.files,
     fonts: code.fonts,
+    markup: code.markup,
+    rootSelector: code.rootSelector,
     fidelity,
     mode,
     patterns: code.patterns || [],

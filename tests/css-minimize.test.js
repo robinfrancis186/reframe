@@ -163,3 +163,30 @@ test(
     }
   },
 );
+
+test(
+  'a rule on an element with a transition is judged by its final value',
+  { timeout: 60000 },
+  async () => {
+    const browser = new ReferenceBrowser();
+    try {
+      const css = `
+      .s .s-0 { display: block; height: 40px; background: rgb(200, 0, 0); transition: height 0.5s; }
+      @media (max-width: 600px) { .s .s-0 { height: 30px; } }`;
+      const result = await minimizeCss(
+        {
+          css,
+          markup:
+            '<div class="s"><div class="s-html"><div class="s-body"><div class="s-0"></div></div></div></div>',
+          scope: 's',
+          page,
+        },
+        { browser },
+      );
+      assert.match(result.css, /max-width: 600px\)\s*\{\s*\.s \.s-0\s*\{\s*height: 30px/);
+      assert.ok(decls(result.css, '.s .s-0').includes('transition:height 0.5s'), 'motion is kept');
+    } finally {
+      await browser.close();
+    }
+  },
+);

@@ -47,13 +47,36 @@ export function renderedSnapshot(selector) {
     return copy;
   };
   const clone = build(root);
+  // Icons drawn with <use href="#id"> point at a sprite elsewhere in the page; the referenced symbols are copied into
+  // a hidden, zero-size <svg> inside the capture so the icons still resolve.
+  const sprites = new Map();
+  for (const el of source)
+    if (el.localName === 'use') {
+      const ref = el.getAttribute('href') || el.getAttribute('xlink:href') || '';
+      const target = ref.startsWith('#') && el.getRootNode().getElementById?.(ref.slice(1));
+      if (target && !root.contains(target) && !sprites.has(ref)) sprites.set(ref, target);
+      if (ref.startsWith('#') && el.hasAttribute('xlink:href') && !el.hasAttribute('href'))
+        copies[source.indexOf(el)].setAttribute('href', ref);
+    }
+  if (sprites.size && root !== document.body) {
+    const holder = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    holder.setAttribute('width', '0');
+    holder.setAttribute('height', '0');
+    holder.setAttribute('aria-hidden', 'true');
+    holder.setAttribute('style', 'position:absolute;width:0;height:0;overflow:hidden');
+    for (const target of [...sprites.values()].slice(0, 200)) holder.append(target.cloneNode(true));
+    clone.append(holder);
+  }
   if (selector !== 'body' && source.length > 1200)
     throw new Error('Pick a smaller region with fewer than 1,200 elements.');
   for (let i = 0; i < source.length; i++) {
     const el = source[i],
       copy = copies[i];
     for (const attr of ['href', 'src'])
-      if (copy.hasAttribute(attr)) {
+      if (
+        copy.hasAttribute(attr) &&
+        !(attr === 'href' && el instanceof SVGElement && copy.getAttribute(attr).startsWith('#'))
+      ) {
         try {
           copy.setAttribute(
             attr,
@@ -86,6 +109,8 @@ export function renderedSnapshot(selector) {
       'letter-spacing',
       'text-align',
       'color-scheme',
+      'direction',
+      'writing-mode',
       ...(root === document.body ? ['background-color'] : []),
       ...[...computed].filter((p) => p.startsWith('--')),
     ];
@@ -96,15 +121,22 @@ export function renderedSnapshot(selector) {
   let css = '',
     missing = [],
     keyframes = [];
+  // A stylesheet's own media (`<link media="print">`, `@import url() print`) stays attached to its rules.
+  const sheetMedia = {};
+  const within = (media, text) =>
+    media && media !== 'all' && text.trim() ? '@media ' + media + '{\n' + text + '\n}' : text;
   function rules(sheet) {
     const base = sheet.href || document.baseURI;
     return [...sheet.cssRules]
       .map((rule) => {
         if (rule.type === 3) {
+          const media = rule.media?.mediaText || '';
           try {
-            return rules(rule.styleSheet);
+            return within(media, rules(rule.styleSheet));
           } catch {
-            missing.push(rule.href);
+            const href = new URL(rule.href, base).href;
+            missing.push(href);
+            if (media) sheetMedia[href] = media;
             return '';
           }
         }
@@ -151,25 +183,34 @@ export function renderedSnapshot(selector) {
       .join('\n');
   }
   for (const sheet of document.styleSheets) {
+    const media = sheet.media?.mediaText || '';
     try {
-      css += '\n' + rules(sheet);
+      css += '\n' + within(media, rules(sheet));
     } catch {
       missing.push(sheet.href || 'inline stylesheet');
+      if (sheet.href && media) sheetMedia[sheet.href] = media;
     }
   }
   for (const rule of keyframes)
     if (selector === 'body' || css.includes(rule.name)) css += '\n' + rule.cssText;
   // Ancestors outside the picked element, rebuilt as wrappers that render no box of their own: rules that depend on
   // them (e.g. `.search-container .search-input`) keep matching in the copy. Tags whose parsing or rendering could
-  // change the content (p, details, tables, nested forms) become div; class, id, role, lang and dir are kept.
+  // change the content (p, details, nested forms) become div; class, id, role, lang and dir are kept.
   let shells = '',
     closes = '';
+  // A row, row group or cell takes its width from its table and its columns from rows that were not picked, so the
+  // nearest table stays a real (bare) table of the original width, and the picked cells keep their widths.
+  const partialTable = /^table-(?:row|cell|row-group|header-group|footer-group)$/.test(
+      getComputedStyle(root).display,
+    ),
+    table = partialTable ? root.parentElement?.closest('table') : null;
   if (selector !== 'body') {
     const chain = [];
     for (let el = root.parentElement; el && el !== document.documentElement; el = el.parentElement)
       if (el !== document.body || el.id || el.className) chain.unshift(el);
+    // Table parts keep their tags: a row or cell outside its table would be dropped when the markup is parsed again.
     const keep =
-      /^(?:div|section|article|aside|header|footer|main|nav|ul|ol|li|dl|dd|dt|figure|blockquote|form)$/;
+      /^(?:div|section|article|aside|header|footer|main|nav|ul|ol|li|dl|dd|dt|figure|blockquote|form|table|thead|tbody|tfoot|tr|td|th)$/;
     const escape = (text) => String(text).replace(/[&"<>]/g, (c) => '&#' + c.charCodeAt(0) + ';');
     for (const el of chain.slice(-12)) {
       const name = el === document.body ? 'body' : el.localName;
@@ -179,14 +220,34 @@ export function renderedSnapshot(selector) {
         .filter((a) => el.getAttribute(a))
         .map((a) => ' ' + a + '="' + escape(el.getAttribute(a)) + '"')
         .join('');
-      shells += '<' + tag + attrs + ' data-rf-shell="' + escape(name) + '">';
+      shells +=
+        '<' +
+        tag +
+        attrs +
+        ' data-rf-shell="' +
+        escape(name) +
+        '"' +
+        (el === table ? ' data-rf-shell-table=""' : '') +
+        '>';
       closes = '</' + tag + '>' + closes;
     }
-    if (shells) css = '[data-rf-shell]{display:contents!important}\n' + css;
+    if (shells) {
+      let bare = '';
+      if (table && shells.includes('data-rf-shell-table')) {
+        const t = getComputedStyle(table),
+          inner =
+            table.getBoundingClientRect().width -
+            ['padding-left', 'padding-right', 'border-left-width', 'border-right-width']
+              .map((p) => parseFloat(t.getPropertyValue(p)) || 0)
+              .reduce((a, b) => a + b, 0);
+        bare = `[data-rf-shell][data-rf-shell-table]{display:table!important;width:${inner}px;max-width:100%;margin:0;padding:0;border:0;background:none;border-collapse:${t.borderCollapse};border-spacing:${t.borderSpacing};table-layout:${t.tableLayout}}\n`;
+      }
+      css = '[data-rf-shell]{display:contents!important}\n' + bare + css;
+    }
   }
   if (selector !== 'body') {
     const props =
-      'display box-sizing flex-direction flex-wrap align-items justify-content gap grid-template-columns margin-top margin-right margin-bottom margin-left padding-top padding-right padding-bottom padding-left border-top border-right border-bottom border-left border-radius color background-color background-image background-size background-position background-repeat font-family font-size font-weight line-height letter-spacing text-align text-decoration box-shadow opacity fill stroke white-space transform position top right bottom left z-index flex-grow flex-shrink flex-basis order align-self float overflow-x overflow-y text-indent text-transform visibility vertical-align min-width max-width min-height max-height'.split(
+      'display box-sizing flex-direction flex-wrap align-items justify-content gap grid-template-columns margin-top margin-right margin-bottom margin-left padding-top padding-right padding-bottom padding-left border-top border-right border-bottom border-left border-radius color background-color background-image background-size background-position background-repeat font-family font-size font-weight line-height letter-spacing text-align text-decoration box-shadow opacity fill stroke white-space transform position top right bottom left z-index flex-grow flex-shrink flex-basis order align-self float overflow-x overflow-y text-indent text-transform visibility vertical-align min-width max-width min-height max-height outline-style outline-width outline-color outline-offset'.split(
         ' ',
       );
     // Computed-style fallback, without declarations that cannot apply (layout props on non-flex boxes, SVG paint on
@@ -220,6 +281,74 @@ export function renderedSnapshot(selector) {
       },
       offsets = ['top', 'right', 'bottom', 'left'],
       item = ['flex-grow', 'flex-shrink', 'flex-basis', 'order', 'align-self'];
+    // The root's size is pinned so it keeps its place outside its parent, except where the size simply follows the
+    // content (`auto` that equals max-content): a button or link then keeps following its text at other widths.
+    const rootSize = () => {
+      const el = source[0],
+        c = getComputedStyle(el),
+        map = el.computedStyleMap?.(),
+        before = el.getAttribute('style');
+      const fits = (property) => {
+        if (partialTable || String(map?.get(property)) !== 'auto') return false;
+        const used = el.getBoundingClientRect()[property],
+          value = el.style.getPropertyValue(property),
+          priority = el.style.getPropertyPriority(property);
+        // max-content, not fit-content: a wrapped paragraph also fits its parent, but its width comes from the parent.
+        el.style.setProperty(property, 'max-content', 'important');
+        try {
+          return Math.abs(used - el.getBoundingClientRect()[property]) < 0.5;
+        } finally {
+          // The page's own inline style is restored exactly (property by property; rewriting the attribute does not
+          // reliably reset the inline declaration).
+          if (value) el.style.setProperty(property, value, priority);
+          else el.style.removeProperty(property);
+          if (before === null && !el.style.length) el.removeAttribute('style');
+        }
+      };
+      let size = '';
+      try {
+        size += fits('width') ? 'width:fit-content;' : 'width:' + c.width + ';';
+        if (!fits('height')) size += 'height:' + c.height + ';';
+      } catch {
+        size = 'width:' + c.width + ';height:' + c.height + ';';
+      }
+      return size + 'max-width:100%;';
+    };
+    const REPLACED = new Set([
+      'img',
+      'svg',
+      'video',
+      'canvas',
+      'iframe',
+      'input',
+      'select',
+      'textarea',
+      'object',
+      'embed',
+    ]);
+    // Absolutely positioned elements whose containing block is an ancestor outside the capture (now a box-less shell)
+    // would fall back to the page; the root becomes their containing block and their offsets are measured from it.
+    const rootBox = root.getBoundingClientRect(),
+      rootStyle = getComputedStyle(root),
+      escaped = new Set(
+        source.filter(
+          (el, i) =>
+            i > 0 &&
+            getComputedStyle(el).position === 'absolute' &&
+            el.offsetParent &&
+            !root.contains(el.offsetParent),
+        ),
+      );
+    const placed = (el, c) => {
+      const r = el.getBoundingClientRect();
+      return (
+        'top:' +
+        (r.top - rootBox.top - parseFloat(rootStyle.borderTopWidth) - parseFloat(c.marginTop)) +
+        'px;left:' +
+        (r.left - rootBox.left - parseFloat(rootStyle.borderLeftWidth) - parseFloat(c.marginLeft)) +
+        'px;right:auto;bottom:auto;'
+      );
+    };
     const groups = new Map();
     for (let i = 0; i < source.length; i++) {
       copies[i].setAttribute('data-rf-rendered', String(i));
@@ -228,8 +357,24 @@ export function renderedSnapshot(selector) {
         display = c.display,
         svg = el instanceof SVGElement,
         image = c.getPropertyValue('background-image') !== 'none';
+      // Inside a shadow root the component's own stylesheet cannot follow the copy, so its sizes are kept, as computed
+      // rather than laid out (`auto` is left to the content; percentages and calc() stay fluid). Elsewhere the site's
+      // rules are captured with their media conditions, and a desktop-only size here would override them.
+      let sized = '';
+      if (i > 0 && partialTable && display === 'table-cell') sized = 'width:' + c.width + ';';
+      else if (
+        i > 0 &&
+        el.getRootNode() !== document &&
+        (display !== 'inline' || REPLACED.has(el.localName))
+      ) {
+        const map = el.computedStyleMap?.();
+        for (const p of ['width', 'height']) {
+          const v = map ? String(map.get(p)) : 'auto';
+          if (v && v !== 'auto' && v !== 'null') sized += p + ':' + v + ';';
+        }
+      }
       const block =
-        (i === 0 ? 'width:' + c.width + ';height:' + c.height + ';max-width:100%;' : '') +
+        (i === 0 ? rootSize() : sized) +
         props
           .filter(
             (p) =>
@@ -239,6 +384,7 @@ export function renderedSnapshot(selector) {
                 (!/grid/.test(display) && p === 'grid-template-columns') ||
                 (!image && /^background-(?:size|position|repeat)$/.test(p)) ||
                 (c.position === 'static' && offsets.includes(p)) ||
+                (c.outlineStyle === 'none' && p.startsWith('outline')) ||
                 (!/flex|grid/.test(
                   el.parentElement ? getComputedStyle(el.parentElement).display : '',
                 ) &&
@@ -247,7 +393,9 @@ export function renderedSnapshot(selector) {
               ),
           )
           .map((p) => p + ':' + c.getPropertyValue(p) + ';')
-          .join('');
+          .join('') +
+        (escaped.has(el) ? placed(el, c) : '') +
+        (i === 0 && escaped.size && c.position === 'static' ? 'position:relative;' : '');
       if (!groups.has(block)) groups.set(block, []);
       groups.get(block).push(i);
     }
@@ -298,6 +446,13 @@ export function renderedSnapshot(selector) {
       '\n' +
       css;
   }
+  // Site data-* attributes stay only where a captured selector uses them ([data-state=open]); others can carry page
+  // data (analytics IDs, serialised props) that the component does not need.
+  const used = new Set([...css.matchAll(/\[\s*(data-[\w-]+)/gi)].map((m) => m[1].toLowerCase()));
+  for (const copy of copies)
+    for (const { name } of [...copy.attributes])
+      if (name.startsWith('data-') && !name.startsWith('data-rf-') && !used.has(name))
+        copy.removeAttribute(name);
   const body = root === document.body ? clone.innerHTML : shells + clone.outerHTML + closes;
   // Faces actually rendered by the component (including icon pseudo-elements) decide which @font-face rules are kept.
   const fonts =
@@ -331,9 +486,22 @@ export function renderedSnapshot(selector) {
     const color = getComputedStyle(el).backgroundColor;
     if (color && !/^(?:transparent|rgba\([^)]*,\s*0\))$/.test(color)) backdrop = color;
   }
+  // The width the component's container gave it, so copies are checked in the same space (page padding around a
+  // component is the page's, not the component's, especially on narrow screens).
+  let holder = root.parentElement;
+  while (holder && getComputedStyle(holder).display === 'contents') holder = holder.parentElement;
+  const space = holder && getComputedStyle(holder),
+    container =
+      selector !== 'body' && space && !/absolute|fixed/.test(getComputedStyle(root).position)
+        ? Math.round(
+            (holder.clientWidth - parseFloat(space.paddingLeft) - parseFloat(space.paddingRight)) *
+              100,
+          ) / 100
+        : null;
   return {
     url: location.href,
     title: document.title,
+    container,
     html: body,
     css,
     rootStyle: inheritedCSS,
@@ -344,6 +512,7 @@ export function renderedSnapshot(selector) {
     rem: parseFloat(getComputedStyle(document.documentElement).fontSize) || 16,
     height: Math.ceil(root.getBoundingClientRect().height),
     missing,
+    sheetMedia,
     fonts,
     links: [
       ...new Set(source.filter((el) => el.localName === 'a' && el.href).map((a) => a.href)),

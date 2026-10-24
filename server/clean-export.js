@@ -2,6 +2,7 @@ import { load } from 'cheerio';
 import postcss from 'postcss';
 import { validateVariants } from './capture-variants.js';
 import { snapshotRules } from './fidelity.js';
+import { SNAPSHOT_DEFAULTS } from './replica.js';
 
 const slug = (text) =>
   String(text)
@@ -84,10 +85,22 @@ export function cleanStyles(code, item, names = {}) {
   });
   const variants = validateVariants(item.captureVariants),
     breakpoints = [];
+  const px = (value, unit) => Number(value) * (unit === 'px' ? 1 : site.pages[0].rem || 16);
   postcss.parse(site.css).walkAtRules('media', (rule) => {
-    for (const m of rule.params.matchAll(/(min|max)-width\s*:\s*([\d.]+)(px|rem|em)/g)) {
-      const n = Number(m[2]) * (m[3] === 'px' ? 1 : site.pages[0].rem || 16);
+    // Breakpoints as the max-width that ends the narrower range: min-/max-width and range syntax
+    // (`width > 768px`, `width <= 48rem`; "<" is stored escaped as \3c).
+    const params = rule.params.replace(/\\3c\s?/gi, '<').replace(/\\3e\s?/gi, '>');
+    for (const m of params.matchAll(/(min|max)-width\s*:\s*([\d.]+)(px|rem|em)/g)) {
+      const n = px(m[2], m[3]);
       breakpoints.push(m[1] === 'min' ? n - 0.02 : n);
+    }
+    for (const m of params.matchAll(/\bwidth\s*([<>]=?)\s*([\d.]+)(px|rem|em)\b/g)) {
+      const n = px(m[2], m[3]);
+      breakpoints.push(m[1] === '>' || m[1] === '<=' ? n : n - 0.02);
+    }
+    for (const m of params.matchAll(/([\d.]+)(px|rem|em)\s*([<>]=?)\s*width\b/g)) {
+      const n = px(m[1], m[2]);
+      breakpoints.push(m[3] === '<' || m[3] === '>=' ? n : n - 0.02);
     }
   });
   const defaults = variants.filter((v) => v.state === 'default').sort((a, b) => b.width - a.width);
@@ -111,9 +124,28 @@ export function cleanStyles(code, item, names = {}) {
       for (const { id, values } of records.get(base.width + ':' + state) || []) {
         if (!map.has(String(id))) continue;
         const normal = baseRules.find((r) => r.id === id)?.values || {};
-        const declarations = Object.entries(values).filter(
-          ([property, value]) => state === 'default' || normal[property] !== value,
-        );
+        // Snapshots leave out default values, so a property that returns to its default here (float:none on a
+        // narrow screen, box-shadow:none on hover) is absent; it is reset explicitly against the wider or resting
+        // snapshot that set it.
+        const wider =
+          state === 'default'
+            ? (records.get(defaults[0].width + ':default') || []).find((r) => r.id === id)
+                ?.values || {}
+            : normal;
+        const reset = Object.keys(wider)
+          .filter(
+            (property) =>
+              !(property in values) &&
+              Object.hasOwn(SNAPSHOT_DEFAULTS, property) &&
+              wider[property] !== SNAPSHOT_DEFAULTS[property],
+          )
+          .map((property) => [property, SNAPSHOT_DEFAULTS[property]]);
+        const declarations = [
+          ...Object.entries(values).filter(
+            ([property, value]) => state === 'default' || normal[property] !== value,
+          ),
+          ...reset,
+        ];
         if (!declarations.length) continue;
         const root = map.get('0'),
           selector =
@@ -144,6 +176,31 @@ export function cleanStyles(code, item, names = {}) {
     warnings,
     rootSelector: '.' + (map.get('0') || code.scope),
   };
+}
+
+/**
+ * Opened panels may need the root to grow, so the root's measured heights become minimums, in each rule and
+ * breakpoint where they were measured: the root keeps its captured height at every width and can still expand.
+ */
+function growable(css, rootSelector) {
+  const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const own = new RegExp(
+    `${escape(rootSelector)}(?:${escape(rootSelector)})?(?::not\\(#[\\w-]+\\))*$`,
+  );
+  const sheet = postcss.parse(css);
+  sheet.walkRules((rule) => {
+    if (!rule.selectors.every((selector) => own.test(selector.trim()))) return;
+    let height = null;
+    rule.walkDecls('height', (decl) => {
+      if (/^[\d.]+px$/.test(decl.value)) height = decl.value;
+    });
+    if (!height) return;
+    rule.walkDecls(/^(?:min-)?height$/, (decl) => {
+      decl.remove();
+    });
+    rule.append({ prop: 'min-height', value: height });
+  });
+  return sheet.toString();
 }
 
 /** Only semantic controls with unambiguous relationships receive independently authored state. */
@@ -300,9 +357,9 @@ export function cleanComponent(item, code, jsx, names = {}, style = (_value) => 
     ...code.files,
     [`${code.name}.tsx`]: result.replace(source),
     [`${code.name}.css`]:
-      result.css +
+      (behavior.patterns.length ? growable(result.css, result.rootSelector) : result.css) +
       (behavior.patterns.length
-        ? `\n.${code.scope} [hidden]{display:none!important}.${code.scope} [data-captured-panel]:not([hidden]){display:revert!important;visibility:visible!important;opacity:1!important}.${code.scope} ${result.rootSelector}{height:auto!important}`
+        ? `\n.${code.scope} [hidden]{display:none!important}.${code.scope} [data-captured-panel]:not([hidden]){display:revert!important;visibility:visible!important;opacity:1!important}`
         : ''),
     [`${code.name}.html`]: result.replace(code.files[`${code.name}.html`]),
   };

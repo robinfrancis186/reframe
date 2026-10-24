@@ -26,6 +26,33 @@ export function safeImageData(value) {
   return bytes.toString('base64') === match[2] && rasterType(bytes) === match[1];
 }
 
+/**
+ * Inline SVG images (`url("data:image/svg+xml,...")`, common for icons and logos). Rendered as images they cannot
+ * run scripts; they are still only kept when small, self-contained and free of scripting or external references.
+ */
+export function safeSvgData(value) {
+  const match = /^data:image\/svg\+xml(?:;charset=[\w-]+)?(;base64)?,([\s\S]*)$/i.exec(value || '');
+  if (!match || match[2].length > 200000) return false;
+  let text;
+  try {
+    const unescaped = match[2]
+      .replace(/\\([0-9a-f]{1,6})\s?/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+      .replace(/\\(.)/g, '$1');
+    text = match[1]
+      ? Buffer.from(unescaped, 'base64').toString('utf8')
+      : decodeURIComponent(unescaped);
+  } catch {
+    return false;
+  }
+  return (
+    text.length <= 100000 &&
+    /^\s*(?:<\?xml[^>]*>\s*)?(?:<!--[\s\S]*?-->\s*)*<svg[\s>]/i.test(text) &&
+    !/<(?:script|foreignObject|iframe|object|embed|!ENTITY|!DOCTYPE)|\son[a-z]+\s*=|javascript:|\b(?:href|src)\s*=\s*(?!["']?\s*#)|url\(\s*(?!["']?\s*#)/i.test(
+      text,
+    )
+  );
+}
+
 // Only public, bounded raster resources are embedded. SVG documents need a separate sanitizer.
 export async function bundleImages(site, resource = referenceResource) {
   site.warnings = site.warnings.filter(
