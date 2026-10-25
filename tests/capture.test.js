@@ -53,9 +53,17 @@ test('private, loopback, mapped, reserved and multicast addresses are blocked', 
     'fc00::1',
     'fe80::1',
     '::ffff:127.0.0.1',
+    '64:ff9b::7f00:1',
+    '64:ff9b::a00:1',
+    '64:ff9b::a9fe:a9fe',
+    '64:ff9b::c0a8:101',
+    '64:ff9b::e000:1',
+    '64:ff9b:1::d8c6:4f01',
   ])
     assert.equal(publicAddress(address), false, address);
   assert.equal(publicAddress('93.184.216.34'), true);
+  assert.equal(publicAddress('64:ff9b::5db8:d822'), true);
+  assert.equal(publicAddress('64:ff9b::d8c6:4f01'), true);
 });
 test('URL schemes, credentials, ports and local destinations are rejected', async () => {
   for (const url of [

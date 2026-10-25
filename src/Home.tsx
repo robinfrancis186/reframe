@@ -52,7 +52,7 @@ export default function Home({
           </span>
           <span>
             <strong>Capture a screen</strong>
-            <small>Start with a screenshot, video or camera</small>
+            <small>Pick from a website screenshot or recording</small>
           </span>
           <ArrowRight size={20} />
         </button>
@@ -127,8 +127,8 @@ export default function Home({
           <ArrowRight size={16} />
         </button>
         <p className="muted">
-          No project yet? Use the included React demo in Projects. Native source is available;
-          Android and iOS runtime testing is pending.
+          No project yet? Try the included demo. Already have a website? Copy a working web embed
+          for React, Next.js, Go templates or HTML.
         </p>
       </details>
       <section className="home-starters" aria-label="Starter components">

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import Preview from './Preview';
 import ReadyToReuse from './ReadyToReuse';
+import WebDrop from './WebDrop';
 import ThemeEditor from './ThemeEditor';
 import FidelityCheck, { canCheckFidelity, FidelityBadge } from './FidelityCheck';
 import { downloadCode, exportedCode } from './code-export';
@@ -84,6 +85,7 @@ export default function CaptureEditor({
   } = model;
   return (
     <div className="workbench focused-editor">
+      <WebDrop item={active} theme={theme} />
       <ReadyToReuse key={active.id} item={active} onUpdate={setActive} />
       <details className="panel elements editor-sources">
         <summary>Source elements · {elements.length}</summary>

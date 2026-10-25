@@ -198,8 +198,8 @@ export default function FeatureBuilder({
                 inside your destination app. Prices and stock are sample data you own.
               </p>
               <p className="muted">
-                React + Vite only · one local shared cart · no payment or shipment. Each variant
-                allows up to five units. Native product clients are not included.
+                Works as a web embed or a direct React install · one local shared cart · no payment
+                or shipment. Each option allows up to five units.
               </p>
               <details>
                 <summary>Edit product catalog and demo prices</summary>

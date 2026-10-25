@@ -11,6 +11,17 @@ const port = Number(process.env.PORT || 5175);
 let vite;
 const server = httpServer(async (req, res) => {
   try {
+    if (process.env.REFRAME_EMBED === '1') {
+      if (!/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(req.headers.host || '')) {
+        res.writeHead(403);
+        return res.end('Local component host required');
+      }
+      res.setHeader(
+        'Content-Security-Policy',
+        "frame-ancestors 'self' http://localhost:* http://127.0.0.1:*",
+      );
+      res.setHeader('Referrer-Policy', 'no-referrer');
+    }
     const pathname = new URL(req.url, 'http://localhost').pathname;
     const id = pathname.match(
       /^\/api\/reframe\/(rf_[a-f0-9]{12})(?:\/(?:auth|credentials|site\/.*))?$/,
@@ -47,6 +58,9 @@ const server = httpServer(async (req, res) => {
               ? {
                   frameAncestors:
                     "'self'" +
+                    (process.env.REFRAME_EMBED === '1'
+                      ? ' http://localhost:* http://127.0.0.1:*'
+                      : '') +
                     (process.env.REFRAME_DEMO_PARENT_ORIGIN
                       ? ' ' + process.env.REFRAME_DEMO_PARENT_ORIGIN
                       : ''),

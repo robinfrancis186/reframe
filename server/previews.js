@@ -7,6 +7,53 @@ import { build } from 'vite';
 import { validatedFeature } from './features.js';
 import { themeStyle } from '../src/branding.js';
 const projectRoot = fileURLToPath(new URL('..', import.meta.url));
+export async function renderWebBundle(root, item, theme, disposable = false) {
+  root = await realpath(root);
+  const variables = themeStyle(theme),
+    bundle = await validatedFeature(item);
+  await writeFile(path.join(root, 'feature.json'), JSON.stringify(bundle.spec));
+  for (const name of ['Component.tsx', 'Account.tsx'])
+    if (bundle.files[name])
+      await writeFile(
+        path.join(root, name),
+        disposable
+          ? bundle.files[name].replace(
+              "if(action.operation==='navigate'){window.location.assign(action.target);return;}",
+              "if(action.operation==='navigate'){setMessage('Navigation is disabled in this disposable preview.');return;}",
+            )
+          : bundle.files[name],
+      );
+  await writeFile(
+    path.join(root, 'index.html'),
+    '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reframe · Working component</title></head><body><div id="root"></div><script type="module" src="/main.tsx"></script></body></html>',
+  );
+  await writeFile(
+    path.join(root, 'main.tsx'),
+    `import React from 'react';import{createRoot}from'react-dom/client';import Component from './Component';import './preview.css';const brand=${JSON.stringify(variables)};createRoot(document.getElementById('root')!).render(<main style={{...brand,'--primary':brand['--rf-primary'],'--primary-foreground':brand['--rf-on-primary'],'--radius':brand['--rf-radius'],fontFamily:brand['--rf-font'],background:brand['--rf-bg'],color:brand['--rf-text'],colorScheme:brand['--rf-scheme']}}><Component/></main>);`,
+  );
+  await writeFile(
+    path.join(root, 'preview.css'),
+    'html,body{margin:0;min-height:100%;font-family:system-ui}*{box-sizing:border-box}main{padding:' +
+      (disposable ? '24px' : '0') +
+      ';min-height:100vh}h1,h2,h3{letter-spacing:-.025em;line-height:1.2}input,button,textarea,select{max-width:100%;font:inherit}input,button{min-height:44px}button{cursor:pointer}button:disabled{cursor:wait;opacity:.55}:focus-visible{outline:2px solid var(--primary);outline-offset:3px}pre{white-space:pre-wrap;overflow-wrap:anywhere}li{margin:10px 0}p[role=alert]{color:inherit;border-left:3px solid;padding:12px}',
+  );
+  await build({
+    root,
+    configFile: false,
+    envFile: false,
+    logLevel: 'error',
+    esbuild: { jsx: 'automatic' },
+    resolve: {
+      dedupe: ['react', 'react-dom'],
+      alias: {
+        'react-dom': path.join(projectRoot, 'node_modules/react-dom'),
+        react: path.join(projectRoot, 'node_modules/react'),
+      },
+    },
+    build: { outDir: 'dist', emptyOutDir: true, minify: true },
+  });
+  return bundle;
+}
 export class WorkingPreviews {
   sessions = new Map();
   building = false;
@@ -31,47 +78,9 @@ export class WorkingPreviews {
     let root, child;
     try {
       signal?.throwIfAborted();
-      const variables = themeStyle(theme),
-        bundle = await validatedFeature(item);
       await mkdir(this.folder, { recursive: true, mode: 0o700 });
       root = await realpath(await mkdtemp(path.join(this.folder, 'run-')));
-      await writeFile(path.join(root, 'feature.json'), JSON.stringify(bundle.spec));
-      for (const name of ['Component.tsx', 'Account.tsx'])
-        if (bundle.files[name])
-          await writeFile(
-            path.join(root, name),
-            bundle.files[name].replace(
-              "if(action.operation==='navigate'){window.location.assign(action.target);return;}",
-              "if(action.operation==='navigate'){setMessage('Navigation is disabled in this disposable preview.');return;}",
-            ),
-          );
-      await writeFile(
-        path.join(root, 'index.html'),
-        '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reframe · Disposable working preview</title></head><body><div id="root"></div><script type="module" src="/main.tsx"></script></body></html>',
-      );
-      await writeFile(
-        path.join(root, 'main.tsx'),
-        `import React from 'react';import{createRoot}from'react-dom/client';import Component from './Component';import './preview.css';const brand=${JSON.stringify(variables)};createRoot(document.getElementById('root')!).render(<main style={{...brand,'--primary':brand['--rf-primary'],'--primary-foreground':brand['--rf-on-primary'],'--radius':brand['--rf-radius'],fontFamily:brand['--rf-font'],background:brand['--rf-bg'],color:brand['--rf-text'],colorScheme:brand['--rf-scheme']}}><Component/></main>);`,
-      );
-      await writeFile(
-        path.join(root, 'preview.css'),
-        'html,body{margin:0;min-height:100%;font-family:system-ui}*{box-sizing:border-box}main{padding:24px;min-height:100vh}h1,h2,h3{letter-spacing:-.025em;line-height:1.2}input,button,textarea,select{max-width:100%;font:inherit}input,button{min-height:44px}button{cursor:pointer}button:disabled{cursor:wait;opacity:.55}:focus-visible{outline:2px solid var(--primary);outline-offset:3px}pre{white-space:pre-wrap;overflow-wrap:anywhere}li{margin:10px 0}p[role=alert]{color:inherit;border-left:3px solid;padding:12px}',
-      );
-      await build({
-        root,
-        configFile: false,
-        envFile: false,
-        logLevel: 'error',
-        esbuild: { jsx: 'automatic' },
-        resolve: {
-          dedupe: ['react', 'react-dom'],
-          alias: {
-            'react-dom': path.join(projectRoot, 'node_modules/react-dom'),
-            react: path.join(projectRoot, 'node_modules/react'),
-          },
-        },
-        build: { outDir: 'dist', emptyOutDir: true, minify: true },
-      });
+      const bundle = await renderWebBundle(root, item, theme, true);
       signal?.throwIfAborted();
       child = fork(
         fileURLToPath(new URL('./preview-runtime.mjs', import.meta.url)),

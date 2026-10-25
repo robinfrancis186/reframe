@@ -30,7 +30,7 @@ test('readiness distinguishes source, local UI and declared backend without clai
   assert.match(componentReadiness(original).detail, /runtime testing is pending/);
   const feature = { ...reference, feature: { spec: { commerce: {}, actions: [] } } };
   assert.equal(componentReadiness(feature).kind, 'feature');
-  assert.match(componentReadiness(feature).detail, /React \/ Vite only/);
+  assert.match(componentReadiness(feature).detail, /web embed or React source/);
   assert.match(componentReadiness(feature).preview, /before installation/);
   assert.ok(matchesComponent(feature, '  PHONE  ', 'feature'));
   assert.ok(matchesComponent(original, 'interactive ui', 'all'));

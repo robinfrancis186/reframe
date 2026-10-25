@@ -1,3 +1,4 @@
+import { WebComponents } from './web-components.js';
 import { checkReuse } from './reuse-check.js';
 import { bundleImages } from './portable-assets.js';
 import { validateReplica } from './replica.js';
@@ -50,6 +51,7 @@ const app = express();
 const referenceBrowser = new ReferenceBrowser();
 const store = process.env.REFRAME_STORE || path.join(root, '.reframe');
 const projects = new Projects(store);
+const webComponents = new WebComponents(store);
 const libraryStore = new LibraryStore(store);
 const thumbnails = new Thumbnails(store, referenceBrowser);
 const extensionPairing = new ExtensionPairing(store);
@@ -220,6 +222,27 @@ const route = (method, url, action) =>
       next(error);
     }
   });
+route('post', '/api/web-components/prepare', (req, { signal }) => {
+  if (!isItem(req.body.item)) throw new Error('Choose a saved working component.');
+  return webComponents.prepare(req.body.item, req.body.theme, {
+    signal,
+    hostname: req.headers.host.split(':')[0],
+  });
+});
+route('post', '/api/web-components/:id/stop', async (req) => {
+  await webComponents.stop(req.params.id);
+  return { stopped: true };
+});
+app.get('/api/web-components/:id/download', async (req, res, next) => {
+  try {
+    res
+      .attachment('reframe-web-component.zip')
+      .type('application/zip')
+      .send(await webComponents.archive(req.params.id));
+  } catch (error) {
+    next(error);
+  }
+});
 route('post', '/api/reuse/check', (req, options) => checkReuse(req.body.item, options));
 route('post', '/api/reuse/bundle', async (req) => {
   const item = req.body.item;
@@ -621,6 +644,7 @@ for (const signal of ['SIGINT', 'SIGTERM'])
       thumbnails.close().then(() => referenceBrowser.close()),
       gradio.stop(),
       previews.close(),
+      webComponents.close(),
       demo.close(),
     ]);
     process.exit(0);

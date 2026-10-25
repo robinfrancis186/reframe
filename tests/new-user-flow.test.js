@@ -161,6 +161,40 @@ test(
         .getByText('Saved on this computer', { exact: true })
         .waitFor();
       mark('reopened');
+      const webDrop = page.getByRole('region', { name: 'Use in any website' });
+      await webDrop.getByRole('button', { name: 'Prepare for my website' }).click();
+      const embed = webDrop.getByRole('textbox', { name: 'Website embed code' });
+      await embed.waitFor();
+      assert.match(await embed.inputValue(), /<iframe.*style="width:100%/);
+      await webDrop.getByRole('combobox', { name: 'Paste into' }).selectOption('jsx');
+      assert.match(await embed.inputValue(), /style=\{\{/);
+      const packageDownload = page.waitForEvent('download');
+      await webDrop.getByRole('link', { name: 'Download standalone package' }).click();
+      assert.match((await packageDownload).suggestedFilename(), /web-component.zip$/);
+      const portablePage = await context.newPage();
+      portablePage.on('pageerror', (e) => errors.push(e.message));
+      await portablePage.goto(
+        await webDrop.getByRole('link', { name: 'Try working component ↗' }).getAttribute('href'),
+      );
+      await portablePage.getByRole('textbox', { name: 'Email' }).fill('portable@example.test');
+      await portablePage.getByRole('button', { name: 'Subscribe', exact: true }).click();
+      await portablePage
+        .getByRole('button', { name: 'Email: portable@example.test', exact: true })
+        .waitFor();
+      await portablePage.reload();
+      await portablePage
+        .getByRole('button', { name: 'Email: portable@example.test', exact: true })
+        .waitFor();
+      await portablePage.close();
+      await page.screenshot({ path: '/tmp/reframe-new-user-web-drop.png', fullPage: true });
+      await page.setViewportSize({ width: 390, height: 844 });
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      await page.screenshot({ path: '/tmp/reframe-new-user-web-drop-mobile.png', fullPage: true });
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await webDrop.getByText('What is included?', { exact: true }).click();
+      await webDrop.getByRole('button', { name: 'Stop local component' }).click();
+      await webDrop.getByRole('button', { name: 'Prepare for my website' }).waitFor();
+      mark('portableWebComponent');
       await page.getByText('Export & code options', { exact: true }).click();
       const downloadEvent = page.waitForEvent('download');
       await page.getByRole('button', { name: 'Export UI + backend package' }).click();

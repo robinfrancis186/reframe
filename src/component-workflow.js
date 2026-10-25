@@ -29,9 +29,9 @@ export function componentReadiness(item) {
       kind: 'feature',
       label: 'UI + backend package',
       detail: item.feature.spec.website
-        ? 'Original rendered styling, local navigation, PDF downloads and an independently authored form backend. Review asset portability and tested behavior in Ready to reuse. React / Vite only.'
+        ? 'Original rendered styling, local navigation, PDF downloads and an independently authored form backend. Review assets and tested behavior in Ready to reuse. Copy a web embed or install React source.'
         : item.feature.spec.commerce
-          ? 'Product options, shared demo cart and local orders. React / Vite only; no payments or shipment.'
+          ? 'Product options, shared demo cart and local orders. Use a web embed or React source; no payments or shipment.'
           : 'Declared actions, API and storage are included. Configure any account and external service requirements before use.',
       preview:
         'This is the captured appearance. Use Working preview below to test the generated UI and backend before installation.',

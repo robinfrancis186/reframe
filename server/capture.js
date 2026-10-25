@@ -7,7 +7,11 @@ import sanitize from 'sanitize-html';
 
 export function publicAddress(address) {
   try {
-    return ipaddr.process(address).range() === 'unicast';
+    const parsed = ipaddr.process(address);
+    // DNS64 exposes IPv4 through the well-known /96 prefix; validate the embedded destination.
+    if (parsed.kind() === 'ipv6' && parsed.match(ipaddr.parse('64:ff9b::'), 96))
+      return publicAddress(parsed.toByteArray().slice(-4).join('.'));
+    return parsed.range() === 'unicast';
   } catch {
     return false;
   }

@@ -705,3 +705,34 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.web-drop .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 12px;
+}
+.web-drop a.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  text-decoration: none;
+}
+.web-drop a.button:hover {
+  background: var(--raised);
+}
+.web-drop label {
+  max-width: 420px;
+  margin-block: 12px;
+}
+.web-drop textarea {
+  font-family: ui-monospace, monospace;
+}
+.web-drop p {
+  line-height: 1.6;
+}

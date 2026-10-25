@@ -1,4 +1,5 @@
 import ReadyToReuse from './ReadyToReuse';
+import WebDrop from './WebDrop';
 import BehaviorSummary from './BehaviorSummary';
 import AgentAvatar from './AgentAvatar';
 import BrandingDetector from './BrandingDetector';
@@ -350,6 +351,7 @@ export default function Projects({
   ]);
   return (
     <div className="projects-page">
+      <WebDrop item={component} theme={theme} />
       <div className="intro">
         <span className="eyebrow">
           {installed
