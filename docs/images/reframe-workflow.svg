@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="254" viewBox="0 0 1200 254" role="img" aria-labelledby="title desc">
+  <title id="title">From reference to reusable component</title>
+  <desc id="desc">Four steps: pick a website element, define and test its behavior, save its package to the local Library, then embed, export or install it.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M1 1 7 5 1 9" fill="none" stroke="#8b877e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+    </marker>
+  </defs>
+  <rect width="1200" height="254" rx="20" fill="#f5f3ed" />
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <text x="30" y="32" font-size="12" font-weight="700" letter-spacing="2" fill="#6b665e">FROM REFERENCE TO REUSE</text>
+    <g fill="#fffefd" stroke="#dedad1">
+      <rect x="30" y="54" width="255" height="170" rx="14" />
+      <rect x="325" y="54" width="255" height="170" rx="14" />
+      <rect x="620" y="54" width="255" height="170" rx="14" />
+      <rect x="915" y="54" width="255" height="170" rx="14" />
+    </g>
+    <g fill="none" stroke="#8b877e" stroke-width="1.6" marker-end="url(#arrow)">
+      <path d="M292 139H316" />
+      <path d="M587 139H611" />
+      <path d="M882 139H906" />
+    </g>
+    <g font-size="13" font-weight="700">
+      <rect x="50" y="74" width="36" height="30" rx="8" fill="#e8f1fb" />
+      <text x="68" y="94" text-anchor="middle" fill="#315d8c">01</text>
+      <rect x="345" y="74" width="36" height="30" rx="8" fill="#f7edd6" />
+      <text x="363" y="94" text-anchor="middle" fill="#805d25">02</text>
+      <rect x="640" y="74" width="36" height="30" rx="8" fill="#ece9f8" />
+      <text x="658" y="94" text-anchor="middle" fill="#66539a">03</text>
+      <rect x="935" y="74" width="36" height="30" rx="8" fill="#e6f2e9" />
+      <text x="953" y="94" text-anchor="middle" fill="#356b48">04</text>
+    </g>
+    <g font-size="23" font-weight="650" fill="#272621">
+      <text x="50" y="140">Pick a reference</text>
+      <text x="345" y="140">Make it work</text>
+      <text x="640" y="140">Keep it in Library</text>
+      <text x="935" y="140">Use it in your app</text>
+    </g>
+    <g font-size="15" fill="#68645c">
+      <text x="50" y="170">Select a real website element.</text>
+      <text x="50" y="193">Keep design + source evidence.</text>
+      <text x="345" y="170">Define the behavior you need.</text>
+      <text x="345" y="193">Test the UI + backend.</text>
+      <text x="640" y="170">Save assets and revisions.</text>
+      <text x="640" y="193">Find it again. Reuse it again.</text>
+      <text x="935" y="170">Embed, export or install.</text>
+      <text x="935" y="193">Check it in its new home.</text>
+    </g>
+  </g>
+</svg>
