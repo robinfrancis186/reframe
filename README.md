@@ -51,7 +51,7 @@ See the [step-by-step web guide](docs/WEB_WORKFLOW.md), including a first run wi
 
 ### Optional OpenAI assistance
 
-Copy [`.env.example`](.env.example) to `.env`, add `OPENAI_API_KEY` locally and restart the server. You can also supply a key for a supported request in the app. AI actions are explicit; ordinary editing does not silently start paid requests. Keys are not included in component exports.
+Create a local `.env` file containing `OPENAI_API_KEY=your-key`, then restart the server. You can also supply a key for a supported request in the app. AI actions are explicit; ordinary editing does not silently start paid requests. Keys are not included in component exports.
 
 ## What works today
 
@@ -80,6 +80,10 @@ The development Library lives in `.reframe/library/`, with individual revisions,
 
 `.env`, local Libraries, credentials and build artifacts are excluded from Git. The Chrome extension uses explicit pairing; it does not transfer your signed-in session into the isolated browser. Captured fonts, logos and artwork retain their owners' rights.
 
+## Local-only build resources
+
+At the owner's request, `.claude/`, `examples/`, `vendor/`, `.env.example`, `THIRD_PARTY_NOTICES.md` and the root `tsconfig.json` are kept on the local Mac and excluded from this repository. **A fresh checkout is currently incomplete:** restore those local build resources before running the setup, demo, verification or packaging commands below. The existing macOS application contains its own runtime and continues to work.
+
 ## macOS desktop
 
 The repository includes an Electron build for **Apple Silicon** with bundled Node and Chromium:
@@ -103,7 +107,7 @@ npm run benchmark   # Library benchmarks at 150 / 500 / 1,000 components
 - [Contributing](CONTRIBUTING.md) — setup, project layout and verification.
 - [MCP connections](docs/CONNECTIONS.md) — scoped access for compatible assistants.
 - [Architecture map](docs/architecture/graphify/README.md) — a dated, browsable Graphify snapshot.
-- [Third-party notices](THIRD_PARTY_NOTICES.md) — Ponytail, REA, Graphify and other dependencies.
+- Third-party notices and dependency licence files are retained in the local build resources and bundled runtime.
 
 Ponytail supplies generation guidance, REA supplies static source analysis, and Graphify supplies optional code maps. The inaccessible Turnitout engine is **not bundled**; Reframe Copy Polish is an independently authored replacement. See the notices for exact scope and attribution.
 
