@@ -234,6 +234,10 @@ test(
         .getByRole('checkbox', { name: /Allow these files to be added or updated in/ })
         .check();
       await page.getByRole('button', { name: 'Install component', exact: true }).click();
+      await page
+        .locator('.integration-status')
+        .filter({ hasText: 'Installed in the demo app. Choose Launch demo app below to test it.' })
+        .waitFor();
       const receipt = page.getByRole('region', { name: 'Test installed component' });
       await receipt.getByRole('button', { name: 'Launch demo app', exact: true }).click();
       const link = receipt.getByRole('link', { name: 'Open demo app ↗' });

@@ -124,6 +124,10 @@ try {
   await page.getByRole('button', { name: 'Review installation', exact: true }).click();
   await page.getByRole('checkbox', { name: /Allow these files to be added or updated in/ }).check();
   await page.getByRole('button', { name: 'Install component', exact: true }).click();
+  await page
+    .locator('.integration-status')
+    .filter({ hasText: 'Installed in the demo app. Choose Launch demo app below to test it.' })
+    .waitFor();
   await page.getByRole('button', { name: 'Launch demo app', exact: true }).click();
   const link = page.getByRole('link', { name: 'Open demo app ↗' });
   await link.waitFor();

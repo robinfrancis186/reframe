@@ -1,0 +1,18 @@
+✔ REA and MCP reject oversized bounded collections before walking their elements (60.519125ms)
+✔ desktop recovers from timeout without orphaning a backend or granting web-page recovery access (171.417542ms)
+✔ desktop recovers from spawn without orphaning a backend or granting web-page recovery access (161.558375ms)
+✔ desktop recovers from storage without orphaning a backend or granting web-page recovery access (3.71275ms)
+✔ portable runtime cache commits complete versions, reuses them and recovers from interrupted preparation (376.275083ms)
+✔ packaged OCR uses the bundled helper without a compiler or app-bundle writes (454.240875ms)
+✔ desktop starter creates a writable React destination and preserves later user edits (75.628375ms)
+✔ desktop reuses its preferred loopback port and falls back when another process owns it (9.270542ms)
+✔ runtime framework links remain local after copying and removing the source cache (13.201084ms)
+✔ new user captures, defines behavior, reopens, exports, installs and launches a working demo (25607.4945ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 26889.131875

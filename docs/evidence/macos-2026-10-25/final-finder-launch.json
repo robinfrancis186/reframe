@@ -1,0 +1,50 @@
+{
+  "launchMethod": "Launch Services (open), no debugging flags",
+  "freshProfile": true,
+  "homeReadyMs": 11779,
+  "phases": [
+    {
+      "phase": "startup-visible",
+      "elapsedMs": 1203
+    },
+    {
+      "phase": "runtime-cache-prepared",
+      "elapsedMs": 6137
+    },
+    {
+      "phase": "backend-ready",
+      "elapsedMs": 9208
+    },
+    {
+      "phase": "home-ready",
+      "elapsedMs": 10104
+    }
+  ],
+  "libraryItems": 0,
+  "profile": "/var/folders/cl/krw8r1cs1wvbqgd9thdtlntc0000gn/T/reframe-final-finder-20261025-xiv4razs",
+  "base": "http://127.0.0.1:5176",
+  "mainProcess": "54536     1 /Volumes/Reframe-20261025/Reframe.app/Contents/MacOS/Reframe --user-data-dir=/var/folders/cl/krw8r1cs1wvbqgd9thdtlntc0000gn/T/reframe-final-finder-20261025-xiv4razs",
+  "restartHomeMs": 1893,
+  "restartPhases": [
+    {
+      "phase": "startup-visible",
+      "elapsedMs": 299
+    },
+    {
+      "phase": "runtime-cache-reused",
+      "elapsedMs": 467
+    },
+    {
+      "phase": "backend-ready",
+      "elapsedMs": 1284
+    },
+    {
+      "phase": "home-ready",
+      "elapsedMs": 1401
+    }
+  ],
+  "firstQuitStoppedBackend": true,
+  "nativeHomeVisuallyObserved": true,
+  "restartHomeVisuallyObserved": true,
+  "finalQuitStoppedBackend": true
+}

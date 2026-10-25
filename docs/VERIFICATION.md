@@ -1,5 +1,16 @@
 # Verification history
 
+## 25 October 2026 — patched macOS app and direct-DMG verification
+
+- Rebuilt the Apple Silicon app with body-parser 2.4.0 and Zod 4.6.7; inspected the actual engine archive and confirmed the demo receipt fix is in the compiled UI. No `.env`, `.reframe` or Git folders were bundled.
+- Fixed the owned demo's installation receipt, which incorrectly directed users to a terminal command and fixed port. It now points to **Launch demo app**. The fresh-user regression and packaged workflow both check this instruction.
+- The final read-only DMG passed the complete two-component workflow in **57.1 s**; the copied app passed in **54.1 s**. Both tested required-input validation, disposable preview isolation, installation, real saved records, restart persistence, forced-backend-exit recovery, Library import and bundled OCR/Chromium. No page errors; all 16 observed child processes closed in each run.
+- Normal Launch Services launch from the final DMG, with no debugger flags: fresh profile **11.8 s**, cached repeat **1.9 s**. Home was visually observed in both runs and Quit stopped the backend. These are local, OS-cache-sensitive measurements, not reboot-cold or second-Mac evidence.
+- **10 focused tests passed**, including the fresh-profile web capture-to-install flow. Targeted formatting, ESLint and the client TypeScript check passed; the production UI was rebuilt for the final package.
+- Strict local ad-hoc signature checks passed for mounted and copied apps. Developer ID signing, notarization, another Mac, independent newcomer testing and live OpenAI calls remain unverified in this pass.
+
+[Artifact checksum, raw timings, screenshot and reproduction commands](evidence/macos-2026-10-25/README.md).
+
 ## 25 October 2026 — working web embeds
 
 - **177 tests passed**, including capture/save/reopen, behavior validation, local API persistence, standalone package execution, source-blocked navigation/forms/downloads and direct React demo installation. Formatting, ESLint, client/server type checks and all three web builds passed separately.

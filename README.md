@@ -88,7 +88,7 @@ The repository includes an Electron build for **Apple Silicon** with bundled Nod
 npm run desktop:package
 ```
 
-Build outputs are local under `out/`; the DMG is not committed to this repository. The current development distribution is **not Developer ID signed or notarized**. Desktop checks are separate from web-flow evidence, and the newest web changes require a fresh package build.
+Build outputs are local under `out/`; the DMG is not committed to this repository. The current development distribution is **not Developer ID signed or notarized**. On 25 October, the rebuilt DMG and copied app passed capture → behavior → Library → reviewed installation → working demo, including restart and recovery. Normal macOS launch directly from the DMG was also checked. [Results and remaining release gates](docs/evidence/macos-2026-10-25/README.md).
 
 [Desktop configuration and release gates](docs/RELEASE.md)
 

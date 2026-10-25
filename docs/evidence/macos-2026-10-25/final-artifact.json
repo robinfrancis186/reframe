@@ -1,0 +1,13 @@
+{
+  "artifact": "/Users/robinfrancis/Documents/ChatGPT/devinhack/out/make/Reframe-arm64-local-unsigned.dmg",
+  "sha256": "0cf3f97023bc2302d4e17121c386f7273dc7531bc7a8f18af44f888f739b5f72",
+  "bytes": 408271066,
+  "arch": "arm64",
+  "signing": "local ad-hoc; not Developer ID signed or notarized",
+  "dependencies": {
+    "node_modules/body-parser/package.json": "2.4.0",
+    "node_modules/zod/package.json": "4.6.7"
+  },
+  "demoReceiptFixBundled": true,
+  "environmentAndWorkspaceFoldersBundled": false
+}

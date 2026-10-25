@@ -1,0 +1,126 @@
+{
+  "artifact": "/Volumes/Reframe-20261025/Reframe.app/Contents/MacOS/Reframe",
+  "homeReadyMs": 16372,
+  "restartHomeMs": 3224,
+  "launchedFromReadOnlyVolume": true,
+  "startupPhases": [
+    {
+      "phase": "startup-visible",
+      "elapsedMs": 740
+    },
+    {
+      "phase": "runtime-cache-prepared",
+      "elapsedMs": 5271
+    },
+    {
+      "phase": "backend-ready",
+      "elapsedMs": 8330
+    },
+    {
+      "phase": "home-ready",
+      "elapsedMs": 10475
+    },
+    {
+      "phase": "startup-visible",
+      "elapsedMs": 991
+    },
+    {
+      "phase": "runtime-cache-reused",
+      "elapsedMs": 1195
+    },
+    {
+      "phase": "backend-ready",
+      "elapsedMs": 2064
+    },
+    {
+      "phase": "home-ready",
+      "elapsedMs": 2230
+    },
+    {
+      "phase": "startup-visible",
+      "elapsedMs": 4130
+    },
+    {
+      "phase": "backend-ready",
+      "elapsedMs": 4749
+    },
+    {
+      "phase": "home-ready",
+      "elapsedMs": 4872
+    }
+  ],
+  "recoveryRetainedLibraryAndRecords": true,
+  "publicSiteCaptured": true,
+  "twoComponentsInstalled": true,
+  "timings": [
+    {
+      "endpoint": "/api/features/build",
+      "ms": 5733,
+      "reused": false,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/projects/plan",
+      "ms": 60,
+      "reused": true,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/tabs",
+      "ms": 4621,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 1419,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 124,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 26,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 79,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 785,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/browser/action",
+      "ms": 48,
+      "status": 200
+    },
+    {
+      "endpoint": "/api/projects/plan",
+      "ms": 5761,
+      "reused": false,
+      "status": 200
+    }
+  ],
+  "elapsedMs": 57091,
+  "libraryItems": 2,
+  "security": {
+    "sandbox": true,
+    "contextIsolation": true,
+    "nodeIntegration": false
+  },
+  "errors": [],
+  "ownedProcessesClosed": 16,
+  "restartRecordsPersisted": true,
+  "packagedLibraryImport": true,
+  "compileCacheWritten": true,
+  "bundledOCR": true,
+  "ocrMs": 1441,
+  "appBundleStoreAbsent": true,
+  "systemPathOnly": "/usr/bin:/bin:/usr/sbin:/sbin"
+}

@@ -1188,7 +1188,11 @@ export default function Projects({
                 setFile('');
                 await refresh();
                 setInstalled(receipt);
-                setMessage(r.message);
+                setMessage(
+                  receipt.demo
+                    ? 'Installed in the demo app. Choose Launch demo app below to test it.'
+                    : r.message,
+                );
               })
             }
           >
