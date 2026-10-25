@@ -6,6 +6,7 @@ import { extract } from './capture.js';
 import { readRendered, replicaItem, buildReplicaFeature } from './replica.js';
 import { finishCapture } from './fidelity.js';
 import { captureVariants } from './capture-variants.js';
+import { pauseCaptureMotion } from './capture-page.js';
 
 async function settle(entry) {
   if (entry.dialog) return;
@@ -677,57 +678,64 @@ export class ReferenceBrowser {
             entry.selection = null;
             throw new Error('This element is too large. Pick a smaller component.');
           }
-          // Hidden or off-screen containers have no visible box to photograph; they are still capturable.
-          // The reference shows only the picked element over its own backdrop: siblings of the element and of each
-          // ancestor (overlapping images, sticky headers, banners) are hidden for the screenshot and then restored.
-          if (entry.selection.bounds.width >= 1 && entry.selection.bounds.height >= 1) {
-            await page.evaluate(() => {
-              const el = document.querySelector('[data-rf-picked]');
-              for (let node = el; node?.parentElement; node = node.parentElement)
-                for (const sibling of node.parentElement.children)
-                  if (sibling !== node) sibling.setAttribute('data-rf-isolate', '');
-              const style = document.createElement('style');
-              style.id = 'rf-isolate';
-              style.textContent = '[data-rf-isolate]{visibility:hidden!important}';
-              document.head.append(style);
-            });
-            try {
-              // The whole element, also where it extends past the viewport (a tall footer or section).
-              const { clip, fullPage } = await page.evaluate(() => {
-                const r = document.querySelector('[data-rf-picked]').getBoundingClientRect(),
-                  fullPage =
-                    r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth;
-                return {
-                  fullPage,
-                  clip: {
-                    x: Math.max(0, r.x + (fullPage ? scrollX : 0)),
-                    y: Math.max(0, r.y + (fullPage ? scrollY : 0)),
-                    width: r.width,
-                    height: Math.min(r.height, 6000),
-                  },
-                };
-              });
-              entry.selection.referenceImage =
-                'data:image/jpeg;base64,' +
-                (
-                  await page.screenshot({
-                    type: 'jpeg',
-                    quality: 65,
-                    clip: clip.width >= 1 && clip.height >= 1 ? clip : entry.selection.bounds,
-                    fullPage,
-                    timeout: 5000,
-                    animations: 'disabled',
-                  })
-                ).toString('base64');
-            } finally {
+          const motion = await page.evaluateHandle(pauseCaptureMotion, '[data-rf-picked]');
+          try {
+            entry.selection.rendered = await readRendered(page, '[data-rf-picked]');
+            // Hidden or off-screen containers have no visible box to photograph; they are still capturable.
+            // The reference shows only the picked element over its own backdrop: siblings of the element and of each
+            // ancestor (overlapping images, sticky headers, banners) are hidden for the screenshot and then restored.
+            if (entry.selection.bounds.width >= 1 && entry.selection.bounds.height >= 1) {
               await page.evaluate(() => {
-                document.getElementById('rf-isolate')?.remove();
-                for (const node of document.querySelectorAll('[data-rf-isolate]'))
-                  node.removeAttribute('data-rf-isolate');
+                const el = document.querySelector('[data-rf-picked]');
+                for (let node = el; node?.parentElement; node = node.parentElement)
+                  for (const sibling of node.parentElement.children)
+                    if (sibling !== node) sibling.setAttribute('data-rf-isolate', '');
+                const style = document.createElement('style');
+                style.id = 'rf-isolate';
+                style.textContent = '[data-rf-isolate]{visibility:hidden!important}';
+                document.head.append(style);
               });
+              try {
+                // The whole element, also where it extends past the viewport (a tall footer or section).
+                const { clip, fullPage } = await page.evaluate(() => {
+                  const r = document.querySelector('[data-rf-picked]').getBoundingClientRect(),
+                    fullPage =
+                      r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth;
+                  return {
+                    fullPage,
+                    clip: {
+                      x: Math.max(0, r.x + (fullPage ? scrollX : 0)),
+                      y: Math.max(0, r.y + (fullPage ? scrollY : 0)),
+                      width: r.width,
+                      height: Math.min(r.height, 6000),
+                    },
+                  };
+                });
+                entry.selection.referenceImage =
+                  'data:image/jpeg;base64,' +
+                  (
+                    await page.screenshot({
+                      type: 'jpeg',
+                      quality: 65,
+                      clip: clip.width >= 1 && clip.height >= 1 ? clip : entry.selection.bounds,
+                      fullPage,
+                      timeout: 5000,
+                      animations: 'allow',
+                    })
+                  ).toString('base64');
+              } finally {
+                await page.evaluate(() => {
+                  document.getElementById('rf-isolate')?.remove();
+                  for (const node of document.querySelectorAll('[data-rf-isolate]'))
+                    node.removeAttribute('data-rf-isolate');
+                });
+              }
             }
+            entry.selection.capturedAt = new Date().toISOString();
+          } finally {
+            await motion.evaluate((restore) => restore()).catch(() => {});
+            await motion.dispose();
           }
-          entry.selection.capturedAt = new Date().toISOString();
         }
       } else if (action === 'scroll') {
         if (!Number.isFinite(y) || Math.abs(y) > 1000) throw new Error('Invalid scroll distance.');
@@ -843,9 +851,13 @@ export class ReferenceBrowser {
         if (!entry.selection) throw new Error('Pick an element first.');
         const s = entry.selection;
         let item = {
-          ...(await replicaItem([await readRendered(page, '[data-rf-picked]')], s.name, {
-            resource: this.resource,
-          })),
+          ...(await replicaItem(
+            [s.rendered || (await readRendered(page, '[data-rf-picked]'))],
+            s.name,
+            {
+              resource: this.resource,
+            },
+          )),
           referenceImage: s.referenceImage,
           capturedAt: s.capturedAt,
         };

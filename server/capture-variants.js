@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { load } from 'cheerio';
 import { readRendered, prepareReplica, validateReplica } from './replica.js';
+import { pauseCaptureMotion } from './capture-page.js';
 const identity = (html) => {
   const $ = load(html, null, false);
   return $('*')
@@ -108,66 +109,74 @@ export async function captureVariants(entry, { resource }) {
           }
         }
         await page.waitForTimeout(120);
-        const raw = await readRendered(page, '[data-rf-picked]');
-        if (identity(raw.html) !== structure) {
-          warnings.push(
-            `${width}px ${state}: the element tree changed; this variant needs manual mapping.`,
-          );
-          continue;
-        }
-        const website = await prepareReplica([raw], { resource });
-        await selected.scrollIntoViewIfNeeded();
-        const box = await selected.boundingBox();
-        if (!box || box.width < 1 || box.height < 1 || box.height > 3000 || box.width > 4000) {
-          warnings.push(`${width}px ${state}: component is hidden or exceeds the capture bounds.`);
-          continue;
-        }
-        await page.evaluate(() => {
-          const root = document.querySelector('[data-rf-picked]');
-          for (let el = root; el?.parentElement; el = el.parentElement)
-            for (const sibling of el.parentElement.children)
-              if (sibling !== el) sibling.setAttribute('data-rf-variant-isolate', '');
-          const style = document.createElement('style');
-          style.id = 'rf-variant-isolation';
-          style.textContent = '[data-rf-variant-isolate]{visibility:hidden!important}';
-          document.head.append(style);
-        });
-        let referenceImage;
+        const motion = await page.evaluateHandle(pauseCaptureMotion, '[data-rf-picked]');
         try {
-          // Same fractional crop as the main reference (an element screenshot rounds to whole pixels).
-          const { clip, fullPage } = await selected.evaluate((el) => {
-            const r = el.getBoundingClientRect(),
-              fullPage = r.bottom > innerHeight || r.right > innerWidth || r.top < 0;
-            return {
-              fullPage,
-              clip: {
-                x: r.x + (fullPage ? scrollX : 0),
-                y: r.y + (fullPage ? scrollY : 0),
-                width: r.width,
-                height: r.height,
-              },
-            };
-          });
-          referenceImage =
-            'data:image/jpeg;base64,' +
-            (
-              await page.screenshot({
-                type: 'jpeg',
-                quality: 65,
-                animations: 'disabled',
-                fullPage,
-                clip,
-              })
-            ).toString('base64');
-        } finally {
+          const raw = await readRendered(page, '[data-rf-picked]');
+          if (identity(raw.html) !== structure) {
+            warnings.push(
+              `${width}px ${state}: the element tree changed; this variant needs manual mapping.`,
+            );
+            continue;
+          }
+          const website = await prepareReplica([raw], { resource });
+          await selected.scrollIntoViewIfNeeded();
+          const box = await selected.boundingBox();
+          if (!box || box.width < 1 || box.height < 1 || box.height > 3000 || box.width > 4000) {
+            warnings.push(
+              `${width}px ${state}: component is hidden or exceeds the capture bounds.`,
+            );
+            continue;
+          }
           await page.evaluate(() => {
-            document.getElementById('rf-variant-isolation')?.remove();
-            document
-              .querySelectorAll('[data-rf-variant-isolate]')
-              .forEach((el) => el.removeAttribute('data-rf-variant-isolate'));
+            const root = document.querySelector('[data-rf-picked]');
+            for (let el = root; el?.parentElement; el = el.parentElement)
+              for (const sibling of el.parentElement.children)
+                if (sibling !== el) sibling.setAttribute('data-rf-variant-isolate', '');
+            const style = document.createElement('style');
+            style.id = 'rf-variant-isolation';
+            style.textContent = '[data-rf-variant-isolate]{visibility:hidden!important}';
+            document.head.append(style);
           });
+          let referenceImage;
+          try {
+            // Same fractional crop as the main reference (an element screenshot rounds to whole pixels).
+            const { clip, fullPage } = await selected.evaluate((el) => {
+              const r = el.getBoundingClientRect(),
+                fullPage = r.bottom > innerHeight || r.right > innerWidth || r.top < 0;
+              return {
+                fullPage,
+                clip: {
+                  x: r.x + (fullPage ? scrollX : 0),
+                  y: r.y + (fullPage ? scrollY : 0),
+                  width: r.width,
+                  height: r.height,
+                },
+              };
+            });
+            referenceImage =
+              'data:image/jpeg;base64,' +
+              (
+                await page.screenshot({
+                  type: 'jpeg',
+                  quality: 65,
+                  animations: 'allow',
+                  fullPage,
+                  clip,
+                })
+              ).toString('base64');
+          } finally {
+            await page.evaluate(() => {
+              document.getElementById('rf-variant-isolation')?.remove();
+              document
+                .querySelectorAll('[data-rf-variant-isolate]')
+                .forEach((el) => el.removeAttribute('data-rf-variant-isolate'));
+            });
+          }
+          variants.push({ width, state, website, referenceImage, identity: hash(structure) });
+        } finally {
+          await motion.evaluate((restore) => restore()).catch(() => {});
+          await motion.dispose();
         }
-        variants.push({ width, state, website, referenceImage, identity: hash(structure) });
       }
     }
     return { variants: validateVariants(variants), warnings };

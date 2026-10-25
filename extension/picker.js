@@ -198,13 +198,15 @@
     try {
       document.querySelector('[data-rf-picked]')?.removeAttribute('data-rf-picked');
       selected.setAttribute('data-rf-picked', 'true');
-      let page;
+      let page, referenceImage;
+      const restore = await globalThis.reframePauseCapture('[data-rf-picked]');
       try {
         page = globalThis.reframeSnapshot('[data-rf-picked]');
+        referenceImage = await screenshot(selected);
       } finally {
+        restore();
         selected.removeAttribute('data-rf-picked');
       }
-      const referenceImage = await screenshot(selected);
       render('Saving to Reframe and checking the match…');
       const reply = await send({
         type: 'save',

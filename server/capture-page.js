@@ -1,3 +1,43 @@
+// Keep the reference and DOM snapshot at the same CSS motion state, then restore the source page.
+export async function pauseCaptureMotion(selector) {
+  const root = document.querySelector(selector);
+  if (!root) throw new Error('Pick the component again.');
+  const animations = new Set(root.getAnimations({ subtree: true }));
+  for (let el = root.parentElement; el; el = el.parentElement)
+    for (const animation of el.getAnimations()) animations.add(animation);
+  const saved = [];
+  for (const animation of animations) {
+    if (!['running', 'paused'].includes(animation.playState)) continue;
+    const timing = animation.effect?.getComputedTiming();
+    if (!timing) continue;
+    const state = {
+      animation,
+      time: animation.currentTime,
+      playing: animation.playState === 'running',
+    };
+    try {
+      saved.push(state);
+      animation.pause();
+      animation.currentTime = Number.isFinite(timing.endTime) ? timing.endTime : 0;
+    } catch {
+      /* A source script may cancel an animation while it is being captured. */
+    }
+  }
+  await Promise.all(saved.map(({ animation }) => animation.ready.catch(() => {})));
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  return () => {
+    for (const { animation, time, playing } of saved) {
+      try {
+        if (animation.playState === 'idle') continue;
+        animation.currentTime = time;
+        if (playing) animation.play();
+      } catch {
+        /* A removed source animation must not stop the others from resuming. */
+      }
+    }
+  };
+}
+
 // Reads a rendered element (or the whole body) for capture: sanitizable markup, the stylesheet rules that apply to it,
 // a computed-style snapshot and capture context (fonts, backdrop, viewport, root font size).
 // It runs inside the captured page — through Playwright in the reference browser, and as generated code in the browser
@@ -357,6 +397,20 @@ export function renderedSnapshot(selector) {
         display = c.display,
         svg = el instanceof SVGElement,
         image = c.getPropertyValue('background-image') !== 'none';
+      // Script-driven entrance effects can display opacity:1 over an inline opacity:0 that cloning would revive.
+      for (const animation of el.getAnimations()) {
+        const effect = animation.effect;
+        if (!(effect instanceof KeyframeEffect) || effect.getTiming().iterations === Infinity)
+          continue;
+        for (const property of new Set(
+          effect.getKeyframes().flatMap((frame) => Object.keys(frame)),
+        )) {
+          if (['offset', 'computedOffset', 'easing', 'composite'].includes(property)) continue;
+          const name = property.replace(/[A-Z]/g, (letter) => '-' + letter.toLowerCase());
+          const value = c.getPropertyValue(name);
+          if (value) copies[i].style.setProperty(name, value);
+        }
+      }
       // Inside a shadow root the component's own stylesheet cannot follow the copy, so its sizes are kept, as computed
       // rather than laid out (`auto` is left to the content; percentages and calc() stay fluid). Elsewhere the site's
       // rules are captured with their media conditions, and a desktop-only size here would override them.
@@ -373,13 +427,16 @@ export function renderedSnapshot(selector) {
           if (v && v !== 'auto' && v !== 'null') sized += p + ':' + v + ';';
         }
       }
+      // A <use> instance supplies inherited paint; baking the definition's default black fill breaks it.
+      const definition = svg && el.closest('defs,symbol');
       const block =
         (i === 0 ? rootSize() : sized) +
         props
           .filter(
             (p) =>
               !(
-                (!svg && (p === 'fill' || p === 'stroke')) ||
+                ((!svg || definition) && (p === 'fill' || p === 'stroke')) ||
+                (definition && p === 'color') ||
                 (!/flex|grid/.test(display) && layout.includes(p)) ||
                 (!/grid/.test(display) && p === 'grid-template-columns') ||
                 (!image && /^background-(?:size|position|repeat)$/.test(p)) ||

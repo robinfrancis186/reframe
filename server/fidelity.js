@@ -280,6 +280,16 @@ async function findRepairs(tab, rules) {
           ];
           // Width and height are snapshotted as computed values (auto, %, calc), not the laid-out pixels.
           const computed = getComputedStyle(el),
+            animated = new Set(
+              el
+                .getAnimations()
+                .flatMap((a) =>
+                  a.effect instanceof KeyframeEffect && a.effect.getTiming().iterations === Infinity
+                    ? a.effect.getKeyframes().flatMap((frame) => Object.keys(frame))
+                    : [],
+                )
+                .map((property) => property.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase())),
+            ),
             map = el.computedStyleMap?.(),
             value = (property) =>
               map && (property === 'width' || property === 'height')
@@ -287,6 +297,7 @@ async function findRepairs(tab, rules) {
                 : computed.getPropertyValue(property).trim(),
             wrong = expected.filter(
               ([property, expected]) =>
+                !animated.has(property) &&
                 !same(value(property), expected) &&
                 !same(computed.getPropertyValue(property).trim(), expected),
             );
