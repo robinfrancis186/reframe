@@ -22,16 +22,16 @@ The installed demo is available while its local validation server runs at <http:
 
 `npm run verify` passed: **168 tests**, formatting, ESLint, client/server type checks and all three production builds. New tests cover bundling, relative and cross-origin redirects, malicious data resources, private-network rejection, unsupported/oversized resources, changed asset revisions, both React export modes, and real Chromium checks with lazy images and PDF downloads.
 
-Evidence is under [output/playwright/portable-robin](../output/playwright/portable-robin/):
+The original evidence is local-only under `output/playwright/portable-robin/` (ignored by Git). See [the current committed web-reuse evidence](evidence/web-reuse-2026-10-25/README.md) for downloadable screenshots and results. Original local artifact names:
 
-- [Ready to reuse report](../output/playwright/portable-robin/report-desktop.png)
-- [Phone-width report](../output/playwright/portable-robin/report-mobile.png)
-- [Installed component](../output/playwright/portable-robin/installed-desktop.png)
-- [Installed phone-width check](../output/playwright/portable-robin/installed-mobile.png)
-- [Source-blocked report](../output/playwright/portable-robin/source-blocked-report.json)
-- [Destination browser checks](../output/playwright/portable-robin/installed-check.log)
-- [Complete verification log](../output/playwright/portable-robin/verify-final.log)
-- [Importable single-component Library backup](../output/playwright/portable-robin/Reframe-Robin-Self-Contained.json)
+- Ready to reuse report — `output/playwright/portable-robin/report-desktop.png` (local-only)
+- Phone-width report — `output/playwright/portable-robin/report-mobile.png` (local-only)
+- Installed component — `output/playwright/portable-robin/installed-desktop.png` (local-only)
+- Installed phone-width check — `output/playwright/portable-robin/installed-mobile.png` (local-only)
+- Source-blocked report — `output/playwright/portable-robin/source-blocked-report.json` (local-only)
+- Destination browser checks — `output/playwright/portable-robin/installed-check.log` (local-only)
+- Complete verification log — `output/playwright/portable-robin/verify-final.log` (local-only)
+- Importable single-component Library backup — `output/playwright/portable-robin/Reframe-Robin-Self-Contained.json` (local-only)
 
 ## Deliberate limits
 

@@ -1,74 +1,110 @@
-# Reframe
+<div align="center">
+  <img src="desktop/icon.png" width="88" height="88" alt="Reframe icon" />
+  <h1>Reframe</h1>
+  <p><strong>Point. Pick. Make it work.</strong></p>
+  <p>Turn a component you like on a website into a reusable, working part of your own web app.</p>
+  <p>
+    <a href="#quick-start">Get started</a> ·
+    <a href="docs/WEB_WORKFLOW.md">First component</a> ·
+    <a href="#what-works-today">Compatibility</a> ·
+    <a href="docs/README.md">Documentation</a> ·
+    <a href="CONTRIBUTING.md">Contribute</a>
+  </p>
+  <p><strong>Web focused</strong> · Local workspace · Optional OpenAI assistance</p>
+</div>
 
-Collect UI from the web, keep it in your Library, and reuse it in your apps.
+![Reframe Home: browse a website, capture a screen or open your reusable component Library](docs/images/reframe-home.png)
 
-**The main flow:** Capture → Library → working preview → export or install.
+## From inspiration to something you can use
 
-## Run locally
+You find a button, card or form you want in your own product. Reframe lets you pick it from the rendered website, keep its appearance and assets, define what it should do, and test the result before reuse.
 
-Requires Node 24 and npm. From this project folder:
+**Browse & pick → Library → Build & test → Copy or install**
+
+- **Pick from a real website.** The built-in browser renders JavaScript pages; an optional Chrome extension captures from your own browser.
+- **Keep a reusable Library.** Save source evidence, styling, bundled assets and declared behavior together. Search, tag, organise and reopen components.
+- **Make the component work.** Build supported actions, validation, APIs and local persistence. Add account or external-service requirements explicitly.
+- **Check before reuse.** Compare appearance and review **Ready to reuse** for asset dependencies. Test supported assets with the source website blocked.
+- **Use it in your project.** Copy a working web embed, download a standalone package, or review a direct React/Vite installation with guarded undo.
+
+Reframe captures what the browser can observe. It independently builds the behavior you define; it does not recover another site's private backend or guarantee an exact copy of every interaction.
+
+## Quick start
+
+Requires **Node.js 24 and npm**. The web workbench runs on your own computer.
 
 ```sh
+git clone https://github.com/robinfrancis186/reframe.git
+cd reframe
 npm ci
 npx playwright install chromium
 npm run dev
 ```
 
-Open [Reframe](http://localhost:5173). The workbench listens only on this computer.
+Open **[localhost:5173](http://localhost:5173)**. No OpenAI key is needed for ordinary website capture, Library operations or deterministic generation.
 
-OpenAI is optional. Add `OPENAI_API_KEY` to your local `.env` for AI features, or supply a key for one request in the app. Ordinary capture, Library operations and deterministic exports do not make paid model calls. AI-assist buttons explain what they send.
+On Linux, use `npx playwright install --with-deps chromium` to install Chromium's system dependencies as well. Local OCR and macOS desktop packaging require macOS; these are separate from the web workflow.
 
-## First component
+**First try:** choose **Browse & pick**, enter a website URL and select a small component. Open it in the editor, review or define its behavior, test it, then save to **Library**. Choose **Prepare for my website → Copy component**, or **Fit & install → Use demo app** to try direct installation.
 
-1. Choose **Capture → Browse & pick**, load a public website, and pick a button, card or section. Select a parent if you need a larger region.
-2. Optionally measure desktop, tablet, phone, hover and keyboard-focus states in the isolated browser. Hidden, changed or ambiguous regions are reported.
-3. Save to **Library**. Use **More options** to rename, tag or export, and **Filters & sort** to narrow the list; packages load only when opened. Image thumbnails keep the Library light.
-4. Open the component and choose **Define behavior**. Pick what each button does, then **Build working component**. Try it with **Start working preview**, then **Save working component**. Inputs and sign-in are under settings; generated source remains available under **Code & runtime requirements**. Captures cannot recover private services.
-5. Open **Export & code options** for downloads. Export **Faithful** React/CSS/HTML, or choose **Clean & responsive** in the editor's Code view. Clean mode uses semantic names and supported React interactions, with measured visual differences.
-6. Choose **Fit & install → Use demo app**, choose **Review installation**, check the behavior and file summary, allow the listed changes, then **Install component**. Source comparisons remain available on demand. **Launch demo app** builds the actual destination and opens its UI and backend inside the receipt. No terminal is needed; demo records persist across restarts. You can also connect your own project folder and run it with its normal commands. Guarded undo remains available.
+See the [step-by-step web guide](docs/WEB_WORKFLOW.md), including a first run without a project folder.
 
-Supported public raster images, fonts and PDFs can be bundled with website packages. **Ready to reuse** lists remaining external dependencies and offers a source-blocked check. Older captures can use **Bundle supported assets** before saving. Unsupported or oversized assets may remain online. Captured fonts and artwork belong to their owners; use the bundled open fonts when appropriate. Faithful appearance, reconstructed interactions and backend integration have separate validation.
+### Optional OpenAI assistance
 
-## Pick in Chrome
+Copy [`.env.example`](.env.example) to `.env`, add `OPENAI_API_KEY` locally and restart the server. You can also supply a key for a supported request in the app. AI actions are explicit; ordinary editing does not silently start paid requests. Keys are not included in component exports.
 
-The optional [Reframe Picker extension](extension) can capture a component in your own browser session. Install the unpacked `extension/` folder from `chrome://extensions`, reload Reframe in Chrome, and use **Library → Pick from your own browser → Connect extension**. Confirm the local address. Click the extension or press **Alt+Shift+R**, pick an element, then press Enter.
+## What works today
 
-The extension runs on a site only when you start it. Captures are sanitized; it does not transfer cookies or authentication sessions into the isolated browser. Chrome Web Store publication is pending.
+| Your goal                                          | Supported route                                                              | Boundary                                                                          |
+| -------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Capture a React, Next.js, Go or other website      | Pick its rendered HTML/CSS in the built-in browser                           | Captures the browser result, not the original framework source                    |
+| Reuse a working component in HTML or a Go template | Copy the HTML iframe embed                                                   | The component's Node backend runs separately                                      |
+| Reuse in React or Next.js                          | Copy the JSX iframe embed                                                    | This is an embed, not a native framework rewrite                                  |
+| Install source in a React/Vite app                 | Review files in **Projects**, install and test                               | Full working source installation is scoped to React/Vite                          |
+| Run without Reframe                                | Download the standalone UI/backend ZIP and run `node start.mjs` with Node 24 | No `npm install` needed; public deployment is a separate step                     |
+| Explore advanced tools                             | Open **Labs**                                                                | Agents, MCP, Gradio, native adapters and review tools have separate prerequisites |
 
-## Data and recovery
+Copied addresses are **local links**. Keep Reframe open while testing them. A public website needs a separately hosted component address, HTTPS and appropriate production identity/storage controls. Do not expose Reframe's local project-editing API publicly.
 
-The development Library lives in `.reframe/library/`: immutable component revisions, a small index, shared fonts/images and ten retained manifests. Existing v1 workspaces and histories migrate automatically; the original workspace is retained as `workspace.v1.backup.json`.
+### A real website, tested
 
-Renaming or tagging updates metadata, not the captured package. Unsynced edits stay in IndexedDB. Conflicting item edits can be kept as new components, without replacing the server version. **Back up** exports the complete Library; pending edits have a separate backup action. `.reframe` and `.env` are excluded from Git and desktop packages.
+The 25 October 2026 local verification captured **Download CV from RobinFrancis.in**, saved it to the Library and tested its bundled **80,412-byte PDF** inside separate **Go and Next.js** apps with external requests blocked. A separately authored newsletter component saved records and retained them after reload in both hosts. A fresh-profile flow also covered direct React demo installation.
 
-Agents, device capture, Gradio, standalone browser tests and assistant connections remain available in **Labs**. Their prerequisites and runtime limits remain explicit.
+**177 automated tests passed**, alongside formatting, linting, client/server type checks and all three web builds. These are dated local results, not a claim that remote CI or a public release has passed.
+
+[Verification history and evidence](docs/VERIFICATION.md) · [Capture-to-reuse screenshot](docs/images/reframe-web-reuse.png)
+
+## Your workspace stays yours
+
+The development Library lives in `.reframe/library/`, with individual revisions, shared assets and ten retained manifests. Metadata edits do not rewrite every component. Pending offline changes stay in IndexedDB. Backups, conflict recovery and guarded installation undo remain available.
+
+`.env`, local Libraries, credentials and build artifacts are excluded from Git. The Chrome extension uses explicit pairing; it does not transfer your signed-in session into the isolated browser. Captured fonts, logos and artwork retain their owners' rights.
 
 ## macOS desktop
 
-Open `out/make/Reframe-arm64-local-unsigned.dmg` and double-click **Reframe** to try it, or drag it to **Applications** for regular use. The first launch unpacks a private backend cache once per app version (about 280 MB). Opening from the DMG also caches the bundled runtimes (about 760 MB total); subsequent launches reuse them. Backend compilation is cached across restarts. Preparation has a visible startup screen, and a failed startup offers **Try again** and **Open diagnostic log**. The cache is separate from your Library; no administrator access or downloads are needed. The Apple Silicon build targets macOS 13 or newer; older macOS versions have not been runtime-tested here.
-
-To rebuild the installer:
+The repository includes an Electron build for **Apple Silicon** with bundled Node and Chromium:
 
 ```sh
 npm run desktop:package
 ```
 
-This prepares an Apple Silicon `.app` with its own Node, Chromium and compiled macOS Vision OCR helper, then creates a DMG using macOS's `hdiutil`. Outputs are under `out/`; no terminal or global Node/Chrome/Swift installation is required to run the packaged app. Its Library is in macOS application user data, separate from the development project. Use **Library → saved-location details → Import an existing Reframe Library** to copy an existing project Library.
+Build outputs are local under `out/`; the DMG is not committed to this repository. The current development distribution is **not Developer ID signed or notarized**. Desktop checks are separate from web-flow evidence, and the newest web changes require a fresh package build.
 
-The current local package has a verified ad-hoc resource seal, but is **not Developer ID signed or notarized**. It is a development artifact, not a verified public release. Signing uses `MAC_SIGN_IDENTITY`; notarization additionally uses `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER` in the build environment. Never put signing credentials in source control. Browser extension pairing is separate from installing the desktop app.
+[Desktop configuration and release gates](docs/RELEASE.md)
 
-## Verify
+## Development and documentation
 
 ```sh
-npm run verify
-npm run benchmark
-node scripts/verify-desktop.mjs
+npm run verify      # Formatting, lint, types, builds and automated tests
+npm run benchmark   # Library benchmarks at 150 / 500 / 1,000 components
 ```
 
-Verification checks formatting, linting, client/server types, automated workflows and all three web builds. Benchmarks cover 150, 500 and 1,000 realistic captures; the report distinguishes JavaScript heap from browser-process memory.
+- [Documentation index](docs/README.md) — current guides and dated evidence.
+- [Contributing](CONTRIBUTING.md) — setup, project layout and verification.
+- [MCP connections](docs/CONNECTIONS.md) — scoped access for compatible assistants.
+- [Architecture map](docs/architecture/graphify/README.md) — a dated, browsable Graphify snapshot.
+- [Third-party notices](THIRD_PARTY_NOTICES.md) — Ponytail, REA, Graphify and other dependencies.
 
-See the [current release assessment](docs/RELEASE_ASSESSMENT_2026-10-23.md), [technical reference](docs/REFERENCE.md), [previous product audit](docs/PRODUCT_AUDIT_2026-10-22.md) and [verification history](docs/VERIFICATION.md). Public multiuser hosting and physical Android/iOS runtime validation are separate from this local macOS release.
+Ponytail supplies generation guidance, REA supplies static source analysis, and Graphify supplies optional code maps. The inaccessible Turnitout engine is **not bundled**; Reframe Copy Polish is an independently authored replacement. See the notices for exact scope and attribution.
 
-## Architecture and improvement roadmap
-
-Browse the [reconciled Graphify map and evidence](docs/architecture/graphify/README.md) and the [prioritized improvement report](docs/GRAPHIFY_IMPROVEMENTS_2026-10-23.md). Local credentials, saved user Libraries, build artifacts and working Graphify caches are excluded from this repository.
+Built by [Robin Francis](https://github.com/robinfrancis186). Reframe's current focus is a clear, testable web workflow; universal backend recovery, public multiuser hosting and verified Android/iOS runtimes are outside that scope.

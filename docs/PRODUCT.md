@@ -1,4 +1,6 @@
-# Reframe
+# Reframe product notes
+
+> Current focus: web components for a simple **pick → build behavior → save → reuse** workflow. See [the current guide](WEB_WORKFLOW.md) and [compatibility table](../README.md#what-works-today). The original, broader product notes below are retained as historical context; native adapters and advanced tools are in Labs, with separate runtime limits.
 
 **A reusable interface workbench: observe a pattern, keep the evidence, adapt it to your product, and carry it to the next project.**
 

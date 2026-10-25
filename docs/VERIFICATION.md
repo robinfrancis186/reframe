@@ -1,4 +1,16 @@
-# Verification — 23 October 2026
+# Verification history
+
+## 25 October 2026 — working web embeds
+
+- **177 tests passed**, including capture/save/reopen, behavior validation, local API persistence, standalone package execution, source-blocked navigation/forms/downloads and direct React demo installation. Formatting, ESLint, client/server type checks and all three web builds passed separately.
+- Captured the actual Download CV control from RobinFrancis.in and saved it as **Robin CV · working web component**. Its Ready to reuse check passed at 1280px and 390px, with a verified bundled PDF and zero external resource requests. The live capture reported 96.2% measured visual match.
+- In separate running Go and Next.js apps, the captured CV downloaded the 80,412-byte PDF with non-local requests blocked. A separately authored newsletter component saved records and retained them after reload in both hosts. This is embed compatibility, not native Go/Next.js backend generation.
+- The fresh-profile test also exercised the new Prepare/HTML/JSX/download controls and stopped the local component before continuing through reviewed direct installation and one-click demo launch. The downloaded package ran independently without Reframe and without exporting existing records.
+- Fixed public IPv4-through-DNS64 capture while retaining private/loopback rejection. Fixed macOS realpath handling in canonical web builds and used captured component height in copied snippets.
+- After the documentation refresh and verification-command reordering, formatting, the production build and the complete fresh-profile capture-to-install regression passed again. No second full-suite result is claimed.
+- Local web evidence only: no new macOS package, signing/notarization, public deployment, physical native runtime or unaided newcomer trial was completed for this change. The 177-test run preceded the documentation-only refresh and verification-script reordering; it is not a remote CI result.
+
+[Retained logs, screenshots and scope](evidence/web-reuse-2026-10-25/README.md).
 
 ## 23 October 2026 — self-contained captures and Ready to reuse
 

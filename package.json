@@ -9,7 +9,7 @@
     "start": "NODE_ENV=production node --env-file-if-exists=.env server/index.js",
     "test": "node --test --test-concurrency=2 tests/*.test.js",
     "check": "tsc --noEmit",
-    "verify": "npm run format:check && npm run lint && npm run check && npm run check:server && npm test && npm run build && npm --prefix examples/integrated-app run build && npm --prefix examples/connected-app run build",
+    "verify": "npm run format:check && npm run lint && npm run check && npm run check:server && npm run build && npm --prefix examples/integrated-app run build && npm --prefix examples/connected-app run build && npm test",
     "gradio:setup": "uv venv --allow-existing .reframe/gradio-venv && uv pip install --python .reframe/gradio-venv/bin/python -r server/gradio-requirements.txt",
     "demo": "node examples/connected-app/server/index.js",
     "fidelity": "node tests/fidelity-suite.mjs",

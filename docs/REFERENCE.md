@@ -1,8 +1,10 @@
-# Reframe
+# Extended feature reference
+
+> Historical implementation notes collected through 23 October 2026. Some navigation names and integration routes have changed. Use [the current web guide](WEB_WORKFLOW.md) and [documentation index](README.md) for the supported capture-to-reuse workflow.
 
 A local component workbench: capture an interface, pick reusable elements, adapt them to your project theme, save them, and insert them into connected web or native projects.
 
-See the [product and usability audit](docs/PRODUCT_AUDIT_2026-10-22.md) for current capability ratings, market comparisons, implemented workflow improvements and remaining release gates.
+See the [product and usability audit](PRODUCT_AUDIT_2026-10-22.md) for current capability ratings, market comparisons, implemented workflow improvements and remaining release gates.
 
 ## Run
 
@@ -20,12 +22,12 @@ npm run build
 npm start
 ```
 
-Stop the dev server before starting production on the same port. Production serves the built frontend and API together. Run `npm run verify` for TypeScript, the Node suite and all three web builds. See [release configuration and hosting gates](docs/RELEASE.md). This build is intended for a single user on their own machine; it is not a publicly hosted multiuser service.
+Stop the dev server before starting production on the same port. Production serves the built frontend and API together. Run `npm run verify` for TypeScript, the Node suite and all three web builds. See [release configuration and hosting gates](RELEASE.md). This build is intended for a single user on their own machine; it is not a publicly hosted multiuser service.
 
 ## Try it
 
-- **Connections** gives compatible external assistants scoped, revocable MCP access over local HTTP or stdio. Create a named connection, copy its configuration, and explicitly share components. Assistants can capture, generate declared UI/backend packages, run REA/Graphify and check project fit; installation remains in Projects after review. Your browser clipboard stays private by default. See [MCP setup and tools](docs/CONNECTIONS.md).
-- **Toolchain checks:** Ponytail 5.3.2 and REA 6.7.0 match verified upstream versions. Graphify was updated to 0.9.93 and now maps actual JS/TS source in Review tools. Run `npm run graphify:setup` on a new machine. See [versions and compatibility boundaries](docs/TOOLCHAIN.md).
+- **Connections** gives compatible external assistants scoped, revocable MCP access over local HTTP or stdio. Create a named connection, copy its configuration, and explicitly share components. Assistants can capture, generate declared UI/backend packages, run REA/Graphify and check project fit; installation remains in Projects after review. Your browser clipboard stays private by default. See [MCP setup and tools](CONNECTIONS.md).
+- **Toolchain checks:** Ponytail 5.3.2 and REA 6.7.0 match verified upstream versions. Graphify was updated to 0.9.93 and now maps actual JS/TS source in Review tools. Run `npm run graphify:setup` on a new machine. See [versions and compatibility boundaries](TOOLCHAIN.md).
 - **One workspace, five sections:** Home; Studio (Canvas, Browser, Devices); Library (Saved components, Originals); Projects (Integrate, Branding); Agents (Team & workflows, Review tools, Connections). Existing capture, export and review tools remain available within these sections.
 - **OpenAI project suggestions** use Atlas to interpret your project purpose, sampled existing UI and possible missing features, then rank eligible Originals and clipboard components. A configured server key enables explicit model requests; alternatively supply a key for one suggestion. Local matching remains an explicit separate choice. Each card explains the gap, keeps service requirements visible and supports saving the full component to the clipboard or selecting it for the branded destination preview. AI relevance is an estimate, separate from actual Project fit. Installation still requires fit → source review → acknowledgement → apply, with undo.
 - Suggestions sample up to four eligible source files / 200 KB locally; OpenAI receives bounded visible-text/control signals and candidate metadata, not entire source files, backend packages or destination records. Missing features are hypotheses, not whole-app or runtime evidence. Candidate identities and capabilities are revalidated on the server; failed model requests never silently switch to local matching.
@@ -159,7 +161,7 @@ Heavy tool screens load on demand. A failed view has a reload recovery screen wi
 - **Built-in decision model** uses transparent local rules to recommend a supported destination, manual reconstruction, action wiring, or source review. It needs no API key and never claims to infer private backend code. Expand its evidence to separate frontend structure, local input state and missing business behavior.
 - **Minimal generation** omits unused callbacks and input state, adds no dependencies, and retains original link destinations in the action contract for deliberate wiring. The bundled Ponytail policy guides vision prompts. Package checks parse JS/TS and JSON, count literal imports and flag dependencies beyond the React/Vite baseline. These are bounded structural checks; they do not prove all code is necessary or resolve dynamic dependency expressions. Ponytail itself is an instruction policy, not a compiler or optimizer.
 
-See [UI research, scoring rules and design comparison](docs/UI-REFRESH.md).
+See [UI research, scoring rules and design comparison](UI-REFRESH.md).
 
 ## Optional vision
 
@@ -175,7 +177,7 @@ Public URL capture validates all DNS addresses, pins the approved address for th
 
 ## Integration scope
 
-Ponytail rules and REA source analysis are built in. The user confirmed Turnitout authorization, but its public repository only includes documentation and its referenced core is inaccessible. The user requested an independent replacement; **Reframe Copy Polish** is that local feature. It reviews UI wording, JS/TS comments, TXT, Markdown, LaTeX and DOCX. Word formatting, citation fields, code and math are protected by conservative rules; review suggested edits and download a new file from Engines. Documents stay local. Detector evasion and human-authorship guarantees are not provided. Read [third-party notices](THIRD_PARTY_NOTICES.md), [product definition](docs/PRODUCT.md), and [verification](docs/VERIFICATION.md).
+Ponytail rules and REA source analysis are built in. The user confirmed Turnitout authorization, but its public repository only includes documentation and its referenced core is inaccessible. The user requested an independent replacement; **Reframe Copy Polish** is that local feature. It reviews UI wording, JS/TS comments, TXT, Markdown, LaTeX and DOCX. Word formatting, citation fields, code and math are protected by conservative rules; review suggested edits and download a new file from Engines. Documents stay local. Detector evasion and human-authorship guarantees are not provided. Read [third-party notices](../THIRD_PARTY_NOTICES.md), [product definition](PRODUCT.md), and [verification](VERIFICATION.md).
 
 Android and iOS Simulator capture adapters, native SwiftUI/Compose/React Native generation, and automatic source insertion are implemented. Live Android/iOS device capture and OS runtime tests remain pending by the user’s explicit choice; this machine has no ADB, full Xcode, Android SDK or Java runtime. Shared SwiftUI source was compiled as a macOS app, and its actual UI validation, save, counter and restart persistence were tested against the installed backend. Those results are not iOS runtime proof. APK/IPA decompilation and recovery of hidden business logic are not included. The local web destination workflow has a runnable starter app for end-to-end verification.
 

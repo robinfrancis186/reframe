@@ -1,0 +1,22 @@
+name: Feature request
+description: Suggest a useful improvement to the capture-to-reuse workflow.
+title: '[Feature]: '
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the user task and where the current workflow falls short.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: What would a successful result look like?
+      description: A small concrete example helps more than a list of tools or frameworks.
+    validations:
+      required: true
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Current workaround or alternatives

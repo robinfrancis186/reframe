@@ -8,11 +8,11 @@ The refresh preserves every previous node identity and every previous relationsh
 
 The export guard stayed enabled. Preservation assertions verify old IDs, old links, endpoint resolution, hyperedge membership and the absence of link loss during export. The HTML intentionally shows a simpler connection projection; the complete evidence remains in graph.json. Current-code analysis excludes historical and external-reference hubs. Same-file symbol relationships are retained, but are not mislabeled as module import cycles.
 
-- [Interactive map](../graphify-out/graph.html)
-- [Complete graph report](../graphify-out/GRAPH_REPORT.md)
+- [Interactive map](architecture/graphify/graph.html)
+- [Complete graph report](architecture/graphify/GRAPH_REPORT.md)
 - [Preservation checks](evidence/graphify-2026-10-23/preservation.json)
-- [Workflow paths](../graphify-out/workflow-paths.json)
-- [File coupling measurements](../graphify-out/file-coupling.json)
+- Workflow paths (local-only `../graphify-out/workflow-paths.json`)
+- File coupling measurements (local-only `../graphify-out/file-coupling.json`)
 
 ## What the graph reveals
 

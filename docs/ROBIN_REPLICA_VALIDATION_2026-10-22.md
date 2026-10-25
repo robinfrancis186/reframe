@@ -49,7 +49,7 @@ The suite covers HTML/SVG/style sanitization; preserved CV geometry and download
 
 Final command: `npm run verify` passed **120 tests**, TypeScript and all three production builds. Log: `/tmp/reframe-robin-completion.log`. Browser checks were performed against the running local Reframe and rebuilt Haven applications; both final browser consoles contain no errors.
 
-Deliverables: [portable working website](evidence/robin-working-website.zip), [installed demo](http://localhost:5175/) and [final clipboard backup](</Users/robinfrancis/Downloads/reframe-clipboard (2).json>). The final browser-picked item is named **Download CV · faithful capture** and retains the original genuine reference screenshot.
+Deliverables: [portable working website](evidence/robin-working-website.zip), [installed demo](http://localhost:5175/) and final clipboard backup (a local Downloads artifact, not distributed in this repository). The final browser-picked item is named **Download CV · faithful capture** and retains the original genuine reference screenshot.
 
 ## Engines actually exercised
 

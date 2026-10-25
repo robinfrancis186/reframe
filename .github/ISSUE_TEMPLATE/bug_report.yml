@@ -1,0 +1,31 @@
+name: Bug report
+description: Report a broken capture, Library, preview, export or installation flow.
+title: '[Bug]: '
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include a public URL or small fixture when possible. Remove credentials and private project data.
+      placeholder: '1. Open Browse & pick…'
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Expected and actual result
+      description: What should happen, and what happens instead?
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: 'macOS version / browser version / Node version / web or desktop build'
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or sanitized logs
+      description: Share the smallest evidence needed. Do not include API keys, account data or Library backups.

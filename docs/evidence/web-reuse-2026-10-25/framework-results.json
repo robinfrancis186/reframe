@@ -1,0 +1,18 @@
+{
+  "hosts": [
+    {
+      "framework": "Go",
+      "pdfBytes": 80412,
+      "persistedAfterReload": true
+    },
+    {
+      "framework": "Next.js",
+      "pdfBytes": 80412,
+      "persistedAfterReload": true
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "scope": "Local Go and Next.js hosts with the real Robin CV capture and a separately authored newsletter. External requests were blocked.",
+  "verifiedAt": "2026-10-25"
+}
