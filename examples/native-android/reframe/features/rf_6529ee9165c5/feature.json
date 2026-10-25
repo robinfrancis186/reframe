@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "id": "rf_6529ee9165c5",
+  "name": "Native community",
+  "fields": [
+    {
+      "id": "field1",
+      "label": "Email",
+      "type": "email",
+      "required": true
+    }
+  ],
+  "actions": [
+    {
+      "id": "action1",
+      "label": "Save",
+      "href": null,
+      "operation": "create",
+      "target": "",
+      "message": "",
+      "reason": "Suggested from visible labels or links; review before building."
+    },
+    {
+      "id": "action2",
+      "label": "Count",
+      "href": null,
+      "operation": "increment",
+      "target": "",
+      "message": "",
+      "reason": "Suggested from visible labels or links; review before building."
+    }
+  ]
+}

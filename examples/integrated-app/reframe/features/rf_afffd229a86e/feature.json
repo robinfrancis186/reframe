@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "id": "rf_afffd229a86e",
+  "name": "Community check-ins",
+  "fields": [],
+  "actions": [
+    {
+      "id": "action1",
+      "label": "Count",
+      "href": null,
+      "operation": "increment",
+      "target": "",
+      "message": "",
+      "reason": "The capture does not define the intended business rule."
+    }
+  ]
+}

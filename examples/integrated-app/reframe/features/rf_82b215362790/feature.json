@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "id": "rf_82b215362790",
+  "name": "Connected API lookup",
+  "authRequired": true,
+  "fields": [
+    {
+      "id": "field1",
+      "label": "Message",
+      "type": "text",
+      "required": true
+    }
+  ],
+  "actions": [
+    {
+      "id": "action1",
+      "label": "Save note",
+      "href": null,
+      "operation": "create",
+      "target": "",
+      "message": "",
+      "reason": "Suggested from visible labels or links; review before building."
+    },
+    {
+      "id": "action2",
+      "label": "Call API",
+      "href": null,
+      "operation": "external",
+      "target": "",
+      "message": "",
+      "reason": "The capture does not define the intended business rule.",
+      "connection": {
+        "url": "https://postman-echo.com/get",
+        "method": "GET",
+        "auth": "bearer",
+        "keyName": "SERVICE_API_KEY",
+        "inputMap": {
+          "message": "field1"
+        }
+      }
+    }
+  ]
+}

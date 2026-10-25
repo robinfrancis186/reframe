@@ -1,0 +1,9 @@
+# Screenshot community
+
+Generated from captured UI; action rules were reviewed and authored independently.
+
+Install through Reframe Projects to wire source, API and scripts. Web: React + Vite, npm run reframe:dev. Production: npm run build && npm run reframe:start. SwiftUI: Component.swift + ReframeClient.swift. Android Compose: Component.kt wraps ReframeFeatureView.java with MaterialTheme colors. Native: npm run reframe:backend (Node 24+, port 5176); the backend remains on the Mac. iOS Simulator uses localhost; Android Emulator uses 10.0.2.2. Physical Android: adb reverse tcp:5176 tcp:5176 and pass localhost apiBase. Add generated Swift files to explicit Xcode targets; synchronized groups and SwiftPM discover them. Android debug-only local HTTP configuration is included by the installer. Production requires an authenticated HTTPS service.
+
+The API /api/reframe/rf_bca88c87a2bc provides GET state and POST declared actions. Data stays in .reframe/data/rf_bca88c87a2bc.json. One local workspace, no multiuser authentication. Back up the data directory. No external-service or payment behavior is implied.
+
+Persistent actions use schema validation, optimistic versions, idempotent request IDs and atomic writes. Supports 200 records and 10000 writes before migration. Generated feature data is not part of the clipboard bundle.

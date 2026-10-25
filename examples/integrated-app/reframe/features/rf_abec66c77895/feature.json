@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "id": "rf_abec66c77895",
+  "name": "Community contacts",
+  "fields": [
+    {
+      "id": "field1",
+      "label": "Email",
+      "type": "email",
+      "required": true
+    }
+  ],
+  "actions": [
+    {
+      "id": "action1",
+      "label": "Subscribe",
+      "href": null,
+      "operation": "create",
+      "target": "",
+      "message": "",
+      "reason": "Suggested from visible labels or links; review before building."
+    },
+    {
+      "id": "action2",
+      "label": "Update",
+      "href": null,
+      "operation": "update",
+      "target": "",
+      "message": "",
+      "reason": "Suggested from visible labels or links; review before building."
+    },
+    {
+      "id": "action3",
+      "label": "Delete",
+      "href": null,
+      "operation": "delete",
+      "target": "",
+      "message": "",
+      "reason": "Suggested from visible labels or links; review before building."
+    },
+    {
+      "id": "action4",
+      "label": "Search",
+      "href": null,
+      "operation": "search",
+      "target": "",
+      "message": "",
+      "reason": "Suggested from visible labels or links; review before building."
+    },
+    {
+      "id": "action5",
+      "label": "Like",
+      "href": null,
+      "operation": "toggle",
+      "target": "",
+      "message": "",
+      "reason": "Suggested from visible labels or links; review before building."
+    }
+  ]
+}

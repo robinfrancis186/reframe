@@ -19,11 +19,3 @@ graphify-out/
 
 .desktop-runtime/
 out/
-
-# Kept only on this Mac at the owner's request.
-/.claude/
-/examples/
-/vendor/
-/.env.example
-/THIRD_PARTY_NOTICES.md
-/tsconfig.json

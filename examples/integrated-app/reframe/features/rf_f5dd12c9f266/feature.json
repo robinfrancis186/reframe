@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "id": "rf_f5dd12c9f266",
+  "name": "Subscribe to our Newsletter",
+  "authRequired": false,
+  "fields": [
+    {
+      "id": "field1",
+      "label": "Name",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "field2",
+      "label": "Email address",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "field3",
+      "label": "Daily Newsletter",
+      "type": "checkbox",
+      "required": false
+    }
+  ],
+  "actions": [
+    {
+      "id": "action1",
+      "label": "Subscribe",
+      "href": null,
+      "operation": "create",
+      "target": "",
+      "message": "",
+      "reason": "Submitting a new newsletter subscription record with validated form data."
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "id": "rf_b83df0993f49",
+  "name": "OpenAI newsletter",
+  "authRequired": false,
+  "fields": [
+    {
+      "id": "field1",
+      "label": "Name",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "field2",
+      "label": "Email address",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "field3",
+      "label": "Daily Newsletter",
+      "type": "checkbox",
+      "required": false
+    }
+  ],
+  "actions": [
+    {
+      "id": "action1",
+      "label": "Subscribe",
+      "href": null,
+      "operation": "create",
+      "target": "local_storage",
+      "message": "Create subscriber record with Name, Email address, Daily Newsletter preference",
+      "reason": "Suggested from visible labels or links; review before building."
+    }
+  ]
+}

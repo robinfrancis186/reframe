@@ -1,0 +1,22 @@
+{
+  "name": "reframe-integrated-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5175",
+    "build": "vite build",
+    "reframe:dev": "node reframe/server.mjs",
+    "reframe:start": "node reframe/server.mjs --production"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "vite": "^6.4.1",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=24.11.1"
+  }
+}

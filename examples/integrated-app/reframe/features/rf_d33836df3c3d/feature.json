@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "id": "rf_d33836df3c3d",
+  "name": "Apple MCP product card",
+  "fields": [],
+  "actions": [
+    {
+      "id": "action1",
+      "label": "Learn more",
+      "href": "https://www.apple.com/iphone-18-pro/",
+      "operation": "product-details",
+      "target": "",
+      "message": "Independently authored in-app product behavior.",
+      "reason": "Suggested from visible labels or links; review before building."
+    },
+    {
+      "id": "action2",
+      "label": "Buy",
+      "href": "https://www.apple.com/us/shop/goto/buy_iphone/iphone_18_pro",
+      "operation": "product-options",
+      "target": "",
+      "message": "Independently authored in-app product behavior.",
+      "reason": "Suggested from visible labels or links; review before building."
+    }
+  ],
+  "commerce": {
+    "product": {
+      "id": "captured-phone",
+      "name": "iPhone 18 Pro",
+      "description": "Choose your model, finish and storage without leaving this app.",
+      "currency": "INR",
+      "details": [
+        "An independently authored product configurator based on the captured card.",
+        "Product options, prices and stock are sample demo data.",
+        "Cart and demo orders are saved by this application’s own backend."
+      ],
+      "notice": "Demo catalog · sample pricing and stock. No payment, Apple order or shipment occurs."
+    },
+    "variants": [
+      {
+        "id": "pro-burgundy-256-gb",
+        "name": "Pro · Burgundy · 256 GB",
+        "options": {
+          "Model": "Pro",
+          "Finish": "Burgundy",
+          "Storage": "256 GB"
+        },
+        "priceCents": 11990000,
+        "initialStock": 8
+      },
+      {
+        "id": "pro-burgundy-512-gb",
+        "name": "Pro · Burgundy · 512 GB",
+        "options": {
+          "Model": "Pro",
+          "Finish": "Burgundy",
+          "Storage": "512 GB"
+        },
+        "priceCents": 13990000,
+        "initialStock": 8
+      },
+      {
+        "id": "pro-black-256-gb",
+        "name": "Pro · Black · 256 GB",
+        "options": {
+          "Model": "Pro",
+          "Finish": "Black",
+          "Storage": "256 GB"
+        },
+        "priceCents": 11990000,
+        "initialStock": 8
+      },
+      {
+        "id": "pro-black-512-gb",
+        "name": "Pro · Black · 512 GB",
+        "options": {
+          "Model": "Pro",
+          "Finish": "Black",
+          "Storage": "512 GB"
+        },
+        "priceCents": 13990000,
+        "initialStock": 8
+      },
+      {
+        "id": "pro-glacier-256-gb",
+        "name": "Pro · Glacier · 256 GB",
+        "options": {
+          "Model": "Pro",
+          "Finish": "Glacier",
+          "Storage": "256 GB"
+        },
+        "priceCents": 11990000,
+        "initialStock": 8
+      },
+      {
+        "id": "pro-glacier-512-gb",
+        "name": "Pro · Glacier · 512 GB",
+        "options": {
+          "Model": "Pro",
+          "Finish": "Glacier",
+          "Storage": "512 GB"
+        },
+        "priceCents": 13990000,
+        "initialStock": 0
+      },
+      {
+        "id": "pro-max-burgundy-256-gb",
+        "name": "Pro Max · Burgundy · 256 GB",
+        "options": {
+          "Model": "Pro Max",
+          "Finish": "Burgundy",
+          "Storage": "256 GB"
+        },
+        "priceCents": 13990000,
+        "initialStock": 8
+      },
+      {
+        "id": "pro-max-burgundy-512-gb",
+        "name": "Pro Max · Burgundy · 512 GB",
+        "options": {
+          "Model": "Pro Max",
+          "Finish": "Burgundy",
+          "Storage": "512 GB"
+        },
+        "priceCents": 15990000,
+        "initialStock": 8
+      },
+      {
+        "id": "pro-max-black-256-gb",
+        "name": "Pro Max · Black · 256 GB",
+        "options": {
+          "Model": "Pro Max",
+          "Finish": "Black",
+          "Storage": "256 GB"
+        },
+        "priceCents": 13990000,
+        "initialStock": 8
+      },
+      {
+        "id": "pro-max-black-512-gb",
+        "name": "Pro Max · Black · 512 GB",
+        "options": {
+          "Model": "Pro Max",
+          "Finish": "Black",
+          "Storage": "512 GB"
+        },
+        "priceCents": 15990000,
+        "initialStock": 8
+      },
+      {
+        "id": "pro-max-glacier-256-gb",
+        "name": "Pro Max · Glacier · 256 GB",
+        "options": {
+          "Model": "Pro Max",
+          "Finish": "Glacier",
+          "Storage": "256 GB"
+        },
+        "priceCents": 13990000,
+        "initialStock": 8
+      },
+      {
+        "id": "pro-max-glacier-512-gb",
+        "name": "Pro Max · Glacier · 512 GB",
+        "options": {
+          "Model": "Pro Max",
+          "Finish": "Glacier",
+          "Storage": "512 GB"
+        },
+        "priceCents": 15990000,
+        "initialStock": 0
+      }
+    ]
+  }
+}

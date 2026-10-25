@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "id": "rf_344d24f39eef",
+  "name": "Agent community board",
+  "authRequired": false,
+  "fields": [
+    {
+      "id": "field1",
+      "label": "Email",
+      "type": "email",
+      "required": true
+    },
+    {
+      "id": "field2",
+      "label": "Note",
+      "type": "text",
+      "required": true
+    }
+  ],
+  "actions": [
+    {
+      "id": "action1",
+      "label": "Save note",
+      "href": null,
+      "operation": "create",
+      "target": "",
+      "message": "",
+      "reason": "Retained from the saved behavior contract; review before reuse."
+    },
+    {
+      "id": "action2",
+      "label": "Count",
+      "href": null,
+      "operation": "increment",
+      "target": "",
+      "message": "",
+      "reason": "Retained from the saved behavior contract; review before reuse."
+    }
+  ]
+}

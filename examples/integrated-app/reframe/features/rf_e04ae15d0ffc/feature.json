@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "id": "rf_e04ae15d0ffc",
+  "name": "Website collection",
+  "fields": [],
+  "actions": [
+    {
+      "id": "action1",
+      "label": "Add Element",
+      "href": null,
+      "operation": "create",
+      "target": "",
+      "message": "",
+      "reason": "The capture does not define the intended business rule."
+    },
+    {
+      "id": "action2",
+      "label": "Delete",
+      "href": null,
+      "operation": "delete",
+      "target": "",
+      "message": "",
+      "reason": "Suggested from visible labels or links; review before building."
+    }
+  ]
+}

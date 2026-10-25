@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "reframe", "runtimeExecutable": "node_modules/.bin/node", "runtimeArgs": ["--env-file-if-exists=.env", "server/index.js"], "port": 5173 }
+  ]
+}

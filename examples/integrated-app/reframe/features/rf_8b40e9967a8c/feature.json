@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "id": "rf_8b40e9967a8c",
+  "name": "MCP idea inbox",
+  "authRequired": false,
+  "fields": [
+    {
+      "id": "field1",
+      "label": "Idea",
+      "type": "text",
+      "required": true
+    }
+  ],
+  "actions": [
+    {
+      "id": "action1",
+      "label": "Save idea",
+      "href": null,
+      "operation": "create",
+      "target": "",
+      "message": "",
+      "reason": "Suggested from visible labels or links; review before building."
+    },
+    {
+      "id": "action2",
+      "label": "Count",
+      "href": null,
+      "operation": "increment",
+      "target": "",
+      "message": "",
+      "reason": "Suggested from visible labels or links; review before building."
+    }
+  ]
+}

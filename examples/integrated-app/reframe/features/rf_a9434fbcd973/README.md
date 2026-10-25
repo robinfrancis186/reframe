@@ -1,0 +1,3 @@
+# Contact form
+
+Rendered source HTML, public CSS, inline SVG and independently authored website runtime. Install through Reframe Projects in React + Vite, then npm run reframe:dev (or build and reframe:start). Original styling is isolated in an iframe. Captured routes stay local; PDFs are bundled. Images remain online references. Contact forms validate and save local requests with durable receipts; no email is sent. No original JavaScript or private backend is recovered. Generic search, theme, disclosure and carousel behavior is authored by Reframe. Unknown actions show an explicit explanation. Review forms and routes before publishing. Local single-user storage is not a public multiuser service.
