@@ -60,5 +60,10 @@
   "author": "Robin Francis",
   "config": {
     "forge": "./forge.config.js"
+  },
+  "overrides": {
+    "rea-agents": {
+      "zod": "4.6.7"
+    }
   }
 }

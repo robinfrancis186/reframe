@@ -1,5 +1,13 @@
 # Toolchain check — 22 October 2026
 
+## Security dependency update — 25 October 2026
+
+The lockfile now selects `body-parser@2.4.0` for the [compressed-request parser advisory](https://github.com/advisories/GHSA-27r3-jxmh-p828) and `zod@4.6.7` for the [bounded-collection validation advisory](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5). REA 6.7.0 still pins Zod 4.4.3 upstream, so `package.json` has a targeted REA override. The other Zod consumers retain their existing compatible ranges. Remove the override when REA itself requires a patched version, while retaining the regression checks.
+
+`tests/dependency-validation.test.js` exercises the Zod instances resolved by REA and the MCP SDK. `tests/workbench-http.test.js` checks legitimate compressed requests and malformed trailing data through both the global and Library parsers. These checks supplement the dependency audit; they do not establish a complete security assessment.
+
+## Earlier engine inventory
+
 | Engine | Installed / bundled | Verified upstream | Result |
 | --- | --- | --- | --- |
 | Ponytail | 5.3.2 policy | 5.3.2 | Bundled bytes match current upstream skill exactly |
