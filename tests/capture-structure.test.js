@@ -69,23 +69,31 @@ async function capture(browser, id, selector, variants = false) {
   return (await browser.act({ id, action: 'capture', variants })).items[0];
 }
 
-test(
-  'captures keep web components, ancestor-dependent rules and cross-origin styles',
-  { timeout: 120000 },
-  async () => {
-    const requested = [];
-    const browser = new ReferenceBrowser({
-      resource: async (url) => {
-        requested.push(url);
-        if (url === 'https://cdn.example/icons.css')
-          return { status: 200, headers: { 'content-type': 'text/css' }, body: Buffer.from(icons) };
-        return { status: 200, headers: { 'content-type': 'text/html' }, body: Buffer.from(page) };
-      },
-    });
-    try {
-      const { id } = await browser.create();
-      await browser.act({ id, action: 'navigate', url: 'https://example.com/' });
+async function withFixture(run) {
+  const requested = [];
+  const browser = new ReferenceBrowser({
+    resource: async (url) => {
+      requested.push(url);
+      if (url === 'https://cdn.example/icons.css')
+        return { status: 200, headers: { 'content-type': 'text/css' }, body: Buffer.from(icons) };
+      return { status: 200, headers: { 'content-type': 'text/html' }, body: Buffer.from(page) };
+    },
+  });
+  try {
+    const { id } = await browser.create();
+    await browser.act({ id, action: 'navigate', url: 'https://example.com/' });
 
+    return await run(browser, id, requested);
+  } finally {
+    await browser.close();
+  }
+}
+
+test(
+  'captures keep web components, ancestor rules, cross-origin styles and table context',
+  { timeout: 120000 },
+  () =>
+    withFixture(async (browser, id, requested) => {
       // Ancestor-dependent rule: `.shell .field { width: 100% }` needs the ancestor that was not picked.
       const field = await capture(browser, id, '#field');
       const html = field.feature.spec.website.pages[0].html;
@@ -159,32 +167,6 @@ test(
         'the stylesheet is no longer reported unavailable',
       );
 
-      // A flex item whose own rules say inline-block and width:auto: pinning the display it really had (block) must not
-      // let it stretch, so the repair checks again after each pin.
-      const cta = await capture(browser, id, '#cta', true);
-      assert.ok(cta.fidelity.score >= 95, `flex item capture scored ${cta.fidelity.score}`);
-      // Its size follows its content, so it is saved as fit-content rather than desktop pixels.
-      assert.match(
-        cta.feature.spec.website.css,
-        /^\s*\[data-rf-rendered="0"\]\{width:fit-content;max-width:100%;/,
-      );
-
-      // The clean export keeps the narrow-screen rule and the focus ring that depended on a script-set attribute, and
-      // links to the original page again.
-      const clean = await reviewedExport(cta, { mode: 'clean', browser });
-      for (const key of ['390:default', '1280:focus']) {
-        const variant = clean.variants.find((v) => `${v.width}:${v.state}` === key);
-        assert.ok(variant && variant.score >= 95, `${key} export scored ${variant?.score}`);
-      }
-      assert.match(clean.files[`${clean.name}.tsx`], /href="https:\/\/example\.com\/learn"/);
-      assert.doesNotMatch(clean.files[`${clean.name}.tsx`], /outside the captured set/);
-
-      // Floats that return to `none` on narrow screens (a default the snapshot leaves out) at a range-syntax breakpoint.
-      const tabs = await capture(browser, id, '#tabs', true);
-      const tabsExport = await reviewedExport(tabs, { mode: 'clean', browser });
-      const narrow = tabsExport.variants.find((v) => v.width === 390 && v.state === 'default');
-      assert.ok(narrow && narrow.score >= 95, `390px tabs export scored ${narrow?.score}`);
-
       // A table row: it keeps its tag (a <tr> outside a table is dropped when parsed), and its table's width and the
       // column widths set by rows that were not picked.
       const story = await capture(browser, id, '#story');
@@ -193,10 +175,41 @@ test(
         /<tr class="story"[^>]*data-rf-picked/,
       );
       assert.ok(story.fidelity.score >= 90, `table row capture scored ${story.fidelity.score}`);
-    } finally {
-      await browser.close();
+    }),
+);
+
+test('clean exports preserve responsive flex sizing and keyboard focus', { timeout: 120000 }, () =>
+  withFixture(async (browser, id) => {
+    // A flex item whose own rules say inline-block and width:auto: pinning the display it really had (block) must not
+    // let it stretch, so the repair checks again after each pin.
+    const cta = await capture(browser, id, '#cta', true);
+    assert.ok(cta.fidelity.score >= 95, `flex item capture scored ${cta.fidelity.score}`);
+    // Its size follows its content, so it is saved as fit-content rather than desktop pixels.
+    assert.match(
+      cta.feature.spec.website.css,
+      /^\s*\[data-rf-rendered="0"\]\{width:fit-content;max-width:100%;/,
+    );
+
+    // The clean export keeps the narrow-screen rule and the focus ring that depended on a script-set attribute, and
+    // links to the original page again.
+    const clean = await reviewedExport(cta, { mode: 'clean', browser });
+    for (const key of ['390:default', '1280:focus']) {
+      const variant = clean.variants.find((v) => `${v.width}:${v.state}` === key);
+      assert.ok(variant && variant.score >= 95, `${key} export scored ${variant?.score}`);
     }
-  },
+    assert.match(clean.files[`${clean.name}.tsx`], /href="https:\/\/example\.com\/learn"/);
+    assert.doesNotMatch(clean.files[`${clean.name}.tsx`], /outside the captured set/);
+  }),
+);
+
+test('clean exports preserve floats across range-syntax breakpoints', { timeout: 120000 }, () =>
+  withFixture(async (browser, id) => {
+    // Floats that return to `none` on narrow screens (a default the snapshot leaves out) at a range-syntax breakpoint.
+    const tabs = await capture(browser, id, '#tabs', true);
+    const tabsExport = await reviewedExport(tabs, { mode: 'clean', browser });
+    const narrow = tabsExport.variants.find((v) => v.width === 390 && v.state === 'default');
+    assert.ok(narrow && narrow.score >= 95, `390px tabs export scored ${narrow?.score}`);
+  }),
 );
 
 // Page-level context a component depends on: a print-only stylesheet, attribute selectors on data-*, a sprite icon
